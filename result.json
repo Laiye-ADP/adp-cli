@@ -1,0 +1,20 @@
+{
+  "results": [
+    {
+      "file": "d:\\ADP\\adp-aiem\\test_data\\22.耀嵘+C类.pdf",
+      "result": {
+        "code": "server_error",
+        "message": "User not found",
+        "tips": null
+      }
+    },
+    {
+      "file": "d:\\ADP\\adp-aiem\\test_data\\73.蚂蚁+B类.png",
+      "result": {
+        "code": "server_error",
+        "message": "User not found",
+        "tips": null
+      }
+    }
+  ]
+}
