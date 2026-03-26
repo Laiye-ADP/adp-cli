@@ -51,7 +51,7 @@ class OutputFormatter:
 
     def print_error(self, message: str) -> None:
         """打印错误消息。"""
-        self.print(f"✗ {message}", style="red")
+        self.console.print(f"✗ {message}", style="red")
 
     def print_warning(self, message: str) -> None:
         """打印警告消息。"""
@@ -117,7 +117,7 @@ class OutputFormatter:
             status: 任务状态
             result: 任务结果（可选）
         """
-        self.print_info(f"Task ID: {task_id}")
+        self.print_info(f"Task_ID: {task_id}")
         self.print_info(f"Status: {status}")
 
         if result:

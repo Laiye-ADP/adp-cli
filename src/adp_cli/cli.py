@@ -36,7 +36,7 @@ def check_config(func):
     def wrapper(*args, **kwargs):
         config_manager = ConfigManager()
         if not config_manager.is_configured():
-            formatter.print_error(t('error_api_key_or_url_required').replace('--api-key or --api-base-url', 'API Key'))
+            formatter.print_error(t('error_not_configured'))
             sys.exit(1)
         return func(*args, **kwargs)
     return wrapper
@@ -130,8 +130,8 @@ def cli(ctx, json_mode, quiet, lang):
     ctx.obj['lang'] = lang
 
     # Update formatter with global options
-    formatter.json_mode = json_mode
-    formatter.quiet = quiet
+    formatter.set_json_mode(json_mode)
+    formatter.set_quiet_mode(quiet)
 
 
 # ==================== Config Commands ====================
@@ -307,16 +307,14 @@ def url(url, app_id, async_mode, export, timeout):
 url.help_key = 'extract_url_title'
 
 
-# ==================== Query Command ====================
-
-@cli.command(help="__query_description__")
+@extract.command('query', help="__extract_query_title__")
 @click.argument('task-id')
 @click.option('--watch', is_flag=True, help="__option_watch__")
 @click.option('--timeout', type=int, default=300, help="__option_watch_timeout__")
 @check_config
-def query(task_id, watch, timeout):
+def extract_query(task_id, watch, timeout):
     """
-    Query async task status.
+    Query extract async task status.
     """
     try:
         config_manager = ConfigManager()
@@ -326,7 +324,7 @@ def query(task_id, watch, timeout):
             # Watch mode: wait for task completion
             result = api_client.wait_for_task(
                 task_id,
-                               api_client.query_extract_task,  # Assume extract task
+                api_client.query_extract_task,
                 timeout=timeout
             )
             formatter.print_success(t('task_completed'))
@@ -340,7 +338,43 @@ def query(task_id, watch, timeout):
         formatter.print_error(f"{t('error')} {str(e)}")
         sys.exit(1)
 
-query.help_key = 'query_description'
+extract_query.help_key = 'extract_query_title'
+
+
+# ==================== Parse Query Command ====================
+
+@parse.command('query', help="__parse_query_title__")
+@click.argument('task-id')
+@click.option('--watch', is_flag=True, help="__option_watch__")
+@click.option('--timeout', type=int, default=300, help="__option_watch_timeout__")
+@check_config
+def parse_query(task_id, watch, timeout):
+    """
+    Query parse async task status.
+    """
+    try:
+        config_manager = ConfigManager()
+        api_client = APIClient(config_manager)
+
+        if watch:
+            # Watch mode: wait for task completion
+            result = api_client.wait_for_task(
+                task_id,
+                api_client.query_parse_task,
+                timeout=timeout
+            )
+            formatter.print_success(t('task_completed'))
+            formatter.print_task_result(task_id, result.get("status", "unknown"), result)
+        else:
+            # Single query
+            result = api_client.query_parse_task(task_id)
+            formatter.print_task_result(task_id, result.get("status", "unknown"), result)
+
+    except Exception as e:
+        formatter.print_error(f"{t('error')} {str(e)}")
+        sys.exit(1)
+
+parse_query.help_key = 'parse_query_title'
 
 
 # ==================== App ID Command ====================
@@ -356,9 +390,10 @@ app_id.help_key = 'app_id_description'
 app_id.is_group = True
 
 
-@app_id.command(help=t('app_id_list_title'))
+@app_id.command('list', help=t('app_id_list_title'))
+@click.option('--app-label', help="__app_id_list_app_label__")
 @check_config
-def list():
+def list_apps(app_label):
     """
     List all available application IDs and their descriptions.
     """
@@ -368,18 +403,34 @@ def list():
 
         apps = api_client.list_apps()
 
+        # Filter by app_label if provided (fuzzy matching)
+        if app_label:
+            filtered_apps = []
+            for app in apps:
+                app_labels = app.get("app_label", [])
+                if app_labels:
+                    # Check if app_label input is contained in any of the app's labels
+                    label_str = ", ".join(app_labels) if isinstance(app_labels, list) else str(app_labels)
+                    if app_label in label_str:
+                        filtered_apps.append(app)
+            apps = filtered_apps
+
         if formatter.json_mode:
             formatter.print_json({"apps": apps})
         elif apps:
             table_data = []
             for app in apps:
+                app_label_value = app.get("app_label", "")
+                # Convert app_label to string if it's a list
+                if isinstance(app_label_value, type([])):
+                    app_label_value = ", ".join(app_label_value)
                 table_data.append([
                     app.get("app_id", ""),
                     app.get("app_name", ""),
-                    app.get("description", ""),
+                    app_label_value,
                 ])
             formatter.print_table(
-                ["App ID", "App Name", "Description"],
+                ["App ID", "App Name", "App Label"],
                 table_data,
                 title=t('available_applications')
             )
@@ -390,7 +441,7 @@ def list():
         formatter.print_error(f"{t('error')} {str(e)}")
         sys.exit(1)
 
-list.help_key = 'app_id_list_title'
+list_apps.help_key = 'app_id_list_title'
 
 
 # ==================== Custom App Commands ====================
@@ -465,6 +516,68 @@ def parse_bool_param(_ctx, _param, value):
         sys.exit(1)
 
 
+def parse_json_list_param(_ctx, _param, value):
+    """
+    Click callback: 解析 JSON 列表参数（用于 app-label）。
+
+    Args:
+        _ctx: Click 上下文（未使用）
+        _param: 参数对象（未使用）
+        value: 参数值（JSON 字符串或逗号分隔的字符串）
+
+    Returns:
+        列表
+    """
+    if value is None:
+        return None
+    import json
+    import re
+
+    # 检查是否为 JSON 数组格式
+    if value.strip().startswith('['):
+        try:
+            labels = json.loads(value)
+            if isinstance(labels, type([])):
+                return labels
+            else:
+                formatter.print_error(t('error_invalid_json_format', error=f"app-label must be a list: {value}"))
+                sys.exit(1)
+        except json.JSONDecodeError:
+            # 不是有效的 JSON，尝试作为逗号分隔的字符串处理
+            pass
+
+    # 尝试作为逗号分隔的字符串处理
+    # 去除可能的引号
+    value = re.sub(r'^["\']|["\']$', '', value)
+    return [label.strip() for label in value.split(',') if label.strip()]
+
+
+def validate_create_app_params(app_name, app_label, enable_long_doc, long_doc_config):
+    """
+    验证创建应用参数。
+
+    Args:
+        app_name: 应用名称
+        app_label: 标签列表
+        enable_long_doc: 是否开启长文档支持
+        long_doc_config: 长文档配置
+    """
+    # 验证 app_name 长度不超过 50 字符
+    if len(app_name) > 50:
+        formatter.print_error(t('error_invalid_json_format', error=f"app_name must be 50 characters or less (got {len(app_name)})"))
+        sys.exit(1)
+
+    # 验证 app_label 最多 5 个
+    if app_label and len(app_label) > 5:
+        formatter.print_error(t('error_invalid_json_format', error=f"app_label must have 5 or fewer labels (got {len(app_label)})"))
+        sys.exit(1)
+
+    # 验证 long_doc_config 仅在 enable_long_doc=true 时生效
+    if long_doc_config is not None and not enable_long_doc:
+        formatter.print_error(t('error_invalid_json_format', error="long_doc_config is only valid when enable_long_doc=true"))
+        sys.exit(1)
+
+
 @cli.group(help=t('custom_app_description'), cls=CLI)
 def custom_app():
     """
@@ -479,21 +592,26 @@ custom_app.is_group = True
 @custom_app.command(help="__custom_app_create_title__")
 @click.option('--api-key', help="__custom_app_create_api_key__")
 @click.option('--app-name', required=True, help="__custom_app_create_app_name__")
+@click.option('--app-label', callback=parse_json_list_param, help="__custom_app_create_app_label__")
 @click.option('--extract-fields', required=True, help="__custom_app_create_extract_fields__")
 @click.option('--parse-mode', required=True, help="__custom_app_create_parse_mode__")
-@click.option('--enable-long-doc', required=True, callback=parse_bool_param, help="__custom_app_create_enable_long_doc__")
+@click.option('--enable-long-doc', callback=parse_bool_param, help="__custom_app_create_enable_long_doc__")
 @click.option('--long-doc-config', help="__custom_app_create_long_doc_config__")
 @check_config
-def create(api_key, app_name, extract_fields, parse_mode, enable_long_doc, long_doc_config):
+def create(api_key, app_name, app_label, extract_fields, parse_mode, enable_long_doc, long_doc_config):
     """
     Create a custom extraction application.
+
     """
     try:
+        # 验证参数
+        validate_create_app_params(app_name, app_label, enable_long_doc, long_doc_config)
+
         # 解析 JSON 参数（支持字符串或文件路径）
         extract_fields = _parse_json_param_value(extract_fields)
         if long_doc_config:
             long_doc_config = _parse_json_param_value(long_doc_config)
-        
+
 
         # 临时覆盖 API Key（如果提供）
         if api_key:
@@ -510,7 +628,8 @@ def create(api_key, app_name, extract_fields, parse_mode, enable_long_doc, long_
             extract_fields=extract_fields,
             parse_mode=parse_mode,
             enable_long_doc=enable_long_doc,
-            long_doc_config=long_doc_config
+            long_doc_config=long_doc_config,
+            app_label=app_label
         )
 
         formatter.print_success(t('app_created'))
@@ -686,15 +805,15 @@ delete_version.help_key = 'custom_app_delete_version_title'
 @click.option('--api-key', help="__custom_app_ai_generate_api_key__")
 @click.option('--app-id', required=True, help="__custom_app_ai_generate_app_id__")
 @click.option('--file-url', help="__custom_app_ai_generate_file_url__")
-@click.option('--file-base64', help="__custom_app_ai_generate_file_base64__")
+@click.option('--file-local', help="__custom_app_ai_generate_file_local__")
 @check_config
-def ai_generate(api_key, app_id, file_url, file_base64):
+def ai_generate(api_key, app_id, file_url, file_local):
     """
     AI generate extraction field recommendations.
     """
     try:
-        if not file_url and not file_base64:
-            formatter.print_error(t('error_file_url_or_base64_required'))
+        if not file_url and not file_local:
+            formatter.print_error(t('error_file_url_or_local_required'))
             sys.exit(1)
 
         if api_key:
@@ -706,7 +825,7 @@ def ai_generate(api_key, app_id, file_url, file_base64):
 
         api_client = APIClient(config_manager)
 
-        result = api_client.ai_generate_fields(app_id, file_url, file_base64)
+        result = api_client.ai_generate_fields(app_id, file_url, file_local)
 
         formatter.print_section(t('custom_app_ai_generate_title'))
         formatter.print_json(result)
@@ -791,8 +910,14 @@ def _process_local_files(
             if mode == "parse":
                 if async_mode:
                     task_id = api_client.parse_async(None, app_id, file_path)
-                    # task_ids.append(task_id)
-                    formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name} - Task ID:{task_id}")
+                    # Query the task and wait for completion
+                    result = api_client.wait_for_task(
+                        task_id,
+                        api_client.query_parse_task,
+                        timeout=timeout
+                    )
+                    results.append({"file": str(file_path), "task_id": task_id, "result": result})
+                    formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name} - Task_ID: {task_id} - Completed")
                 else:
                     formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name}")
                     result = api_client.parse_sync(None, app_id, file_path)
@@ -800,8 +925,14 @@ def _process_local_files(
             elif mode == "extract":
                 if async_mode:
                     task_id = api_client.extract_async(None, app_id, file_path)
-                    # task_ids.append(task_id)
-                    formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name} - Task ID:{task_id}")
+                    # Query the task and wait for completion
+                    result = api_client.wait_for_task(
+                        task_id,
+                        api_client.query_extract_task,
+                        timeout=timeout
+                    )
+                    results.append({"file": str(file_path), "task_id": task_id, "result": result})
+                    formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name} - Task_ID: {task_id} - Completed")
                 else:
                     formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name}")
                     result = api_client.extract_sync(None, app_id, file_path)
@@ -814,9 +945,11 @@ def _process_local_files(
     # Output results
     if results:
         formatter.print_success(t('successfully_processed', count=len(results)))
-        # Only output to console if path is a single file
-        if path.is_file():
-            formatter.print_json({"results": results})
+        # Always output results when async mode returns results with task_id
+        formatter.print_json({"results": results})
+    # Only output to console if path is a single file (for sync mode)
+    elif not async_mode and path.is_file():
+        formatter.print_json(results[0]["result"])
 
     if export_path:
         FileHandler.write_json_output({"results": results}, Path(export_path))
@@ -890,17 +1023,31 @@ def _process_url_file(
         try:
             if mode == "parse":
                 if async_mode:
-                    task_id = api_client.parse_async(current_url,app_id)
-                    formatter.print_progress(i, len(urls), f"Processing: {current_url} - Task ID: {task_id}")
+                    task_id = api_client.parse_async(current_url, app_id)
+                    # Query to task and wait for completion
+                    result = api_client.wait_for_task(
+                        task_id,
+                        api_client.query_parse_task,
+                        timeout=timeout
+                    )
+                    results.append({"url": current_url, "task_id": task_id, "result": result})
+                    formatter.print_progress(i, len(urls), f"Processing: {current_url} - Task_ID: {task_id} - Completed")
                 else:
                     formatter.print_progress(i, len(urls), f"Processing: {current_url}")
-                    result = api_client.parse_sync(current_url,app_id)
+                    result = api_client.parse_sync(current_url, app_id)
                     results.append({"url": current_url, "result": result})
 
             elif mode == "extract":
                 if async_mode:
                     task_id = api_client.extract_async(current_url, app_id)
-                    formatter.print_progress(i, len(urls), f"Processing: {current_url} - Task ID: {task_id}")
+                    # Query task and wait for completion
+                    result = api_client.wait_for_task(
+                        task_id,
+                        api_client.query_extract_task,
+                        timeout=timeout
+                    )
+                    results.append({"url": current_url, "task_id": task_id, "result": result})
+                    formatter.print_progress(i, len(urls), f"Processing: {current_url} - Task_ID: {task_id} - Completed")
                 else:
                     formatter.print_progress(i, len(urls), f"Processing: {current_url}")
                     result = api_client.extract_sync(current_url, app_id)

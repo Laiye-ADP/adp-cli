@@ -68,7 +68,7 @@ def test_get_files_from_path_directory(temp_dir):
     files = FileHandler.get_files_from_path(temp_dir)
 
     assert len(files) == 4  # test.pdf, test.jpg, test.docx, nested.pdf
-    assert (temp_path / "unsupported.txt") not in files
+    assert (temp_dir / "unsupported.txt") not in files
 
 
 def test_validate_files(temp_dir):

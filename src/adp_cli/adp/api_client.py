@@ -1,5 +1,7 @@
 """API client for ADP backend."""
 
+import re
+from tarfile import data_filter
 import time
 import mimetypes
 import uuid
@@ -15,11 +17,11 @@ from .config import ConfigManager
 class TaskStatus:
     """任务状态常量。"""
 
-    PENDING = "pending"
-    RUNNING = "running"
-    SUCCESS = "success"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
+    PENDING = 0
+    RUNNING = 2
+    SUCCESS = 4
+    FAILED = 5
+    CANCELLED = 6
 
 
 class APIClient:
@@ -77,7 +79,7 @@ class APIClient:
 
 
         try:
-            response = requests.request(method, url, headers=headers, json=data, timeout=120)
+            response = requests.request(method, url, headers=headers, json=data, timeout=600)
             response.raise_for_status()
             return response.json()
         except RequestException as e:
@@ -135,7 +137,8 @@ class APIClient:
         else:
             data["file_url"] = file_url
 
-        return self._request("POST", "/open/agentic_doc_processor/laiye/v1/app/doc/recognize", data)
+        tenant_name = self.config_manager.get("tenant_name", "laiye")
+        return self._request("POST", f"/open/agentic_doc_processor/{tenant_name}/v1/app/doc/recognize", data)
 
     def parse_async(self, file_url: str, app_id:str, file_path: Optional[Path] = None) -> str:
         """
@@ -163,8 +166,10 @@ class APIClient:
             data["file_url"] = file_url
         
 
-        response = self._request("POST", "/open/agentic_doc_processor/laiye/v1/app/doc/recognize/create/task", data)
-        return response.get("task_id", "")
+        tenant_name = self.config_manager.get("tenant_name", "laiye")
+        response = self._request("POST", f"/open/agentic_doc_processor/{tenant_name}/v1/app/doc/recognize/create/task", data)
+        data = response.get("data",{})
+        return data.get("task_id", "")
 
     def query_parse_task(self, task_id: str) -> Dict[str, Any]:
         """
@@ -176,7 +181,15 @@ class APIClient:
         Returns:
             任务状态和结果
         """
-        return self._request("GET", f"/open/agentic_doc_processor/laiye/v1/app/doc/recognize/query/task/{task_id}")
+        tenant_name = self.config_manager.get("tenant_name", "laiye")
+        response = self._request("GET", f"/open/agentic_doc_processor/{tenant_name}/v1/app/doc/recognize/query/task/{task_id}")
+        # 确保返回的结构兼容 wait_for_task 的期望
+        data = response.get("data", response)
+        if data:
+            # 合并 data 和 response 的其他字段
+            result = {"data": data, **{k: v for k, v in response.items() if k != "data"}}
+            return result
+        return response
 
     # ==================== Extract APIs ====================
 
@@ -213,7 +226,8 @@ class APIClient:
         if extract_config:
             data["extract_config"] = extract_config
 
-        return self._request("POST", "/open/agentic_doc_processor/laiye/v1/app/doc/extract", data)
+        tenant_name = self.config_manager.get("tenant_name", "laiye")
+        return self._request("POST", f"/open/agentic_doc_processor/{tenant_name}/v1/app/doc/extract", data)
 
     def extract_async(
         self,
@@ -248,8 +262,10 @@ class APIClient:
         if extract_config:
             data["extract_config"] = extract_config
 
-        response = self._request("POST", "/open/agentic_doc_processor/laiye/v1/app/doc/extract/create/task", data)
-        return response.get("task_id", "")
+        tenant_name = self.config_manager.get("tenant_name", "laiye")
+        response = self._request("POST", f"/open/agentic_doc_processor/{tenant_name}/v1/app/doc/extract/create/task", data)
+        data = response.get("data",{})
+        return data.get("task_id", "")
 
     def query_extract_task(self, task_id: str) -> Dict[str, Any]:
         """
@@ -261,7 +277,15 @@ class APIClient:
         Returns:
             任务状态和结果
         """
-        return self._request("GET", f"/open/agentic_doc_processor/laiye/v1/app/doc/extract/query/task/{task_id}")
+        tenant_name = self.config_manager.get("tenant_name", "laiye")
+        response = self._request("GET", f"/open/agentic_doc_processor/{tenant_name}/v1/app/doc/extract/query/task/{task_id}")
+        # 确保返回的结构兼容 wait_for_task 的期望
+        data = response.get("data", response)
+        if data:
+            # 合并 data 和 response 的其他字段
+            result = {"data": data, **{k: v for k, v in response.items() if k != "data"}}
+            return result
+        return response
 
     # ==================== App Management APIs ====================
 
@@ -288,7 +312,7 @@ class APIClient:
                     app = {
                         "app_id": item.get("id", ""),
                         "app_name": item.get("app_name", ""),
-                        "description": item.get("description",""),  
+                        "app_label":item.get("app_label","")
                     }
                     apps_list.append(app)
             return apps_list
@@ -320,7 +344,8 @@ class APIClient:
 
         while time.time() - start_time < timeout:
             result = query_func(task_id)
-            status = result.get("status", "")
+            data = result.get("data",{})
+            status = data.get("status", "")
 
             if status == TaskStatus.SUCCESS:
                 return result
@@ -352,18 +377,20 @@ class APIClient:
         app_name: str,
         extract_fields: List[Dict[str, Any]],
         parse_mode: str,
-        enable_long_doc: bool,
-        long_doc_config: Optional[List[Dict[str, Any]]] = None
+        enable_long_doc: Optional[bool] = None,
+        long_doc_config: Optional[List[Dict[str, Any]]] = None,
+        app_label: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
         创建自定义抽取应用。
 
         Args:
-            app_name: 应用名称（50字以内）
+            app: 应用名称（50字以内）
             extract_fields: 字段配置列表
             parse_mode: 解析模式
-            enable_long_doc: 是否开启长文档支持
+            enable_long_doc: 是否开启长文档支持（可选）
             long_doc_config: 长文档配置（可选）
+            app_label: 标签列表（最多5个，可选）
 
         Returns:
             创建结果，包含 app_id 和 config_vision
@@ -374,13 +401,21 @@ class APIClient:
         data = {
             "app_name": app_name,
             "extract_fields": extract_fields,
-            "parse_mode": parse_mode,
-            "enable_long_doc": enable_long_doc,
+            "parse_mode": parse_mode
         }
 
-        if long_doc_config is not None:
-            data["long_doc_config"] = long_doc_config
-        
+        if app_label is not None:
+            data["app_label"] = app_label
+
+        if enable_long_doc is not None:
+            data["enable_long_doc"] = enable_long_doc
+
+        # 只有共有 enable_long_doc 为 True 时，long_doc_config 才能生效且不应为空
+        if enable_long_doc is True:
+            if long_doc_config:
+                data["long_doc_config"] = long_doc_config
+            else:
+                raise ValueError("long_doc_config must be provided and non-empty when enable_long_doc is True")
 
         return self._request("POST", endpoint, data)
 
@@ -479,7 +514,7 @@ class APIClient:
         self,
         app_id: str,
         file_url: Optional[str] = None,
-        file_base64: Optional[str] = None
+        file_local: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         AI 生成抽取字段与提示词推荐。
@@ -487,24 +522,24 @@ class APIClient:
         Args:
             app_id: 应用 ID
             file_url: 示例文档地址（可选）
-            file_base64: 示例文档 base64 编码（可选）
+            file_local: 示例文档本地文件（可选）
 
         Returns:
             AI 生成的字段推荐结果
 
         Raises:
-            ValueError: 当 file_url 和 file_base64 都未提供时
+            ValueError: 当 file_url 和 file_local 都未提供时
         """
-        if not file_url and not file_base64:
-            raise ValueError("Either file_url or file_base64 must be provided")
-
+        if not file_url and not file_local:
+            raise ValueError("Either file_url or file_local must be provided")
+        
         tenant_name = self.config_manager.get("tenant_name", "laiye")
         endpoint = f"/open/agentic_doc_processor/{tenant_name}/v1/app-manage/ai-recommend"
 
         data = {"app_id": app_id}
         if file_url:
             data["file_url"] = file_url
-        if file_base64:
-            data["file_base64"] = file_base64
+        if file_local:
+            data["file_base64"] = self._encode_file_to_base64(file_local)
 
         return self._request("POST", endpoint, data)

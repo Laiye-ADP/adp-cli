@@ -36,6 +36,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "config_set_examples": "Examples:",
         "config_get_api_key": "Get API Key:",
         "config_get_api_key_hint": "Please visit the ADP platform website to get your API Key",
+        "error_not_configured": "Configuration incomplete. Please run 'adp config set' to configure API Key and API Base URL.",
         "error_api_key_or_url_required": "At least one of --api-key or --api-base-url must be provided",
         "api_key_configured": "API Key configured successfully",
         "api_base_url_configured": "API Base URL configured successfully",
@@ -62,7 +63,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "parse_url_desc": "Parse URL files or URL list files",
         "parsing_modes": "Parsing Modes:",
         "sync_mode": "Synchronous (default): Wait for processing to complete and return results",
-        "async_mode": "Asynchronous (--async): Immediately return task ID, use 'adp query' to check results",
+        "async_mode": "Asynchronous (--async): Automatically wait for task completion and return results",
         "supported_formats": "Supported File Formats:",
         "formats_list": "PDF, DOCX, PPTX, XLSX, TXT, HTML, etc.",
 
@@ -81,6 +82,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "parse_url_detail": "The URL parameter can be a single file URL or a local file path containing a list of URLs.",
         "parse_url_arg": "url            File URL or URL list file path (required)",
         "parse_url_format_title": "URL List File Format:",
+
+        # Parse query
+        "parse_query_title": "Query parse async task status.",
+        "parse_query_detail": "Query the status and result of a document parsing async task created by 'adp parse local/url --async'.",
 
         # Extract command
         "extract_description": "Document extraction.",
@@ -101,6 +106,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Extract url
         "extract_url_title": "Extract URL files or URL list files.",
         "extract_url_detail": "Use specified AI application to perform deep content extraction on URL documents and extract key information.",
+
+        # Extract query
+        "extract_query_title": "Query extract async task status.",
+        "extract_query_detail": "Query the status and result of a document extraction async task created by 'adp extract local/url --async'.",
 
         # Option translations
         "option_api_key": "API Key for authentication (format: sk-xxxxxxxxxxxx)",
@@ -133,6 +142,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "app_id_description": "Application management.",
         "app_id_detail": "Manage applications available for document extraction.",
         "app_id_list_desc": "List all available application IDs and their descriptions",
+        "app_id_list_app_label": "Filter applications by label (optional)",
         "output_example": "Output Example:",
 
         # Help command
@@ -167,12 +177,13 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Custom App command
         "custom_app_description": "Custom extraction application management.",
         "custom_app_create_title": "Create a custom extraction application.",
-        "custom_app_create_api_key": "API Key for authentication",
+        "custom_app_create_api_key": "API Key for authentication (optional if already configured)",
         "custom_app_create_app_name": "Application name (max 50 characters)",
-        "custom_app_create_extract_fields": "Field configuration in JSON format or JSON file path",
-        "custom_app_create_parse_mode": "Parse mode (standard/enhanced/agent)",
-        "custom_app_create_enable_long_doc": "Enable long document support (true/false)",
-        "custom_app_create_long_doc_config": "Long document configuration in JSON format or JSON file path",
+        "custom_app_create_app_label": "Application labels (max 5 labels, optional, format: JSON array or comma-separated string)",
+        "custom_app_create_extract_fields": "Field configuration in JSON format or JSON file path (required). Fields must include: field_name, field_type, field_prompt. field_type: string=text, date=date, table=table. When field_type is table, field_prompt can be empty and must have sub_fields. Sub_fields must include: field_name, field_type, field_prompt. Sub_fields field_type cannot be table, only string or date. See documentation for examples.",
+        "custom_app_create_parse_mode": "Parse mode: standard=standard parsing; advance=advanced parsing; agentic=agentic parsing",
+        "custom_app_create_enable_long_doc": "Enable long document support (true/false, optional)",
+        "custom_app_create_long_doc_config": "Long document configuration in JSON format or JSON file path (optional, only valid when enable-long-doc=true)",
         "custom_app_get_config_title": "Query custom app configuration.",
         "custom_app_get_config_api_key": "API Key for authentication",
         "custom_app_get_config_app_id": "Application ID",
@@ -191,10 +202,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "custom_app_ai_generate_api_key": "API Key for authentication",
         "custom_app_ai_generate_app_id": "Application ID",
         "custom_app_ai_generate_file_url": "URL of sample document",
-        "custom_app_ai_generate_file_base64": "Base64 encoded sample document",
+        "custom_app_ai_generate_file_local": "Local of sample document",
         "error_invalid_json_format": "Invalid JSON format: {error}",
         "error_read_json_file": "Failed to read JSON file: {error}",
-        "error_file_url_or_base64_required": "Either --file-url or --file-base64 must be provided",
+        "error_file_url_or_local_required": "Either --file-url or --file-local must be provided",
         "app_created": "Custom app created successfully",
         "app_config": "App Configuration",
         "config_versions": "Configuration Versions",
@@ -232,6 +243,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "config_set_examples": "示例:",
         "config_get_api_key": "获取 API Key:",
         "config_get_api_key_hint": "请访问 ADP 平台官网获取您的 API Key",
+        "error_not_configured": "配置未完成，请先运行 'adp config set' 配置 API Key 和 API Base URL。",
         "error_api_key_or_url_required": "必须提供 --api-key 或 --api-base-url 中的至少一个",
         "api_key_configured": "API Key 配置成功",
         "api_base_url_configured": "API Base URL 配置成功",
@@ -258,7 +270,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "parse_url_desc": "解析 URL 文件或 URL 列表文件",
         "parsing_modes": "解析模式:",
         "sync_mode": "同步模式 (默认): 等待处理完成并返回结果",
-        "async_mode": "异步模式 (--async): 立即返回任务 ID，可用 'adp query' 查询结果",
+        "async_mode": "异步模式 (--async): 自动等待任务完成并返回结果",
         "supported_formats": "支持的文件格式:",
         "formats_list": "PDF, DOCX, PPTX, XLSX, TXT, HTML 等",
 
@@ -277,6 +289,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "parse_url_detail": "URL 参数可以是单个文件 URL，也可以是包含 URL 列表的本地文件路径。",
         "parse_url_arg": "url            文件 URL 或 URL 列表文件路径 (必需)",
         "parse_url_format_title": "URL 列表文件格式:",
+
+        # Parse query
+        "parse_query_title": "查询解析异步任务状态。",
+        "parse_query_detail": "查询由 'adp parse local/url --async' 创建的文档解析异步任务的状态和结果。",
 
         # Extract command
         "extract_description": "文档抽取。",
@@ -297,6 +313,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Extract url
         "extract_url_title": "抽取 URL 文件或 URL 列表文件。",
         "extract_url_detail": "使用指定的 AI 应用对 URL 文档进行深度内容抽取，提取关键信息。",
+
+        # Extract query
+        "extract_query_title": "查询抽取异步任务状态。",
+        "extract_query_detail": "查询由 'adp extract local/url --async' 创建的文档抽取异步任务的状态和结果。",
 
         # Option translations
         "option_api_key": "API 认证密钥（格式: sk-xxxxxxxxxxxx）",
@@ -363,12 +383,13 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Custom App command
         "custom_app_description": "自定义抽取应用管理。",
         "custom_app_create_title": "创建自定义抽取应用。",
-        "custom_app_create_api_key": "API 认证密钥",
+        "custom_app_create_api_key": "API 认证密钥（可选，如果已配置则不需要）",
         "custom_app_create_app_name": "应用名称 (最多 50 个字符)",
-        "custom_app_create_extract_fields": "字段配置，JSON 格式或 JSON 文件路径",
-        "custom_app_create_parse_mode": "解析模式 (standard/enhanced/agent)",
-        "custom_app_create_enable_long_doc": "启用长文档支持 (true/false)",
-        "custom_app_create_long_doc_config": "长文档配置，JSON 格式或 JSON 文件路径",
+        "custom_app_create_app_label": "应用标签（最多5个，可选，格式：JSON 数组或逗号分隔字符串）",
+        "custom_app_create_extract_fields": "字段配置，JSON 格式或 JSON 文件路径（必需）。字段需要包含 field_name（字段名）、field_type（字段类型）、field_prompt（字段提示词）。field_type 可选值：string（文本）、date（日期）、table（表格）。table 类型时 field_prompt 可为空，需包含 sub_fields（表格子字段）。表格子字段的 field_type 只能为 string 或 date。参见文档查看示例。",
+        "custom_app_create_parse_mode": "解析模式：standard=标准解析；advance=增强解析；agentic=智能体解析",
+        "custom_app_create_enable_long_doc": "启用长文档支持 (true/false，可选)",
+        "custom_app_create_long_doc_config": "长文档配置，JSON 格式或 JSON 文件路径（可选，仅当 enable-long-doc=true 时生效）",
         "custom_app_get_config_title": "查询自定义应用配置。",
         "custom_app_get_config_api_key": "API 认证密钥",
         "custom_app_get_config_app_id": "应用 ID",
@@ -377,6 +398,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "custom_app_list_versions_api_key": "API 认证密钥",
         "custom_app_list_versions_app_id": "应用 ID",
         "custom_app_delete_title": "删除自定义应用。",
+        "app_id_list_app_label": "按标签过滤应用（可选）",
         "custom_app_delete_api_key": "API 认证密钥",
         "custom_app_delete_app_id": "应用 ID",
         "custom_app_delete_version_title": "删除指定配置版本。",
@@ -387,10 +409,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "custom_app_ai_generate_api_key": "API 认证密钥",
         "custom_app_ai_generate_app_id": "应用 ID",
         "custom_app_ai_generate_file_url": "示例文档 URL",
-        "custom_app_ai_generate_file_base64": "Base64 编码的示例文档",
+        "custom_app_ai_generate_file_local": "本地示例文档",
         "error_invalid_json_format": "无效的 JSON 格式: {error}",
         "error_read_json_file": "读取 JSON 文件失败: {error}",
-        "error_file_url_or_base64_required": "必须提供 --file-url 或 --file-base64 中的一个",
+        "error_file_url_or_local_required": "必须提供 --file-url 或 --file-local 中的一个",
         "app_created": "自定义应用创建成功",
         "app_config": "应用配置",
         "config_versions": "配置版本",

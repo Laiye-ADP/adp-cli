@@ -25,6 +25,7 @@ wheels/
 .coverage
 htmlcov/
 .tox/
+test_data/
 
 # Virtual environments
 venv/

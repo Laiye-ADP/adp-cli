@@ -249,7 +249,3 @@ isort src/
 ```bash
 mypy src/
 ```
-
-## 许可证
-
-MIT License

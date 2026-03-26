@@ -1,0 +1,19 @@
+{
+  "env": {
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.5-air",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-4.7",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5",
+    "ANTHROPIC_AUTH_TOKEN": "1a203359-330e-44b1-b7c3-40d02d4d12ba",
+    "ANTHROPIC_BASE_URL": "https://ark.cn-beijing.volces.com/api/coding",
+    "ANTHROPIC_MODEL": "glm-4.7"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npx playwright:*)",
+      "Bash(find tests/e2e -name *.json -type f -o -name index.html)",
+      "Bash(pip uninstall:*)",
+      "Bash(pip install:*)",
+      "Bash(python -c \":*)"
+    ]
+  }
+}

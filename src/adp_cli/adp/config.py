@@ -128,8 +128,10 @@ class ConfigManager:
             self.KEY_FILE.unlink()
 
     def is_configured(self) -> bool:
-        """检查是否已配置 API Key。"""
-        return self.get_api_key() is not None
+        """检查是否已配置 API Key 和 API Base URL。"""
+        api_key = self.get_api_key()
+        api_base_url = self.get("api_base_url", "")
+        return api_key is not None and bool(api_base_url.strip())
 
     def get_config_summary(self) -> Dict[str, Any]:
         """获取配置摘要（不包含敏感信息）。"""
@@ -137,6 +139,6 @@ class ConfigManager:
         summary = {
             "configured": self.is_configured(),
             "api_key_masked": self.get_api_key_masked(),
-            "api_base_url": config.get("api_base_url", "https://adp.laiye.com"),
+            "api_base_url": config.get("api_base_url", ""),
         }
         return summary
