@@ -1,8 +1,8 @@
 # Building ADP CLI Standalone Executables
 
-This document explains how to build ADP CLI standalone executables for different platforms.
+> 📚 **详细指南**: 请查看 [PACKAGING.md](PACKAGING.md) 获取完整的跨平台打包指南和故障排除信息。
 
-## Overview
+## Quick Start
 
 ADP CLI can be distributed in two ways:
 
@@ -22,9 +22,9 @@ This guide covers **Method 2: Building Standalone Executables**.
 - **Python 3.8 or higher** (only needed for building, not for running the executable)
 - **Git** (optional, for cloning the repository)
 
-## Quick Build
+## 快速构建
 
-### Windows
+### Windows 平台
 
 ```cmd
 cd cli-anything
@@ -33,7 +33,7 @@ scripts\build.bat
 
 The executable will be created at: `dist\adp.exe`
 
-### Linux / macOS
+### Linux / macOS 平台
 
 ```bash
 cd cli-anything
@@ -43,20 +43,15 @@ chmod +x scripts/build.sh
 
 The executable will be created at: `dist/adp`
 
-## Detailed Build Process
+## 详细构建流程
 
-### 1. Clone or Navigate to Project
+### 1. 进入项目目录
 
 ```bash
-# If cloning:
-git clone <repository-url>
-cd adp-aiem/cli-anything
-
-# Or navigate:
-cd /path/to/cli-anything
+cd adp-cli
 ```
 
-### 2. (Optional) Create Virtual Environment
+### 2. (可选) 创建虚拟环境
 
 The build scripts automatically create a virtual environment if not present:
 
@@ -82,7 +77,7 @@ scripts/build.sh          # Linux/macOS
 scripts\build.bat         # Windows
 
 # Or directly with PyInstaller
-pyinstaller build/adp_cli.spec
+pyinstaller adp_cli.spec
 ```
 
 ### 5. Test the Executable
@@ -95,18 +90,18 @@ dist\adp.exe --help
 ./dist/adp --help
 ```
 
-## Build Configuration
+## 构建配置
 
-The PyInstaller configuration is defined in [`build/adp_cli.spec`](../build/adp_cli.spec):
+PyInstaller 配置文件位于项目根目录的 [`adp_cli.spec`](../adp_cli.spec)。
 
 - **Output**: Single-file executable (`adp` or `adp.exe`)
 - **Console**: Enabled (for CLI output)
 - **UPX**: Enabled (for smaller size)
 - **Excludes**: Unnecessary packages (tkinter, matplotlib, etc.) to reduce size
 
-## Advanced Options
+## 高级选项
 
-### Install to System PATH
+### 安装到系统 PATH
 
 **Linux/macOS**:
 ```bash
@@ -122,9 +117,9 @@ scripts\build.bat --install
 
 This adds the `dist` folder to your user PATH.
 
-### Build for Specific Platform
+### 为特定平台构建
 
-You can build executables for different platforms by:
+要为不同平台构建可执行文件：
 
 1. **Using GitHub Actions/CircleCI**: Set up CI/CD to build on each platform
 2. **Cross-compilation**: Using Docker containers (for Linux on Windows/macOS)
@@ -134,22 +129,24 @@ Example Docker build for Linux on macOS:
 
 ```bash
 docker run --rm -v $(pwd):/app -w /app python:3.11 \
-  sh -c "pip install pyinstaller && pyinstaller build/adp_cli.spec"
+  sh -c "pip install pyinstaller && pyinstaller adp_cli.spec"
 ```
 
-### Custom Icon
+### 自定义图标
 
 To add a custom icon:
 
 1. Create an `.ico` file (Windows) or `.icns` file (macOS)
 2. Place it in `build/` directory
-3. Update `build/adp_cli.spec` to reference the icon
+3. Update `adp_cli.spec` to reference the icon
 
-## Troubleshooting
+## 故障排除
+
+> 📋 详细的故障排除指南请查看 [PACKAGING.md](PACKAGING.md)。
 
 ### Build Fails with "ModuleNotFoundError"
 
-Solution: Add the missing module to `hiddenimports` in `build/adp_cli.spec`:
+Solution: Add the missing module to `hiddenimports` in `adp_cli.spec`:
 
 ```python
 hiddenimports=[
@@ -187,17 +184,17 @@ Or run:
 sudo spctl --add --label "ADP CLI" dist/adp
 ```
 
-## Distribution
+## 分发
 
-### Single Executable
+### 单个可执行文件
 
-Distribute the single file:
+直接分发单个文件：
 - Windows: `dist/adp.exe`
 - Linux/macOS: `dist/adp`
 
-### Archive (Recommended)
+### 压缩包 (推荐)
 
-Create a compressed archive:
+创建压缩包：
 
 ```bash
 # Linux/macOS
@@ -208,7 +205,7 @@ zip -r adp-cli-1.0.0-linux-x86_64.zip dist/adp
 Compress-Archive -Path dist\adp.exe -DestinationPath adp-cli-1.0.0-win-x64.zip
 ```
 
-### GitHub Releases
+#### GitHub Releases
 
 When releasing via GitHub:
 
@@ -219,9 +216,11 @@ When releasing via GitHub:
    - `adp-cli-1.0.0-darwin-x86_64.tar.gz` (Intel)
    - `adp-cli-1.0.0-darwin-arm64.tar.gz` (Apple Silicon)
 
-## Automated Builds (CI/CD)
+## 自动化构建 (CI/CD)
 
-Example GitHub Actions workflow:
+项目包含预配置的 GitHub Actions 工作流：[.github/workflows/build.yml](../.github/workflows/build.yml)
+
+触发构建：
 
 ```yaml
 name: Build ADP CLI
@@ -243,7 +242,7 @@ jobs:
           python-version: '3.11'
       - run: pip install pyinstaller
       - run: pip install -r cli-anything/requirements.txt
-      - run: cd cli-anything && pyinstaller build/adp_cli.spec
+      - run: cd cli-anything && pyinstaller adp_cli.spec
       - uses: actions/upload-artifact@v3
         with:
           name: adp-${{ matrix.os }}
@@ -260,15 +259,16 @@ After optimization, expect these sizes:
 | Linux    | (none)    | 12-20 MB      |
 | macOS    | (none)    | 13-22 MB      |
 
-## Additional Resources
+## 相关资源
 
-- [PyInstaller Documentation](https://pyinstaller.org/)
-- [Cross-platform Python Packaging](https://packaging.python.org/)
-- [Building Executables with PyInstaller](https://realpython.com/python-executable/)
+- 📖 [详细打包指南](PACKAGING.md) - 完整的跨平台打包说明
+- 📦 [PyInstaller 文档](https://pyinstaller.org/)
+- 🛠️ [Python 打包指南](https://packaging.python.org/)
+- 🚀 [GitHub Actions 工作流](../.github/workflows/build.yml)
 
-## Support
+## 获取帮助
 
-For issues related to building:
-1. Check this documentation first
-2. Review PyInstaller documentation
-3. Open an issue in the project repository
+如遇到构建问题：
+1. 查看 [PACKAGING.md](PACKAGING.md) 中的故障排除部分
+2. 检查 PyInstaller 文档
+3. 在项目仓库提交 Issue

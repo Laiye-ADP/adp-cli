@@ -322,14 +322,16 @@ adp parse local PATH [OPTIONS]
 |-----------|-------------|----------|
 | `path` | File or folder path | Yes |
 | `--app-id` | Parsing application ID | Yes |
-| `--async` | Automatically wait for task completion and return results | No |
+| `--async` | Submit async task and wait for completion with results | No |
 | `--export` | Export results to JSON file | No |
-| `--timeout` | Synchronous mode timeout (seconds) | No |
+| `--timeout` | Task timeout (seconds) | No |
+| `--concurrency` | Concurrent tasks count for batch processing (default: 1) | No |
 
 ```bash
 # Example
 adp parse local ./document.pdf --app-id YOUR_APP_ID
 adp parse local ./documents/ --app-id YOUR_APP_ID --async
+adp parse local ./documents/ --app-id YOUR_APP_ID --async --concurrency 5
 adp parse local ./document.pdf --app-id YOUR_APP_ID --export result.json
 ```
 
@@ -343,14 +345,16 @@ adp parse url URL [OPTIONS]
 |-----------|-------------|----------|
 | `url` | File URL or URL list file path | Yes |
 | `--app-id` | Parsing application ID | Yes |
-| `--async` | Automatically wait for task completion and return results | No |
+| `--async` | Submit async task and wait for completion with results | No |
 | `--export` | Export results to JSON file | No |
-| `--timeout` | Synchronous mode timeout (seconds) | No |
+| `--timeout` | Task timeout (seconds) | No |
+| `--concurrency` | Concurrent tasks count for batch processing (default: 1) | No |
 
 ```bash
 # Example
 adp parse url https://example.com/document.pdf --app-id YOUR_APP_ID
 adp parse url ./urls.txt --app-id YOUR_APP_ID --async
+adp parse url ./urls.txt --app-id YOUR_APP_ID --async --concurrency 5
 ```
 
 **parse query**
@@ -395,14 +399,16 @@ adp extract local PATH [OPTIONS]
 |-----------|-------------|----------|
 | `path` | File or folder path | Yes |
 | `--app-id` | Extraction application ID | Yes |
-| `--async` | Automatically wait for task completion and return results | No |
+| `--async` | Submit async task and wait for completion with results | No |
 | `--export` | Export results to JSON file | No |
-| `--timeout` | Synchronous mode timeout (seconds) | No |
+| `--timeout` | Task timeout (seconds) | No |
+| `--concurrency` | Concurrent tasks count for batch processing (default: 1) | No |
 
 ```bash
 # Example
 adp extract local ./invoice.pdf --app-id INVOICE_EXTRACTOR
 adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --async
+adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --async --concurrency 5
 ```
 
 **extract url**
@@ -415,9 +421,10 @@ adp extract url URL [OPTIONS]
 |-----------|-------------|----------|
 | `url` | File URL or URL list file path | Yes |
 | `--app-id` | Extraction application ID | Yes |
-| `--async` | Automatically wait for task completion and return results | No |
-| `--export` | Export results to JSON file` | No |
-| `--timeout` | Synchronous mode timeout (seconds) | No |
+| `--async` | Submit async task and wait for completion with results | No |
+| `--export` | Export results to JSON file | No |
+| `--timeout` | Task timeout (seconds) | No |
+| `--concurrency` | Concurrent tasks count for batch processing (default: 1) | No |
 
 ```bash
 # Example
@@ -425,6 +432,12 @@ adp extract url https://example.com/invoice.pdf \
   --app-id YOUR_EXTRACT_APP_ID \
   --async \
   --export result.json
+
+# Batch processing with concurrency
+adp extract url ./urls.txt \
+  --app-id YOUR_EXTRACT_APP_ID \
+  --async \
+  --concurrency 5
 ```
 
 **extract query**

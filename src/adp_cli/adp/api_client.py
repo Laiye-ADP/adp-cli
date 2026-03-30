@@ -77,9 +77,8 @@ class APIClient:
         url = f"{self.api_base_url}{endpoint}"
         headers = self._get_headers()
 
-
         try:
-            response = requests.request(method, url, headers=headers, json=data, timeout=600)
+            response = requests.request(method, url, headers=headers, json=data, timeout=300)
             response.raise_for_status()
             return response.json()
         except RequestException as e:
@@ -350,7 +349,7 @@ class APIClient:
             if status == TaskStatus.SUCCESS:
                 return result
             elif status in (TaskStatus.FAILED, TaskStatus.CANCELLED):
-                raise ValueError(f"Task failed with status: {status}")
+                raise ValueError(f"Task failed with status: {status},Failed Message:{data.get('message', "")}")
 
             time.sleep(interval)
 

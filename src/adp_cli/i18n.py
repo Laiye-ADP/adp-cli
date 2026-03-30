@@ -119,6 +119,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "option_async": "Process asynchronously (return task ID immediately)",
         "option_export": "Export results to JSON file",
         "option_timeout": "Timeout for sync mode (seconds, default: 300)",
+        "option_concurrency": "For batch processing, concurrency defaults to 1. Free users max=1, paid users max=2. If other values are entered, concurrency will not take effect. Please wait for processing.",
         "option_watch": "Watch task until completion (polls until task finishes)",
         "option_watch_timeout": "Timeout for watch mode (seconds, default: 300)",
 
@@ -167,12 +168,15 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "failed_to_process": "Failed to process {name}: {error}",
         "successfully_processed": "Successfully processed {count} file(s)",
         "results_exported_to": "Results exported to:",
-        "processing_urls": "Processing {count} URL(s) from file:",
-        "processing_url": "Processing URL:",
+        "processing_urls": "Processing {count} URL(s) from file",
+        "processing_url": "Processing {count} URL",
         "invalid_url_format": "Invalid URL format: {url}. URL must start with http://) or https://",
         "no_valid_urls": "No valid URLs found in file:",
         "successfully_processed_urls": "Successfully processed {count} URL(s)",
         "failed_to_process_url": "Failed to process URL: {url} - {error}",
+        "interrupted": "Received interrupt signal, stopping...",
+        "cancelled_pending_tasks": "Cancelled {count} pending task(s)",
+        "waiting_for_results": "Waiting for all results to complete...",
 
         # Custom App command
         "custom_app_description": "Custom extraction application management.",
@@ -326,6 +330,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "option_async": "异步处理，立即返回任务 ID",
         "option_export": "导出结果到 JSON 文件",
         "option_timeout": "同步模式超时时间（秒，默认 300）",
+        "option_concurrency": "批量处理时，并发数默认为 1。免费用户最高为 1，付费用户最高为 2。若输入其他数值，并发将不生效，请等待处理。",
         "option_watch": "监视任务直到完成（轮询直到任务结束）",
         "option_watch_timeout": "监视模式超时时间（秒，默认 300）",
 
@@ -366,6 +371,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
         # Common
         "error": "错误:",
+        "error_invalid_concurrency": "并发数无效。批量处理时：免费用户最高为1，付费用户最高为2。若输入其他数值，并发将不生效，请等待处理。",
         "no_supported_files": "未找到支持的文件:",
         "skipped_invalid_files": "跳过 {count} 个无效文件:",
         "no_valid_files": "没有有效的文件需要处理",
@@ -373,12 +379,15 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "failed_to_process": "处理失败 {name}: {error}",
         "successfully_processed": "成功处理 {count} 个文件",
         "results_exported_to": "结果已导出到:",
-        "processing_urls": "正在处理文件中的 {count} 个 URL:",
-        "processing_url": "正在处理 URL:",
+        "processing_urls": "正在处理文件中的 {count} 个 URL",
+        "processing_url": "正在处理 {count} 个 URL",
         "invalid_url_format": "无效的 URL 格式: {url}。URL 必须以 http:// 或 https:// 开头",
         "no_valid_urls": "文件中未找到有效的 URL:",
         "successfully_processed_urls": "成功处理 {count} 个 URL",
         "failed_to_process_url": "处理 URL 失败: {url} - {error}",
+        "interrupted": "接收到中断信号，正在停止...",
+        "cancelled_pending_tasks": "已取消 {count} 个待处理任务",
+        "waiting_for_results": "等待所有结果完成...",
 
         # Custom App command
         "custom_app_description": "自定义抽取应用管理。",

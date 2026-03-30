@@ -61,7 +61,7 @@ class CLI(click.Group):
         for subcommand in self.list_commands(ctx):
             cmd = self.get_command(ctx, subcommand)
             if cmd is not None:
-                # Get the translated help text
+                # Get translated help text
                 if hasattr(cmd, 'help_key'):
                     help_text = t(cmd.help_key)
                 else:
@@ -78,7 +78,7 @@ class CLI(click.Group):
         if cmd:
             # Update command help text
             if hasattr(cmd, 'is_group') and cmd.is_group:
-                # For groups, we need to update the help text dynamically
+                # For groups, we need to update help text dynamically
                 if hasattr(cmd, 'help_key'):
                     cmd.help = t(cmd.help_key)
             else:
@@ -220,13 +220,14 @@ parse.is_group = True
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=int, default=300, help="__option_timeout__")
+@click.option('--concurrency', type=int, default=1, help="__option_concurrency__")
 @check_config
-def local(path, app_id, async_mode, export, timeout):
+def local(path, app_id, async_mode, export, timeout, concurrency):
     """
     Parse local files or folders.
     """
     try:
-        _process_local_files(path, async_mode, export, timeout, mode="parse",app_id=app_id)
+        _process_local_files(path, async_mode, export, timeout, mode="parse", app_id=app_id, concurrency=concurrency)
     except Exception as e:
         formatter.print_error(f"{t('error')} {str(e)}")
         sys.exit(1)
@@ -240,13 +241,14 @@ local.help_key = 'parse_local_title'
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=int, default=300, help="__option_timeout__")
+@click.option('--concurrency', type=int, default=1, help="__option_concurrency__")
 @check_config
-def url(url, app_id, async_mode, export, timeout):
+def url(url, app_id, async_mode, export, timeout, concurrency):
     """
     Parse URL files or URL list files.
     """
     try:
-        _process_url_file(url, async_mode, export, timeout, mode="parse",app_id=app_id)
+        _process_url_file(url, async_mode, export, timeout, mode="parse", app_id=app_id, concurrency=concurrency)
     except Exception as e:
         formatter.print_error(f"{t('error')} {str(e)}")
         sys.exit(1)
@@ -273,13 +275,14 @@ extract.is_group = True
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=int, default=300, help="__option_timeout__")
+@click.option('--concurrency', type=int, default=1, help="__option_concurrency__")
 @check_config
-def local(path, app_id, async_mode, export, timeout):
+def local(path, app_id, async_mode, export, timeout, concurrency):
     """
     Extract local files or folders.
     """
     try:
-        _process_local_files(path, async_mode, export, timeout, mode="extract", app_id=app_id)
+        _process_local_files(path, async_mode, export, timeout, mode="extract", app_id=app_id, concurrency=concurrency)
     except Exception as e:
         formatter.print_error(f"{t('error')} {str(e)}")
         sys.exit(1)
@@ -293,13 +296,14 @@ local.help_key = 'extract_local_title'
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=int, default=300, help="__option_timeout__")
+@click.option('--concurrency', type=int, default=1, help="__option_concurrency__")
 @check_config
-def url(url, app_id, async_mode, export, timeout):
+def url(url, app_id, async_mode, export, timeout, concurrency):
     """
     Extract URL files or URL list files.
     """
     try:
-        _process_url_file(url, async_mode, export, timeout, mode="extract", app_id=app_id)
+        _process_url_file(url, async_mode, export, timeout, mode="extract", app_id=app_id, concurrency=concurrency)
     except Exception as e:
         formatter.print_error(f"{t('error')} {str(e)}")
         sys.exit(1)
@@ -328,11 +332,11 @@ def extract_query(task_id, watch, timeout):
                 timeout=timeout
             )
             formatter.print_success(t('task_completed'))
-            formatter.print_task_result(task_id, result.get("status", "unknown"), result)
         else:
             # Single query
             result = api_client.query_extract_task(task_id)
-            formatter.print_task_result(task_id, result.get("status", "unknown"), result)
+        data = result.get("data",{})
+        formatter.print_task_result(task_id, data.get("status", ""), result)
 
     except Exception as e:
         formatter.print_error(f"{t('error')} {str(e)}")
@@ -364,11 +368,12 @@ def parse_query(task_id, watch, timeout):
                 timeout=timeout
             )
             formatter.print_success(t('task_completed'))
-            formatter.print_task_result(task_id, result.get("status", "unknown"), result)
         else:
             # Single query
             result = api_client.query_parse_task(task_id)
-            formatter.print_task_result(task_id, result.get("status", "unknown"), result)
+        data = result.get("data",{})
+        formatter.print_task_result(task_id, data.get("status", ""), result)
+            
 
     except Exception as e:
         formatter.print_error(f"{t('error')} {str(e)}")
@@ -546,7 +551,7 @@ def parse_json_list_param(_ctx, _param, value):
             # 不是有效的 JSON，尝试作为逗号分隔的字符串处理
             pass
 
-    # 尝试作为逗号分隔的字符串处理
+    # 尝试作为作为逗号分隔的字符串处理
     # 去除可能的引号
     value = re.sub(r'^["\']|["\']$', '', value)
     return [label.strip() for label in value.split(',') if label.strip()]
@@ -857,13 +862,86 @@ help.help_key = 'help_description'
 
 # ==================== Helper Functions ====================
 
+def _sort_and_clean_results(results):
+    """
+    对结果按index排序并移除index字段。
+
+    Args:
+        results: 结果列表，每个结果包含'index'字段
+
+    Returns:
+        排序并清理后的结果列表
+    """
+    results.sort(key=lambda x: x["index"])
+    for result in results:
+        result.pop("index", None)
+    return results
+
+
+def _process_items_concurrently(items, process_func, concurrency, display_submit_func, display_result_func, t):
+    """
+    并发处理多个项目，支持键盘中断。
+
+    Args:
+        items: 要处理的项目列表
+        process_func: 处理函数，签名为 func(item, index, total) -> dict
+        concurrency: 并发数
+        display_submit_func: 显示提交信息的函数，签名为 func(index, item, total) -> str
+        display_result_func: 显示完成信息的函数，签名为 func(result) -> str
+        t: 国际化函数
+
+    Returns:
+        处理结果列表
+    """
+    import concurrent.futures
+    results = []
+
+    print(f"Processing {len(items)} items with {concurrency} workers (batch mode)...")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as executor:
+        # Submit all tasks and show submission info
+        future_to_item = {}
+        for i, item in enumerate(items, 1):
+            future = executor.submit(process_func, item, i, len(items))
+            future_to_item[future] = item
+            # Show task submission
+            display_submit_func(i, item, len(items))
+
+        # Show waiting message
+        print(t('waiting_for_results'))
+
+        # Collect results as they complete
+        try:
+            for future in concurrent.futures.as_completed(future_to_item):
+                result = future.result()
+                if "error" not in result:
+                    results.append(result)
+                    display_result_func(result)
+                else:
+                    display_result_func(result)
+        except KeyboardInterrupt:
+            print(t('interrupted'))
+            # Cancel all pending tasks
+            cancelled = 0
+            for future in future_to_item:
+                if future.cancel():
+                    cancelled += 1
+            if cancelled > 0:
+                print(t('cancelled_pending_tasks', count=cancelled))
+            # Shutdown executor immediately
+            executor.shutdown(wait=False)
+            raise
+
+    return results
+
+
 def _process_local_files(
     path_str: str,
     async_mode: bool,
     export_path: Optional[str],
     timeout: int,
     mode: str,
-    app_id: Optional[str] = None
+    app_id: Optional[str] = None,
+    concurrency: int = 1
 ) -> None:
     """
     Process local files (supports batch processing).
@@ -875,7 +953,10 @@ def _process_local_files(
         timeout: Timeout
         mode:: Mode (parse or extract)
         app_id: Application ID (required for extract mode)
+        concurrency: Number of concurrent tasks (only effective for batch processing)
     """
+    import concurrent.futures
+
     path = Path(path_str)
     config_manager = ConfigManager()
     api_client = APIClient(config_manager)
@@ -901,58 +982,85 @@ def _process_local_files(
 
     formatter.print_section(t('processing_files', count=len(valid_files)))
 
-    results = []
-
-    for i, file_path in enumerate(valid_files, 1):
-        # formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name}")
-
+    def process_file(file_path, index, total):
+        """Process a single file."""
         try:
             if mode == "parse":
                 if async_mode:
                     task_id = api_client.parse_async(None, app_id, file_path)
-                    # Query the task and wait for completion
+                    # Query task and wait for completion
                     result = api_client.wait_for_task(
                         task_id,
                         api_client.query_parse_task,
                         timeout=timeout
                     )
-                    results.append({"file": str(file_path), "task_id": task_id, "result": result})
-                    formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name} - Task_ID: {task_id} - Completed")
+                    return {"file": str(file_path), "task_id": task_id, "result": result, "index": index}
                 else:
-                    formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name}")
                     result = api_client.parse_sync(None, app_id, file_path)
-                    results.append({"file": str(file_path), "result": result})
+                    return {"file": str(file_path), "result": result, "index": index}
             elif mode == "extract":
                 if async_mode:
                     task_id = api_client.extract_async(None, app_id, file_path)
-                    # Query the task and wait for completion
+                    # Query task and wait for completion
                     result = api_client.wait_for_task(
                         task_id,
                         api_client.query_extract_task,
                         timeout=timeout
                     )
-                    results.append({"file": str(file_path), "task_id": task_id, "result": result})
-                    formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name} - Task_ID: {task_id} - Completed")
+                    return {"file": str(file_path), "task_id": task_id, "result": result, "index": index}
                 else:
-                    formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name}")
                     result = api_client.extract_sync(None, app_id, file_path)
-                    results.append({"file": str(file_path), "result": result})
-
+                    return {"file": str(file_path), "result": result, "index": index}
         except Exception as e:
             formatter.print_error(t('failed_to_process', name=file_path.name, error=str(e)))
-            continue
+            return {"file": str(file_path), "error": str(e), "index": index}
+
+    # Display functions for concurrent processing
+    def display_file_submit(index, file_path, total):
+        print(f"[{index}/{total}] Submitted: {file_path.name}")
+
+    def display_file_result(result):
+        if "error" in result:
+            print(f"✗ Failed: {Path(result['file']).name} - {result['error']}")
+        else:
+            file_path = Path(result["file"])
+            if "task_id" in result:
+                print(f"✓ Completed: {file_path.name} - Task_ID: {result['task_id']}")
+            else:
+                print(f"✓ Completed: {file_path.name}")
+
+    # Check if batch processing (more than 1 file)
+    is_batch = len(valid_files) > 1
+
+    if is_batch and concurrency > 1:
+        # Concurrent processing for batch
+        results = _process_items_concurrently(
+            valid_files, process_file, concurrency,
+            display_file_submit, display_file_result, t
+        )
+    else:
+        # Sequential processing (single file or sync mode or concurrency=1)
+        results = []
+        for i, file_path in enumerate(valid_files, 1):
+            result = process_file(file_path, i, len(valid_files))
+            if "error" not in result:
+                results.append(result)
+                # Show progress for each file
+                if "task_id" in result:
+                    formatter.print_progress(i, len(valid_files),
+                        f"Processing: {file_path.name} - Task_ID: {result['task_id']} - Completed")
+                elif not async_mode:
+                    formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name}")
+
+    # Sort results by index and remove index
+    results = _sort_and_clean_results(results)
 
     # Output results
-    if results:
-        formatter.print_success(t('successfully_processed', count=len(results)))
-        # Always output results when async mode returns results with task_id
-        formatter.print_json({"results": results})
-    # Only output to console if path is a single file (for sync mode)
-    elif not async_mode and path.is_file():
-        formatter.print_json(results[0]["result"])
+    OutputFormatter.print_results(results, valid_files, mode, formatter, t)
 
     if export_path:
-        FileHandler.write_json_output({"results": results}, Path(export_path))
+        data = results[0]["result"] if len(results) == 1 else {"results": results}
+        FileHandler.write_json_output(data, Path(export_path))
         formatter.print_success(f"{t('results_exported_to')} {export_path}")
 
 
@@ -975,7 +1083,8 @@ def _process_url_file(
     export_path: Optional[str],
     timeout: int,
     mode: str,
-    app_id: Optional[str] = None
+    app_id: Optional[str] = None,
+    concurrency: int = 1
 ) -> None:
     """
     Process URL file or URL list file.
@@ -987,6 +1096,7 @@ def _process_url_file(
         timeout: Timeout
         mode: Mode (parse or extract)
         app_id: Application ID (required for extract mode)
+        concurrency: Number of concurrent tasks (only effective for batch processing)
     """
     config_manager = ConfigManager()
     api_client = APIClient(config_manager)
@@ -1015,28 +1125,24 @@ def _process_url_file(
             return
 
         urls = [url]
-        formatter.print_section(t('processing_url', url=url))
+        formatter.print_section(t('processing_url', count=1, url=url))
 
-    results = []
-
-    for i, current_url in enumerate(urls, 1):
+    def process_url(current_url, index, total):
+        """Process a single URL."""
         try:
             if mode == "parse":
                 if async_mode:
                     task_id = api_client.parse_async(current_url, app_id)
-                    # Query to task and wait for completion
+                    # Query task and wait for completion
                     result = api_client.wait_for_task(
                         task_id,
                         api_client.query_parse_task,
                         timeout=timeout
                     )
-                    results.append({"url": current_url, "task_id": task_id, "result": result})
-                    formatter.print_progress(i, len(urls), f"Processing: {current_url} - Task_ID: {task_id} - Completed")
+                    return {"url": current_url, "task_id": task_id, "result": result, "index": index}
                 else:
-                    formatter.print_progress(i, len(urls), f"Processing: {current_url}")
                     result = api_client.parse_sync(current_url, app_id)
-                    results.append({"url": current_url, "result": result})
-
+                    return {"url": current_url, "result": result, "index": index}
             elif mode == "extract":
                 if async_mode:
                     task_id = api_client.extract_async(current_url, app_id)
@@ -1046,25 +1152,56 @@ def _process_url_file(
                         api_client.query_extract_task,
                         timeout=timeout
                     )
-                    results.append({"url": current_url, "task_id": task_id, "result": result})
-                    formatter.print_progress(i, len(urls), f"Processing: {current_url} - Task_ID: {task_id} - Completed")
+                    return {"url": current_url, "task_id": task_id, "result": result, "index": index}
                 else:
-                    formatter.print_progress(i, len(urls), f"Processing: {current_url}")
                     result = api_client.extract_sync(current_url, app_id)
-                    results.append({"url": current_url, "result": result})
-
+                    return {"url": current_url, "result": result, "index": index}
         except Exception as e:
             formatter.print_error(t('failed_to_process_url', url=current_url, error=str(e)))
-            continue
+            return {"url": current_url, "error": str(e), "index": index}
+
+    # Display functions for concurrent processing
+    def display_url_submit(index, url, total):
+        url_display = url[:80] + ('...' if len(url) > 80 else '')
+        print(f"[{index}/{total}] Submitted: {url_display}")
+
+    def display_url_result(result):
+        url_display = result['url'][:60] + ('...' if len(result['url']) > 60 else '')
+        if "error" in result:
+            print(f"✗ Failed: {url_display} - {result['error']}")
+        elif "task_id" in result:
+            print(f"✓ Completed: {url_display} - Task_ID: {result['task_id']}")
+        else:
+            print(f"✓ Completed: {url_display}")
+
+    # Check if batch processing (more than 1 URL)
+    is_batch = len(urls) > 1
+
+    if is_batch and concurrency > 1:
+        # Concurrent processing for batch mode
+        results = _process_items_concurrently(
+            urls, process_url, concurrency,
+            display_url_submit, display_url_result, t
+        )
+    else:
+        # Sequential processing (single URL or sync mode or concurrency=1)
+        results = []
+        for i, current_url in enumerate(urls, 1):
+            result = process_url(current_url, i, len(urls))
+            if "error" not in result:
+                results.append(result)
+                # Show progress for each URL
+                if "task_id" in result:
+                    formatter.print_progress(i, len(urls),
+                        f"Processing: {current_url} - Task_ID: {result['task_id']} - Completed")
+                elif not async_mode:
+                    formatter.print_progress(i, len(urls), f"Processing: {current_url}")
+
+    # Sort results by index and remove index
+    results = _sort_and_clean_results(results)
 
     # Output results
-    if results:
-        formatter.print_success(t('successfully_processed_urls', count=len(results)))
-        # Only output to console when it's a single URL
-        if len(urls) == 1:
-            formatter.print_json(results[0]["result"])
-        # else:
-        #     formatter.print_json({"results": results})
+    OutputFormatter.print_results(results, urls, mode, formatter, t)
 
     if export_path:
         data = results[0]["result"] if len(results) == 1 else {"results": results}

@@ -22,6 +22,13 @@ class OutputFormatter:
         self.console = console or Console()
         self.json_mode = False
         self.quiet_mode = False
+        self.status = {
+            0: "PENDING",
+            2: "RUNNING",
+            4: "SUCCESS",
+            5: "FAILED",
+            6: "CANCELLED"
+        }
 
     def set_json_mode(self, enabled: bool) -> None:
         """设置 JSON 模式。"""
@@ -108,7 +115,7 @@ class OutputFormatter:
         panel = Panel(content, title=title, border_style=style)
         self.console.print(panel)
 
-    def print_task_result(self, task_id: str, status: str, result: Dict[str, Any] = None) -> None:
+    def print_task_result(self, task_id: str, status: int, result: Dict[str, Any] = None) -> None:
         """
         打印任务结果。
 
@@ -118,7 +125,7 @@ class OutputFormatter:
             result: 任务结果（可选）
         """
         self.print_info(f"Task_ID: {task_id}")
-        self.print_info(f"Status: {status}")
+        self.print_info(f"Status: {self.status.get(status,"UNKNOWN")}")
 
         if result:
             self.print("Result:", style="bold")
@@ -193,3 +200,22 @@ class OutputFormatter:
         separator = "─" * len(title)
         self.print(f"\n{title}", style="bold")
         self.print(separator, style="dim")
+
+    @staticmethod
+    def print_results(results: List[Dict[str, Any]], items: List[Any], mode: str, formatter_instance, t) -> None:
+        """
+        打印处理结果到控制台。
+
+        Args:
+            results: 处理结果列表
+            items: 原始项目列表（文件或URL）
+            mode: 处理模式 ('parse' 或 'extract')
+            formatter_instance: OutputFormatter 实例（用于打印消息）
+            t: 国际化函数
+        """
+        if results:
+            if mode == "parse" or mode == "extract":
+                if len(items) == 1:
+                    # 单个文件/URL，直接打印结果
+                    formatter_instance.print_json(results[0]["result"])
+                # 多个文件/URL，不在控制台打印结果（避免输出过多）

@@ -6,11 +6,12 @@ with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name="adp-cli",
+    name="agentic_doc_parse_and_extract",
     version="1.10.0",
     author="ADP Team",
     author_email="support@adp.ai",
-    description="AI Document Platform Command Line Tool",
+    license="Commercial license required. New users receive 100 free credits monthly to offset usage.",
+    description="AI Document Platform Command Line Tool - Document Parse & Extract Tool",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/adp/adp-aiem",

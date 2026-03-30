@@ -68,9 +68,18 @@ source "$VENV_DIR/bin/activate"
 
 # Install/upgrade dependencies
 echo -e "${YELLOW}Installing/upgrading dependencies...${NC}"
-pip install --upgrade pip
-pip install -r "$PROJECT_ROOT/requirements.txt"
-pip install pyinstaller
+pip install --upgrade pip || {
+    echo -e "${RED}Error: Failed to upgrade pip${NC}"
+    exit 1
+}
+pip install -r "$PROJECT_ROOT/requirements.txt" || {
+    echo -e "${RED}Error: Failed to install dependencies${NC}"
+    exit 1
+}
+pip install pyinstaller || {
+    echo -e "${RED}Error: Failed to install Py PyInstaller${NC}"
+    exit 1
+}
 
 # Clean previous builds
 echo -e "${YELLOW}Cleaning previous builds...${NC}"
@@ -79,7 +88,14 @@ rm -f "$PROJECT_ROOT/dist/adp" 2>/dev/null || true
 # Run PyInstaller
 echo -e "${YELLOW}Building executable with PyInstaller...${NC}"
 cd "$PROJECT_ROOT"
-pyinstaller "$PROJECT_ROOT/build/adp_cli.spec" --clean --noconfirm
+pyinstaller "$PROJECT_ROOT/adp_cli.spec" --clean --noconfirm || {
+    echo ""
+    echo -e "${RED}========================================${NC}"
+    echo -e "${RED}  Build failed!${NC}"
+    echo -e "${RED}========================================${NC}"
+    echo -e "${RED}PyInstaller encountered errors. Check output above.${NC}"
+    exit 1
+}
 
 # Check if build succeeded
 if [ -f "$PROJECT_ROOT/dist/adp" ]; then
@@ -91,7 +107,7 @@ if [ -f "$PROJECT_ROOT/dist/adp" ]; then
     echo -e "${GREEN}Executable location:${NC}"
     echo -e "  $PROJECT_ROOT/dist/adp"
     echo ""
-    echo -e "${YELLOWGC}You can now run:${NC}"
+    echo -e "${YELLOW}You can now run:${NC}"
     echo -e "  $PROJECT_ROOT/dist/adp --help"
     echo ""
 

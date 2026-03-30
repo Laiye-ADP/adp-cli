@@ -308,7 +308,7 @@ scripts\build.bat
 
 ### 6.2 Build Configuration
 
-PyInstaller spec file: `build/adp_cli.spec`
+PyInstaller spec file: `adp_cli.spec`
 
 Key settings:
 - Single-file executable
@@ -457,7 +457,7 @@ pip install -r requirements.txt
 **Build fails with PyInstaller**:
 - Check for missing modules in `hiddenimports`
 - Ensure all dependencies are installed
-- Review `build/adp_cli.spec` configuration
+- Review `adp_cli.spec` configuration
 
 **Encoding issues on Windows**:
 - The CLI automatically configures UTF-8 output

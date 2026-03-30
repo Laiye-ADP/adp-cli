@@ -322,14 +322,16 @@ adp parse local PATH [OPTIONS]
 |------|------|------|
 | `path` | 文件或文件夹路径 | 是 |
 | `--app-id` | 解析应用ID | 是 |
-| `--async` | 自动等待任务完成并返回结果 | 否 |
+| `--async` | 提交异步任务并等待完成返回结果 | 否 |
 | `--export` | 导出结果到JSON文件 | 否 |
-| `--timeout` | 同步模式超时时间（秒） | 否 |
+| `--timeout` | 任务超时时间（秒） | 否 |
+| `--concurrency` | 批量处理的并发数（默认：1） | 否 |
 
 ```bash
 # 示例
 adp parse local ./document.pdf --app-id YOUR_APP_ID
 adp parse local ./documents/ --app-id YOUR_APP_ID --async
+adp parse local ./documents/ --app-id YOUR_APP_ID --async --concurrency 5
 adp parse local ./document.pdf --app-id YOUR_APP_ID --export result.json
 ```
 
@@ -343,14 +345,16 @@ adp parse url URL [OPTIONS]
 |------|------|------|
 | `url` | 文件URL或URL列表文件路径 | 是 |
 | `--app-id` | 解析应用ID | 是 |
-| `--async` | 自动等待任务完成并返回结果 | 否 |
+| `--async` | 提交异步任务并等待完成返回结果 | 否 |
 | `--export` | 导出结果到JSON文件 | 否 |
-| `--timeout` | 同步模式超时时间（秒） | 否 |
+| `--timeout` | 任务超时时间（秒） | 否 |
+| `--concurrency` | 批量处理的并发数（默认：1） | 否 |
 
 ```bash
 # 示例
 adp parse url https://example.com/document.pdf --app-id YOUR_APP_ID
 adp parse url ./urls.txt --app-id YOUR_APP_ID --async
+adp parse url ./urls.txt --app-id YOUR_APP_ID --async --concurrency 5
 ```
 
 **parse query**
@@ -395,14 +399,16 @@ adp extract local PATH [OPTIONS]
 |------|------|------|------|
 | `path` | 文件或文件夹路径 | 是 |
 | `--app-id` | 抽取应用ID | 是 |
-| `--async` | 自动等待任务完成并返回结果 | 否 |
+| `--async` | 提交异步任务并等待完成返回结果 | 否 |
 | `--export` | 导出结果到JSON文件 | 否 |
-| `--timeout` | 同步模式超时时间（秒） | 否 |
+| `--timeout` | 任务超时时间（秒） | 否 |
+| `--concurrency` | 批量处理的并发数（默认：1） | 否 |
 
 ```bash
 # 示例
 adp extract local ./invoice.pdf --app-id INVOICE_EXTRACTOR
 adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --async
+adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --async --concurrency 5
 ```
 
 **extract url**
@@ -415,9 +421,10 @@ adp extract url URL [OPTIONS]
 |------|------|------|------|
 | `url` | 文件URL或URL列表文件路径 | 是 |
 | `--app-id` | 抽取应用ID | 是 |
-| `--async` | 自动等待任务完成并返回结果 | 否 |
+| `--async` | 提交异步任务并等待完成返回结果 | 否 |
 | `--export` | 导出结果到JSON文件 | 否 |
-| `--timeout` | 同步模式超时时间（秒） | 否 |
+| `--timeout` | 任务超时时间（秒） | 否 |
+| `--concurrency` | 批量处理的并发数（默认：1） | 否 |
 
 ```bash
 # 示例
@@ -425,6 +432,12 @@ adp extract url https://example.com/invoice.pdf \
   --app-id YOUR_EXTRACT_APP_ID \
   --async \
   --export result.json
+
+# 批量处理并发数
+adp extract url ./urls.txt \
+  --app-id YOUR_EXTRACT_APP_ID \
+  --async \
+  --concurrency 5
 ```
 
 **extract query**

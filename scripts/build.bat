@@ -42,8 +42,23 @@ call "%VENV_DIR%\Scripts\activate.bat"
 REM Install/upgrade dependencies
 echo [INFO] Installing/upgrading dependencies...
 python -m pip install --upgrade pip
+if errorlevel 1 (
+    echo [ERROR] Failed to upgrade pip.
+    pause
+    exit /b 1
+)
 python -m pip install -r "%PROJECT_ROOT%\requirements.txt"
+if errorlevel 1 (
+    echo [ERROR] Failed to install dependencies from requirements.txt.
+    pause
+    exit /b 1
+)
 python -m pip install pyinstaller
+if errorlevel 1 (
+    echo [ERROR] Failed to install PyInstaller.
+    pause
+    exit /b 1
+)
 
 REM Clean previous builds
 echo [INFO] Cleaning previous builds...
@@ -54,7 +69,16 @@ if exist "%PROJECT_ROOT%\dist\adp.exe" (
 REM Run PyInstaller
 echo [INFO] Building executable with PyInstaller...
 cd /d "%PROJECT_ROOT%"
-pyinstaller "%PROJECT_ROOT%\build\adp_cli.spec" --clean --noconfirm
+pyinstaller "%PROJECT_ROOT%\adp_cli.spec" --clean --noconfirm
+if errorlevel 1 (
+    echo.
+    echo ========================================
+    echo   Build failed!
+    echo ========================================
+    echo PyInstaller encountered errors. Check the output above.
+    pause
+    exit /b 1
+)
 
 REM Check if build succeeded
 if exist "%PROJECT_ROOT%\dist\adp.exe" (
