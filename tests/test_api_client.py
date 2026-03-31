@@ -62,8 +62,8 @@ def test_get_headers(api_client):
     """Test getting request headers."""
     headers = api_client._get_headers()
     assert "Content-Type" in headers
-    assert "Api-key" in headers
-    assert headers["Api-key"] == "test-api-key-12345"
+    assert "X-Api-key" in headers
+    assert headers["X-Api-key"] == "test-api-key-12345"
 
 
 def test_get_headers_no_api_key(mock_config_manager):
@@ -154,7 +154,7 @@ def test_parse_sync_with_url(mock_request, api_client):
 def test_parse_async_with_url(mock_request, api_client):
     """Test asynchronous parse with URL."""
     mock_response = Mock()
-    mock_response.json.return_value = {"task_id": "task-123"}
+    mock_response.json.return_value = {"data": {"task_id": "task-123"}}
     mock_response.raise_for_status = Mock()
     mock_request.return_value = mock_response
 
@@ -182,7 +182,7 @@ def test_extract_sync(mock_request, api_client):
 def test_extract_async(mock_request, api_client):
     """Test asynchronous extract."""
     mock_response = Mock()
-    mock_response.json.return_value = {"task_id": "task-456"}
+    mock_response.json.return_value = {"data": {"task_id": "task-456"}}
     mock_response.raise_for_status = Mock()
     mock_request.return_value = mock_response
 
@@ -357,20 +357,20 @@ def test_ai_generate_fields_no_file(api_client):
 def test_wait_for_task_success(api_client):
     """Test wait for task with success."""
     query_func = Mock(side_effect=[
-        {"status": TaskStatus.RUNNING},
-        {"status": TaskStatus.RUNNING},
-        {"status": TaskStatus.SUCCESS, "result": "done"}
+        {"data": {"status": TaskStatus.RUNNING}},
+        {"data": {"status": TaskStatus.RUNNING}},
+        {"data": {"status": TaskStatus.SUCCESS, "result": "done"}}
     ])
 
     result = api_client.wait_for_task("task-123", query_func, timeout=10, interval=0.1)
 
-    assert result["status"] == TaskStatus.SUCCESS
+    assert result["data"]["status"] == TaskStatus.SUCCESS
     assert query_func.call_count == 3
 
 
 def test_wait_for_task_failed(api_client):
     """Test wait for task with failure."""
-    query_func = Mock(return_value={"status": TaskStatus.FAILED, "error": "Task failed"})
+    query_func = Mock(return_value={"data": {"status": TaskStatus.FAILED, "error": "Task failed"}})
 
     with pytest.raises(ValueError, match="Task failed"):
         api_client.wait_for_task("task-123", query_func, timeout=10, interval=0.1)
@@ -405,8 +405,8 @@ def test_health_check_failure(mock_request, api_client):
 
 def test_task_status_constants():
     """Test TaskStatus constants."""
-    assert TaskStatus.PENDING == "pending"
-    assert TaskStatus.RUNNING == "running"
-    assert TaskStatus.SUCCESS == "success"
-    assert TaskStatus.FAILED == "failed"
-    assert TaskStatus.CANCELLED == "cancelled"
+    assert TaskStatus.PENDING == 0
+    assert TaskStatus.RUNNING == 2
+    assert TaskStatus.SUCCESS == 4
+    assert TaskStatus.FAILED == 5
+    assert TaskStatus.CANCELLED == 6

@@ -14,7 +14,7 @@ from adp_cli.adp import (
     FileHandler,
     OutputFormatter,
 )
-from adp_cli.i18n import t, set_language, reset_help_formatter
+from adp_cli.i18n import t, set_language, reset_help_formatter, get_language
 
 # Set output encoding to UTF-8 for Windows
 if sys.platform == 'win32':
@@ -40,6 +40,46 @@ def check_config(func):
             sys.exit(1)
         return func(*args, **kwargs)
     return wrapper
+
+
+def _validate_concurrency(api_client: APIClient, concurrency: int) -> int:
+    """
+    Validate and adjust concurrency based on user payment status.
+
+    Args:
+        api_client: APIClient instance
+        concurrency: User-provided concurrency value
+
+    Returns:
+        Adjusted concurrency value (1 for free users, 1-2 for paid users)
+
+    Raises:
+        ValueError: If concurrency is invalid
+    """
+    if concurrency <= 1:
+        return 1
+
+    try:
+        payment_status = api_client.get_user_payment_status()
+        payment_type = payment_status.get("payment_type", "")
+
+        if payment_type == "paid":
+            # Paid users can use up to 2
+            if concurrency > 2:
+                raise ValueError(t('error_invalid_concurrency'))
+            return concurrency
+        else:
+            # Free users limited to 1
+            if concurrency > 1:
+                raise ValueError(t('error_not_paid_user'))
+            return 1
+    except Exception as e:
+        # If payment status check fails or validation error, re-raise
+        if isinstance(e, ValueError):
+            raise
+        # If API call fails, default to 1 for safety
+        formatter.print_warning(f"{t('warning')}: {t('error_invalid_concurrency')}")
+        return 1
 
 
 class CLI(click.Group):
@@ -256,6 +296,31 @@ def url(url, app_id, async_mode, export, timeout, concurrency):
 url.help_key = 'parse_url_title'
 
 
+@parse.command('base64', help="__parse_base64_title__")
+@click.argument('file_base64', nargs=-1, required=True)
+@click.option('--app-id', required=True, help="__option_app_id_parse__")
+@click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
+@click.option('--export', type=click.Path(), help="__option_export__")
+@click.option('--timeout', type=int, default=300, help="__option_timeout__")
+@click.option('--file-name', default="document", help="__option_file_name__")
+@click.option('--concurrency', type=int, default=1, help="__option_concurrency__")
+@check_config
+def parse_base64(file_base64, app_id, async_mode, export, timeout, file_name, concurrency):
+    """
+    Parse base64 encoded file content.
+    """
+    try:
+        _process_base64_files(
+            file_base64, app_id, file_name, async_mode,
+            export, timeout, mode="parse", concurrency=concurrency
+        )
+    except Exception as e:
+        formatter.print_error(f"{t('error')} {str(e)}")
+        sys.exit(1)
+
+parse_base64.help_key = 'parse_base64_title'
+
+
 # ==================== Extract Commands ====================
 
 @cli.group(help=t('extract_description'), cls=CLI)
@@ -311,12 +376,38 @@ def url(url, app_id, async_mode, export, timeout, concurrency):
 url.help_key = 'extract_url_title'
 
 
+@extract.command('base64', help="__extract_base64_title__")
+@click.argument('file_base64', nargs=-1, required=True)
+@click.option('--app-id', required=True, help="__option_app_id_extract__")
+@click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
+@click.option('--export', type=click.Path(), help="__option_export__")
+@click.option('--timeout', type=int, default=300, help="__option_timeout__")
+@click.option('--file-name', default="document", help="__option_file_name__")
+@click.option('--concurrency', type=int, default=1, help="__option_concurrency__")
+@check_config
+def extract_base64(file_base64, app_id, async_mode, export, timeout, file_name, concurrency):
+    """
+    Extract base64 encoded file content.
+    """
+    try:
+        _process_base64_files(
+            file_base64, app_id, file_name, async_mode,
+            export, timeout, mode="extract", concurrency=concurrency
+        )
+    except Exception as e:
+        formatter.print_error(f"{t('error')} {str(e)}")
+        sys.exit(1)
+
+extract_base64.help_key = 'extract_base64_title'
+
+
 @extract.command('query', help="__extract_query_title__")
 @click.argument('task-id')
 @click.option('--watch', is_flag=True, help="__option_watch__")
+@click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=int, default=300, help="__option_watch_timeout__")
 @check_config
-def extract_query(task_id, watch, timeout):
+def extract_query(task_id, watch, export,timeout):
     """
     Query extract async task status.
     """
@@ -337,7 +428,10 @@ def extract_query(task_id, watch, timeout):
             result = api_client.query_extract_task(task_id)
         data = result.get("data",{})
         formatter.print_task_result(task_id, data.get("status", ""), result)
-
+        if export:
+            FileHandler.write_json_output(data, Path(export))
+            formatter.print_success(f"{t('results_exported_to')} {export}")
+            
     except Exception as e:
         formatter.print_error(f"{t('error')} {str(e)}")
         sys.exit(1)
@@ -350,9 +444,10 @@ extract_query.help_key = 'extract_query_title'
 @parse.command('query', help="__parse_query_title__")
 @click.argument('task-id')
 @click.option('--watch', is_flag=True, help="__option_watch__")
+@click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=int, default=300, help="__option_watch_timeout__")
 @check_config
-def parse_query(task_id, watch, timeout):
+def parse_query(task_id, watch,export, timeout):
     """
     Query parse async task status.
     """
@@ -373,6 +468,9 @@ def parse_query(task_id, watch, timeout):
             result = api_client.query_parse_task(task_id)
         data = result.get("data",{})
         formatter.print_task_result(task_id, data.get("status", ""), result)
+        if export:
+            FileHandler.write_json_output(data, Path(export))
+            formatter.print_success(f"{t('results_exported_to')} {export}")
             
 
     except Exception as e:
@@ -846,6 +944,59 @@ def ai_generate(api_key, app_id, file_url, file_local):
 ai_generate.help_key = 'custom_app_ai_generate_title'
 
 
+# ==================== Credit Command ====================
+
+@cli.command(help=t('credit_description'))
+@click.option('--api-key', help="__credit_api_key__")
+@check_config
+def credit(api_key):
+    """
+    Query remaining credits.
+    """
+    try:
+        # Temporarily override API Key (if provided)
+        if api_key:
+            config_manager = ConfigManager()
+            original_key = config_manager.get_api_key()
+            config_manager.set_api_key(api_key)
+        else:
+            config_manager = ConfigManager()
+
+        api_client = APIClient(config_manager)
+
+        result = api_client.get_user_payment_status()
+
+        # Get credit from response
+        credit = result.get("remaining_credits", 0)
+
+        # Get portal URL based on language
+        lang = get_language()
+        if lang == 'zh':
+            portal_url = "https://adp.laiye.com"
+        else:
+            portal_url = "https://adp-global.laiye.com"
+
+        # Display result
+        if formatter.json_mode:
+            formatter.print_json({
+                "credit": credit,
+                "portal_url": portal_url
+            })
+        else:
+            formatter.print_section(t('credit_info'))
+            formatter.print_info(f"{t('remaining_credits')}: {credit}")
+            formatter.print_info(f"{t('recharge_message')}: {portal_url}")
+
+        # Restore original API Key
+        if api_key:
+            if original_key:
+                config_manager.set_api_key(original_key)
+
+    except Exception as e:
+        formatter.print_error(f"{t('error')} {str(e)}")
+        sys.exit(1)
+
+
 # ==================== Help Command ====================
 
 @cli.command(help=t('help_description'))
@@ -961,6 +1112,13 @@ def _process_local_files(
     config_manager = ConfigManager()
     api_client = APIClient(config_manager)
 
+    # Validate and adjust concurrency based on payment status
+    try:
+        concurrency = _validate_concurrency(api_client, concurrency)
+    except ValueError as e:
+        formatter.print_error(str(e))
+        sys.exit(1)
+
     # Get file list
     files = FileHandler.get_files_from_path(path)
 
@@ -1041,14 +1199,14 @@ def _process_local_files(
     else:
         # Sequential processing (single file or sync mode or concurrency=1)
         results = []
+        print(f"valid_files:{len(valid_files)}")
         for i, file_path in enumerate(valid_files, 1):
             result = process_file(file_path, i, len(valid_files))
             if "error" not in result:
                 results.append(result)
                 # Show progress for each file
                 if "task_id" in result:
-                    formatter.print_progress(i, len(valid_files),
-                        f"Processing: {file_path.name} - Task_ID: {result['task_id']} - Completed")
+                    formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name} - Task_ID: {result['task_id']} - Completed")
                 elif not async_mode:
                     formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name}")
 
@@ -1100,6 +1258,13 @@ def _process_url_file(
     """
     config_manager = ConfigManager()
     api_client = APIClient(config_manager)
+
+    # Validate and adjust concurrency based on payment status
+    try:
+        concurrency = _validate_concurrency(api_client, concurrency)
+    except ValueError as e:
+        formatter.print_error(str(e))
+        sys.exit(1)
 
     # Determine if url parameter is a file path or a single URL
     input_path = Path(url)
@@ -1192,8 +1357,7 @@ def _process_url_file(
                 results.append(result)
                 # Show progress for each URL
                 if "task_id" in result:
-                    formatter.print_progress(i, len(urls),
-                        f"Processing: {current_url} - Task_ID: {result['task_id']} - Completed")
+                    formatter.print_progress(i, len(urls), f"Processing: {current_url} - Task_ID: {result['task_id']} - Completed")
                 elif not async_mode:
                     formatter.print_progress(i, len(urls), f"Processing: {current_url}")
 
@@ -1202,6 +1366,127 @@ def _process_url_file(
 
     # Output results
     OutputFormatter.print_results(results, urls, mode, formatter, t)
+
+    if export_path:
+        data = results[0]["result"] if len(results) == 1 else {"results": results}
+        FileHandler.write_json_output(data, Path(export_path))
+        formatter.print_success(f"{t('results_exported_to')} {export_path}")
+
+
+def _process_base64_files(
+    base64_strings: list,
+    app_id: str,
+    file_name: str,
+    async_mode: bool,
+    export_path: Optional[str],
+    timeout: int,
+    mode: str,
+    concurrency: int = 1
+) -> None:
+    """
+    Process base64 encoded files (supports batch processing).
+
+    Args:
+        base64_strings: List of base64 encoded strings
+        app_id: Application ID
+        file_name: Base file name
+        async_mode: Whether to process asynchronously
+        export_path: Export path
+        timeout: Timeout
+        mode: Mode (parse or extract)
+        concurrency: Number of concurrent tasks (only effective for batch processing)
+    """
+    import concurrent.futures
+
+    config_manager = ConfigManager()
+    api_client = APIClient(config_manager)
+
+    # Validate and adjust concurrency based on payment status
+    try:
+        concurrency = _validate_concurrency(api_client, concurrency)
+    except ValueError as e:
+        formatter.print_error(str(e))
+        sys.exit(1)
+
+    # Check if batch processing (multiple base64 strings)
+    is_batch = len(base64_strings) > 1
+
+    formatter.print_section(t('processing_files', count=len(base64_strings)))
+
+    def process_base64(b64_str, index, total):
+        """Process a single base64 string."""
+        try:
+            current_file_name = file_name if len(base64_strings) == 1 else f"{file_name}_{index}"
+            if mode == "parse":
+                if async_mode:
+                    task_id = api_client.parse_async(None, app_id, file_base64=b64_str, file_name=current_file_name)
+                    # Query task and wait for completion
+                    result = api_client.wait_for_task(
+                        task_id,
+                        api_client.query_parse_task,
+                        timeout=timeout
+                    )
+                    return {"index": index, "task_id": task_id, "result": result}
+                else:
+                    result = api_client.parse_sync(None, app_id, file_base64=b64_str, file_name=current_file_name)
+                    return {"index": index, "result": result}
+            elif mode == "extract":
+                if async_mode:
+                    task_id = api_client.extract_async(None, app_id, file_base64=b64_str, file_name=current_file_name)
+                    # Query task and wait for completion
+                    result = api_client.wait_for_task(
+                        task_id,
+                        api_client.query_extract_task,
+                        timeout=timeout
+                    )
+                    return {"index": index, "task_id": task_id, "result": result}
+                else:
+                    result = api_client.extract_sync(None, app_id, file_base64=b64_str, file_name=current_file_name)
+                    return {"index": index, "result": result}
+        except Exception as e:
+            formatter.print_error(t('failed_to_process', name=f"base64_{index}", error=str(e)))
+            return {"index": index, "error": str(e)}
+
+    # Display functions for concurrent processing
+    def display_submit(index, b64_str, total):
+        print(f"[{index}/{total}] Submitted base64_{index}")
+
+    def display_result(result):
+        if "error" in result:
+            print(f"✗ Failed: base64_{result['index']} - {result['error']}")
+        else:
+            if "task_id" in result:
+                print(f"✓ Completed: base64_{result['index']} - Task_ID: {result['task_id']}")
+            else:
+                print(f"✓ Completed: base64_{result['index']}")
+
+    # Check if batch processing (more than 1 base64 string)
+    is_batch = len(base64_strings) > 1
+
+    if is_batch and concurrency > 1:
+        # Concurrent processing for batch
+        results = _process_items_concurrently(
+            base64_strings, process_base64, concurrency,
+            display_submit, display_result, t
+        )
+    else:
+        # Sequential processing (single base64 or sync mode or concurrency=1)
+        results = []
+        for i, b64_str in enumerate(base64_strings, 1):
+            result = process_base64(b64_str, i, len(base64_strings))
+            if "error" not in result:
+                results.append(result)
+                # Show progress for each base64 string
+                if "task_id" in result:
+                    formatter.print_progress(i, len(base64_strings), f"Processing: base64_{i} - Task_ID: {result['task_id']} - Completed")
+                elif not async_mode:
+                    formatter.print_progress(i, len(base64_strings), f"Processing: base64_{i}")
+
+    # Sort results by index and remove index
+    results = _sort_and_clean_results(results)
+
+    # Output results
+    OutputFormatter.print_results(results, base64_strings, mode, formatter, t)
 
     if export_path:
         data = results[0]["result"] if len(results) == 1 else {"results": results}

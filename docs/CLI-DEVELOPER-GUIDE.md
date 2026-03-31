@@ -111,6 +111,10 @@ task_id = api_client.extract_async(file_url, app_id)
 
 # 查询抽取任务
 task_result = api_client.query_extract_task(task_id)
+
+# 获取用户付费状态
+payment_status = api_client.get_user_payment_status()
+is_paid = payment_status.get("payment_type", "") == "paid"
 ```
 
 ### FileHandler
@@ -181,6 +185,81 @@ limiter.acquire()
 # 设置用户类型
 limiter.set_paid_user(True)
 ```
+
+## 并发控制
+
+CLI 提供了并发数控制功能，用于批量处理文件时的并发任务数。
+
+### 并发数限制
+
+- **免费用户**：最大并发数为 1
+- **付费用户**：最大并发数为 2
+
+### 并发验证
+
+在 `cli.py` 中提供了 `_validate_concurrency` 函数用于验证并发数：
+
+```python
+from adp_cli.adp import ConfigManager, APIClient
+
+def _validate_concurrency(concurrency: int, config_manager: ConfigManager) -> int:
+    """
+    验证并发数是否有效。
+
+    Args:
+        concurrency: 并发数
+        config_manager: 配置管理器
+
+    Returns:
+        验证通过的并发数
+
+    Raises:
+        ValueError: 当并发数无效时
+    """
+    # 如果并发数不是1或2，直接报错
+    if concurrency not in [1, 2]:
+        raise ValueError(t('error_invalid_concurrency'))
+
+    # 如果并发数为2，需要检查用户是否为付费用户
+    if concurrency == 2:
+        try:
+            api_client = APIClient(config_manager)
+            payment_status = api_client.get_user_payment_status()
+            is_paid = payment_status.get("payment_type", "") == "paid"
+            if not is_paid:
+                raise ValueError(t('error_not_paid_user'))
+        except Exception as e:
+            # 如果无法获取付费状态，假设为免费用户
+            if isinstance(e, ValueError):
+                raise
+            raise ValueError(t('error_invalid_concurrency'))
+
+    return concurrency
+```
+
+### 使用示例
+
+在命令中使用并发参数：
+
+```bash
+# 默认并发数为 1
+adp parse local ./documents/ --app-id YOUR_APP_ID --async
+
+# 设置并发数为 2（需要付费用户）
+adp parse local ./documents/ --app-id YOUR_APP_ID --async --concurrency 2
+```
+
+### 错误处理
+
+当并发数无效时，会返回相应的错误消息：
+
+- **非 1 或 2 的值**：
+  - 英文："Free users: 1, paid users: 2, other values are invalid"
+  - 中文："免费用户：1，付费用户：2，输入其他值无效"
+
+- **免费用户使用并发数 2**：
+  - 英文："You are a free user, maximum concurrency is 1"
+  - 中文："您是免费用户，最大并发数为1"
 
 ## 测试
 

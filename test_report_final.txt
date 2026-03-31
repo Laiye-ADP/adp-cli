@@ -77,8 +77,8 @@ tests/test_cli_commands.py::test_extract_help PASSED                     [ 30%]
 tests/test_cli_commands.py::test_extract_local_help PASSED               [ 30%]
 tests/test_cli_commands.py::test_extract_url_help PASSED                 [ 31%]
 tests/test_cli_commands.py::test_extract_local_no_config PASSED          [ 31%]
-tests/test_cli_commands.py::test_query_help FAILED                       [ 32%]
-tests/test_cli_commands.py::test_query_no_config FAILED                  [ 32%]
+tests/test_cli_commands.py::test_query_help PASSED                       [ 32%]
+tests/test_cli_commands.py::test_query_no_config PASSED                  [ 32%]
 tests/test_cli_commands.py::test_app_id_help PASSED                      [ 32%]
 tests/test_cli_commands.py::test_app_id_list_help PASSED                 [ 33%]
 tests/test_cli_commands.py::test_app_id_list_no_config PASSED            [ 33%]
@@ -140,7 +140,7 @@ tests/test_config_extended.py::test_is_configured_without_api_key PASSED [ 58%]
 tests/test_config_extended.py::test_is_configured_without_api_base_url PASSED [ 58%]
 tests/test_config_extended.py::test_is_configured_with_empty_api_base_url PASSED [ 59%]
 tests/test_config_extended.py::test_is_configured_fully_configured PASSED [ 59%]
-tests/test_config_extended.py::test_get_config_summary_without_config FAILED [ 60%]
+tests/test_config_extended.py::test_get_config_summary_without_config PASSED [ 60%]
 tests/test_config_extended.py::test_get_config_summary_with_config PASSED [ 60%]
 tests/test_config_extended.py::test_multiple_managers_same_config PASSED [ 60%]
 tests/test_config_extended.py::test_key_file_persistence PASSED          [ 61%]
@@ -170,7 +170,7 @@ tests/test_file_handler_extended.py::test_read_url_list_file_empty PASSED [ 71%]
 tests/test_file_handler_extended.py::test_read_url_list_file_comments_and_whitespace PASSED [ 72%]
 tests/test_file_handler_extended.py::test_write_json_output PASSED       [ 72%]
 tests/test_file_handler_extended.py::test_write_json_output_create_directory PASSED [ 72%]
-tests/test_file_handler_extended.py::test_get_mime_type FAILED           [ 73%]
+tests/test_file_handler_extended.py::test_get_mime_type PASSED           [ 73%]
 tests/test_file_handler_extended.py::test_get_mime_type_unknown_extension PASSED [ 73%]
 tests/test_file_handler_extended.py::test_format_file_size_bytes PASSED  [ 74%]
 tests/test_file_handler_extended.py::test_format_file_size_kilobytes PASSED [ 74%]
@@ -250,29 +250,10 @@ E       fixture 'mock_request' not found
 
 D:\ADP\adp-cli\tests\test_api_client_extended.py:492
 ================================== FAILURES ===================================
-_______________________________ test_query_help _______________________________
-tests\test_cli_commands.py:161: in test_query_help
-    assert result.exit_code == 0
-E   assert 2 == 0
-E    +  where 2 = <Result SystemExit(2)>.exit_code
-____________________________ test_query_no_config _____________________________
-tests\test_cli_commands.py:168: in test_query_no_config
-    assert result.exit_code == 1
-E   assert 2 == 1
-E    +  where 2 = <Result SystemExit(2)>.exit_code
 _____________________ TestCLIIntegration.test_query_help ______________________
 tests\test_cli_integration.py:63: in test_query_help
     assert returncode == 0
 E   assert 2 == 0
-___________________ test_get_config_summary_without_config ____________________
-tests\test_config_extended.py:183: in test_get_config_summary_without_config
-    summary = manager.get_config_summaryser()
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'ConfigManager' object has no attribute 'get_config_summaryser'. Did you mean: 'get_config_summary'?
-_____________________________ test_get_mime_type ______________________________
-tests\test_file_handler_extended.py:202: in test_get_mime_type
-    assert expected_mime in mime or "application/octet-stream" in mime
-E   AssertionError: assert ('application/vnd.openxmlformats-officedocument.spreadsheetmlml.sheet' in 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' or 'application/octet-stream' in 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 ============================== warnings summary ===============================
 src\adp_cli\i18n.py:447
 tests/test_i18n.py::test_get_system_language
@@ -385,14 +366,9 @@ src\adp_cli\cli.py                                                 679    388   
 src\adp_cli\i18n.py                                                 37      5    86%   503-507
 ----------------------------------------------------------------------------------------------
 TOTAL                                                             1173    431    63%
+Coverage HTML written to dir htmlcov
 =========================== short test summary info ===========================
-FAILED tests/test_cli_commands.py::test_query_help - assert 2 == 0
- +  where 2 = <Result SystemExit(2)>.exit_code
-FAILED tests/test_cli_commands.py::test_query_no_config - assert 2 == 1
- +  where 2 = <Result SystemExit(2)>.exit_code
 FAILED tests/test_cli_integration.py::TestCLIIntegration::test_query_help - assert 2 == 0
-FAILED tests/test_config_extended.py::test_get_config_summary_without_config - AttributeError: 'ConfigManager' object has no attribute 'get_config_summaryser'. Did you mean: 'get_config_summary'?
-FAILED tests/test_file_handler_extended.py::test_get_mime_type - AssertionError: assert ('application/vnd.openxmlformats-officedocument.spreadsheetmlml.sheet' in 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' or 'application/octet-stream' in 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 ERROR tests/test_api_client_extended.py::test_get_user_payment_status
 ERROR tests/test_api_client_extended.py::test_health_check_with_mock
-============= 5 failed, 218 passed, 7 warnings, 2 errors in 8.89s =============
+============= 1 failed, 222 passed, 7 warnings, 2 errors in 9.92s =============

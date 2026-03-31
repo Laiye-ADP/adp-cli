@@ -83,9 +83,15 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "parse_url_arg": "url            File URL or URL list file path (required)",
         "parse_url_format_title": "URL List File Format:",
 
+        # Parse base64
+        "parse_base64_title": "Parse base64 encoded file content.",
+        "parse_base64_detail": "Parse document from base64 encoded content. Useful when you already have the file in memory or from other sources.",
+
         # Parse query
         "parse_query_title": "Query parse async task status.",
-        "parse_query_detail": "Query the status and result of a document parsing async task created by 'adp parse local/url --async'.",
+        "parse_query_detail": "Query the status and result of a document parsing parsing async task created by 'adp parse local/url --async'.",
+        "parse_result": "Parse Result",
+        "extract_result": "Extract Result",
 
         # Extract command
         "extract_description": "Document extraction.",
@@ -107,6 +113,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "extract_url_title": "Extract URL files or URL list files.",
         "extract_url_detail": "Use specified AI application to perform deep content extraction on URL documents and extract key information.",
 
+        # Extract base64
+        "extract_base64_title": "Extract base64 encoded file content.",
+        "extract_base64_detail": "Extract information from base64 encoded document content. Useful when you already have file in memory or from other sources.",
+
         # Extract query
         "extract_query_title": "Query extract async task status.",
         "extract_query_detail": "Query the status and result of a document extraction async task created by 'adp extract local/url --async'.",
@@ -120,6 +130,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "option_export": "Export results to JSON file",
         "option_timeout": "Timeout for sync mode (seconds, default: 300)",
         "option_concurrency": "For batch processing, concurrency defaults to 1. Free users max=1, paid users max=2. If other values are entered, concurrency will not take effect. Please wait for processing.",
+        "option_file_base64": "Directly pass file content as base64 encoded string (skip file reading)",
+        "option_file_name": "File name (default: document)",
         "option_watch": "Watch task until completion (polls until task finishes)",
         "option_watch_timeout": "Timeout for watch mode (seconds, default: 300)",
 
@@ -149,6 +161,14 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Help command
         "help_description": "Display help information and available commands.",
         "help_detail": "Same as `--help` option, provides detailed command descriptions and usage examples.",
+
+        # Credit command
+        "credit_description": "Query remaining credits.",
+        "credit_detail": "Query the remaining number of credits in your account. If you need to recharge, please visit the ADP portal website.",
+        "credit_api_key": "API Key for authentication (optional if already configured)",
+        "credit_info": "Credit Information",
+        "remaining_credits": "Remaining Credits",
+        "recharge_message": "To recharge, please visit",
 
         # App ID list
         "app_id_list_title": "List all available application IDs and their descriptions.",
@@ -210,6 +230,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "error_invalid_json_format": "Invalid JSON format: {error}",
         "error_read_json_file": "Failed to read JSON file: {error}",
         "error_file_url_or_local_required": "Either --file-url or --file-local must be provided",
+        "error_file_url_local_or_base64_required": "Either --file-url, --file-local or --file-base64 must be provided",
         "app_created": "Custom app created successfully",
         "app_config": "App Configuration",
         "config_versions": "Configuration Versions",
@@ -217,6 +238,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "version_deleted": "Version deleted successfully",
         "no_versions_found": "No versions found",
         "available_versions": "Available Versions",
+        "error_invalid_concurrency": "Free users: 1, paid users: 2, other values are invalid",
+        "error_not_paid_user": "You are a free user, maximum concurrency is 1",
     },
 
     "zh": {
@@ -294,9 +317,15 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "parse_url_arg": "url            文件 URL 或 URL 列表文件路径 (必需)",
         "parse_url_format_title": "URL 列表文件格式:",
 
+        # Parse base64
+        "parse_base64_title": "解析 base64 编码的文件内容。",
+        "parse_base64_detail": "从 base64 编码的内容解析文档。适用于文件已在内存中或从其他来源获取的情况。",
+
         # Parse query
         "parse_query_title": "查询解析异步任务状态。",
         "parse_query_detail": "查询由 'adp parse local/url --async' 创建的文档解析异步任务的状态和结果。",
+        "parse_result": "解析结果",
+        "extract_result": "抽取结果",
 
         # Extract command
         "extract_description": "文档抽取。",
@@ -318,6 +347,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "extract_url_title": "抽取 URL 文件或 URL 列表文件。",
         "extract_url_detail": "使用指定的 AI 应用对 URL 文档进行深度内容抽取，提取关键信息。",
 
+        # Extract base64
+        "extract_base64_title": "抽取 base64 编码的文件内容。",
+        "extract_base64_detail": "从 base64 编码的文档内容中抽取信息。适用于文件已在内存中或从其他来源获取的情况。",
+
         # Extract query
         "extract_query_title": "查询抽取异步任务状态。",
         "extract_query_detail": "查询由 'adp extract local/url --async' 创建的文档抽取异步任务的状态和结果。",
@@ -331,6 +364,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "option_export": "导出结果到 JSON 文件",
         "option_timeout": "同步模式超时时间（秒，默认 300）",
         "option_concurrency": "批量处理时，并发数默认为 1。免费用户最高为 1，付费用户最高为 2。若输入其他数值，并发将不生效，请等待处理。",
+        "option_file_base64": "直接传入文件的 base64 编码内容（跳过文件读取）",
+        "option_file_name": "文件名（默认: document）",
         "option_watch": "监视任务直到完成（轮询直到任务结束）",
         "option_watch_timeout": "监视模式超时时间（秒，默认 300）",
 
@@ -359,6 +394,14 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         # Help command
         "help_description": "显示帮助信息和可用命令。",
         "help_detail": "与 `--help` 选项相同，提供命令的详细说明和使用示例。",
+
+        # Credit command
+        "credit_description": "查询剩余资产数。",
+        "credit_detail": "查询账户中的剩余资产数。如需充值，请访问 ADP 门户网站。",
+        "credit_api_key": "API 认证密钥（可选，如果已配置则不需要）",
+        "credit_info": "资产信息",
+        "remaining_credits": "剩余资产",
+        "recharge_message": "充值请访问",
 
         # App ID list
         "app_id_list_title": "列出所有可用的应用 ID 及其描述。",
@@ -422,6 +465,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "error_invalid_json_format": "无效的 JSON 格式: {error}",
         "error_read_json_file": "读取 JSON 文件失败: {error}",
         "error_file_url_or_local_required": "必须提供 --file-url 或 --file-local 中的一个",
+        "error_file_url_local_or_base64_required": "必须提供 --file-url、--file-local 或 --file-base64 中的一个",
         "app_created": "自定义应用创建成功",
         "app_config": "应用配置",
         "config_versions": "配置版本",
@@ -429,6 +473,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "version_deleted": "版本删除成功",
         "no_versions_found": "未找到版本",
         "available_versions": "可用版本",
+        "error_invalid_concurrency": "免费用户：1，付费用户：2，输入其他值无效",
+        "error_not_paid_user": "您是免费用户，最大并发数为1",
     },
 }
 

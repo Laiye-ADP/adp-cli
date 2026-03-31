@@ -17,11 +17,11 @@ from .config import ConfigManager
 class TaskStatus:
     """任务状态常量。"""
 
-    PENDING = 0
+    PENDING = 1
     RUNNING = 2
     SUCCESS = 4
     FAILED = 5
-    CANCELLED = 6
+    
 
 
 class APIClient:
@@ -55,7 +55,7 @@ class APIClient:
 
         return {
             "Content-Type": "application/json",
-            "Api-key": api_key,
+            "X-Api-key": api_key,
         }
 
     def _request(self, method: str, endpoint: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -115,23 +115,28 @@ class APIClient:
 
     # ==================== Parse (Document Recognition) APIs ====================
 
-    def parse_sync(self,file_url: str, app_id:str,file_path: Optional[Path] = None) -> Dict[str, Any]:
+    def parse_sync(self, file_url: str, app_id: str, file_path: Optional[Path] = None, file_base64: Optional[str] = None, file_name: Optional[str] = None) -> Dict[str, Any]:
         """
         同步解析文档。
 
         Args:
-            file_url: 文件 URL（如果 file_path 提供，则忽略此参数）
+            file_url: 文件 URL（如果 file_path 或 file_base6464 提供，则忽略此参数）
+            app_id: 应用 ID
             file_path: 本地文件路径（可选）
+            file_base64: Base64 编码的文件内容（可选，如果提供则跳过文件读取）
+            file_name: 文件名（可选，默认为 "document"）
 
         Returns:
             解析结果
         """
         data = {
             "app_id": app_id,
-            "file_name": file_path.name if file_path else "document",
+            "file_name": file_name if file_name else (file_path.name if file_path else "document"),
         }
 
-        if file_path:
+        if file_base64:
+            data["file_base64"] = file_base64
+        elif file_path:
             data["file_base64"] = self._encode_file_to_base64(file_path)
         else:
             data["file_url"] = file_url
@@ -139,35 +144,35 @@ class APIClient:
         tenant_name = self.config_manager.get("tenant_name", "laiye")
         return self._request("POST", f"/open/agentic_doc_processor/{tenant_name}/v1/app/doc/recognize", data)
 
-    def parse_async(self, file_url: str, app_id:str, file_path: Optional[Path] = None) -> str:
+    def parse_async(self, file_url: str, app_id: str, file_path: Optional[Path] = None, file_base64: Optional[str] = None, file_name: Optional[str] = None) -> str:
         """
         异步创建文档解析任务。
 
         Args:
-            file_url: 文件 URL 或 base64 编码（如果 file_path 提供，则忽略此参数）
+            file_url: 文件 URL 或 base64 编码（如果 file_path 或 file_base64 提供，则忽略此参数）
+            app_id: 应用 ID
             file_path: 本地文件路径（可选）
+            file_base64: Base64 编码的文件内容（可选，如果提供则跳过文件读取）
+            file_name: 文件名（可选，默认为 "document"）
 
         Returns:
             任务 ID
         """
-        if file_path:
-            file_content = self._encode_file_to_base64(file_path)
-            file_url = f"data:{self._get_mime_type(file_path)};base64,{file_content}"
-
         data = {
             "app_id": app_id,
-            "file_name": file_path.name if file_path else "document",
+            "file_name": file_name if file_name else (file_path.name if file_path else "document"),
         }
 
-        if file_path:
+        if file_base64:
+            data["file_base64"] = file_base64
+        elif file_path:
             data["file_base64"] = self._encode_file_to_base64(file_path)
         else:
             data["file_url"] = file_url
-        
 
         tenant_name = self.config_manager.get("tenant_name", "laiye")
         response = self._request("POST", f"/open/agentic_doc_processor/{tenant_name}/v1/app/doc/recognize/create/task", data)
-        data = response.get("data",{})
+        data = response.get("data", {})
         return data.get("task_id", "")
 
     def query_parse_task(self, task_id: str) -> Dict[str, Any]:
@@ -198,26 +203,32 @@ class APIClient:
         app_id: str,
         file_path: Optional[Path] = None,
         extract_config: Optional[Dict[str, Any]] = None,
+        file_base64: Optional[str] = None,
+        file_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         同步执行文档抽取。
 
         Args:
-            file_url: 文件 URL（如果 file_path 提供，则忽略此参数）
+            file_url: 文件 URL（如果 file_path 或 file_base64 提供，则忽略此参数）
             app_id: 应用 ID
             file_path: 本地文件路径（可选）
             extract_config: 抽取配置（可选）
+            file_base64: Base64 编码的文件内容（可选，如果提供则跳过文件读取）
+            file_name: 文件名（可选，默认为 "document"）
 
         Returns:
             抽取结果
         """
         data = {
             "app_id": app_id,
-            "file_name": file_path.name if file_path else "document",
+            "file_name": file_name if file_name else (file_path.name if file_path else "document"),
             "with_rec_result": False
         }
 
-        if file_path:
+        if file_base64:
+            data["file_base64"] = file_base64
+        elif file_path:
             data["file_base64"] = self._encode_file_to_base64(file_path)
         else:
             data["file_url"] = file_url
@@ -234,6 +245,8 @@ class APIClient:
         app_id: str,
         file_path: Optional[Path] = None,
         extract_config: Optional[Dict[str, Any]] = None,
+        file_base64: Optional[str] = None,
+        file_name: Optional[str] = None,
     ) -> str:
         """
         异步创建文档抽取任务。
@@ -243,17 +256,21 @@ class APIClient:
             app_id: 应用 ID
             file_path: 本地文件路径（可选）
             extract_config: 抽取配置（可选）
+            file_base64: Base64 编码的文件内容（可选，如果提供则跳过文件读取）
+            file_name: 文件名（可选，默认为 "document"）
 
         Returns:
             任务 ID
         """
         data = {
             "app_id": app_id,
-            "file_name": file_path.name if file_path else "document",
+            "file_name": file_name if file_name else (file_path.name if file_path else "document"),
             "with_rec_result": False
         }
 
-        if file_path:
+        if file_base64:
+            data["file_base64"] = file_base64
+        elif file_path:
             data["file_base64"] = self._encode_file_to_base64(file_path)
         else:
             data["file_url"] = file_url
@@ -263,7 +280,7 @@ class APIClient:
 
         tenant_name = self.config_manager.get("tenant_name", "laiye")
         response = self._request("POST", f"/open/agentic_doc_processor/{tenant_name}/v1/app/doc/extract/create/task", data)
-        data = response.get("data",{})
+        data = response.get("data", {})
         return data.get("task_id", "")
 
     def query_extract_task(self, task_id: str) -> Dict[str, Any]:
@@ -348,8 +365,8 @@ class APIClient:
 
             if status == TaskStatus.SUCCESS:
                 return result
-            elif status in (TaskStatus.FAILED, TaskStatus.CANCELLED):
-                raise ValueError(f"Task failed with status: {status},Failed Message:{data.get('message', "")}")
+            elif status == TaskStatus.FAILED:
+                raise ValueError(f"Task failed with status: {status}, Failed Message: {data.get('message', '')}")
 
             time.sleep(interval)
 
@@ -513,7 +530,8 @@ class APIClient:
         self,
         app_id: str,
         file_url: Optional[str] = None,
-        file_local: Optional[str] = None
+        file_local: Optional[str] = None,
+        file_base64: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         AI 生成抽取字段与提示词推荐。
@@ -522,23 +540,40 @@ class APIClient:
             app_id: 应用 ID
             file_url: 示例文档地址（可选）
             file_local: 示例文档本地文件（可选）
+            file_base64: Base64 编码的文件内容（可选，如果提供则跳过文件读取）
 
         Returns:
             AI 生成的字段推荐结果
 
         Raises:
-            ValueError: 当 file_url 和 file_local 都未提供时
+            ValueError: 当 file_url、file_local 和 file_base64 都未提供时
         """
-        if not file_url and not file_local:
-            raise ValueError("Either file_url or file_local must be provided")
-        
+        if not file_url and not file_local and not file_base64:
+            raise ValueError("Either file_url or file_local or file_base64 must be provided")
+
         tenant_name = self.config_manager.get("tenant_name", "laiye")
         endpoint = f"/open/agentic_doc_processor/{tenant_name}/v1/app-manage/ai-recommend"
 
         data = {"app_id": app_id}
-        if file_url:
+        if file_base64:
+            data["file_base64"] = file_base64
+        elif file_url:
             data["file_url"] = file_url
-        if file_local:
+        elif file_local:
             data["file_base64"] = self._encode_file_to_base64(file_local)
 
         return self._request("POST", endpoint, data)
+
+    def get_user_payment_status(self) -> Dict[str, Any]:
+        """
+        获取用户付费状态。
+
+        Returns:
+            用户付费状态信息
+
+        Raises:
+            RequestException: 请求失败
+        """
+        tenant_name = self.config_manager.get("tenant_name", "laiye")
+        endpoint = f"/open/agentic_doc_processor/{tenant_name}/user/payment"
+        return self._request("GET", endpoint)

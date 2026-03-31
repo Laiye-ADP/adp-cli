@@ -7,6 +7,7 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.text import Text
+from rich.box import HEAVY
 
 
 class OutputFormatter:
@@ -23,11 +24,10 @@ class OutputFormatter:
         self.json_mode = False
         self.quiet_mode = False
         self.status = {
-            0: "PENDING",
+            1: "PENDING",
             2: "RUNNING",
             4: "SUCCESS",
-            5: "FAILED",
-            6: "CANCELLED"
+            5: "FAILED"
         }
 
     def set_json_mode(self, enabled: bool) -> None:
@@ -93,7 +93,14 @@ class OutputFormatter:
             rows: 行数据列表
             title: 表格标题（可选）
         """
-        table = Table(title=title, show_header=True, header_style="bold magenta")
+        table = Table(
+            title=title,
+            show_header=True,
+            header_style="bold",
+            box=HEAVY,                 # Use thick (heavy) box lines
+            border_style="blue",       # Border color
+            show_lines=True            # Show all inner lines (all grid lines)
+        )
 
         for header in headers:
             table.add_column(header)

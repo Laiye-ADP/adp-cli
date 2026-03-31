@@ -325,7 +325,7 @@ adp parse local PATH [OPTIONS]
 | `--async` | Submit async task and wait for completion with results | No |
 | `--export` | Export results to JSON file | No |
 | `--timeout` | Task timeout (seconds) | No |
-| `--concurrency` | Concurrent tasks count for batch processing (default: 1) | No |
+| `--concurrency` | Concurrent tasks count for batch processing (default: 1, max: 1 for free users, 2 for paid users) | No |
 
 ```bash
 # Example
@@ -348,7 +348,7 @@ adp parse url URL [OPTIONS]
 | `--async` | Submit async task and wait for completion with results | No |
 | `--export` | Export results to JSON file | No |
 | `--timeout` | Task timeout (seconds) | No |
-| `--concurrency` | Concurrent tasks count for batch processing (default: 1) | No |
+| `--concurrency` | Concurrent tasks count for batch processing (default: 1, max: 1 for free users, 2 for paid users) | No |
 
 ```bash
 # Example
@@ -402,7 +402,7 @@ adp extract local PATH [OPTIONS]
 | `--async` | Submit async task and wait for completion with results | No |
 | `--export` | Export results to JSON file | No |
 | `--timeout` | Task timeout (seconds) | No |
-| `--concurrency` | Concurrent tasks count for batch processing (default: 1) | No |
+| `--concurrency` | Concurrent tasks count for batch processing (default: 1, max: 1 for free users, 2 for paid users) | No |
 
 ```bash
 # Example
@@ -424,7 +424,7 @@ adp extract url URL [OPTIONS]
 | `--async` | Submit async task and wait for completion with results | No |
 | `--export` | Export results to JSON file | No |
 | `--timeout` | Task timeout (seconds) | No |
-| `--concurrency` | Concurrent tasks count for batch processing (default: 1) | No |
+| `--concurrency` | Concurrent tasks count for batch processing (default: 1, max: 1 for free users, 2 for paid users) | No |
 
 ```bash
 # Example
@@ -733,6 +733,8 @@ adp parse local ./document.pdf --app-id YOUR_APP_ID || echo "Parse failed, retry
 | `Invalid API Key` | Invalid API Key | Check if API Key is correct |
 | `Network error` | Network connection failed | Check network connection |
 | `Task timeout` | Task timeout | Increase timeout or use async mode |
+| `Free users: 1, paid users: 2, other values are invalid` | Invalid concurrency value | Use 1 for free users, or 2 for paid users |
+| `You are a free user, maximum concurrency is 1` | Free user cannot use concurrency 2 | Set concurrency to 1 or upgrade to paid account |
 
 ---
 
@@ -813,6 +815,14 @@ A: Use the `--lang` option or set the environment variable `ADP_LANG`.
 adp --lang en --help
 export ADP_LANG=zh
 ```
+
+**Q: What is the maximum concurrency limit?**
+
+A: The concurrency limit depends on your account type:
+- Free users: Maximum concurrency is 1
+- Paid users: Maximum concurrency is 2
+
+If you try to use concurrency 2 as a free user, you will receive an error message: "You are a free user, maximum concurrency is 1" (or the Chinese equivalent: "您是免费用户，最大并发数为1").
 
 ---
 

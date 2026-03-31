@@ -1,0 +1,231 @@
+{
+  "task_id": "039c24362cd711f19359627c0509427d",
+  "file_url": "",
+  "status": 4,
+  "message": "",
+  "doc_recognize_result": [
+    {
+      "page_num": 1,
+      "document_content": "WSQ - NSRS ASSESSMENT RESULTS SLIP\n\nName: PANG HONG HIN\nIdentification: FIN\nNumber: G6609279N\n\nIt is here by certified that the candidate named above has completed the following WSQ/NSRS assessments and achieved the results as shown:\n\n(\"C\" - Competent / Passed; \"NYC\" - Not Yet Competent / Failed; \"WPLN\" - Workplace Literacy and Numeracy; \"EX\" - Exempted)\n\n| Date of Assessment | Competency Standard Code | Competency Standard Name | Results | Certificate Serial Number |\n|---|---|---|---|---|\n| 07 Mar 2018 | MF-COM-402E-1 | Develop a Risk Management Implementation Plan | C | 180000000151920 |\n| 24 Mar 2017 | MF-COM-306E-1 | Supervise Safe Lifting Operations | C | 170000000173389 |\n| 15 Jun 2016 | MF-LOG-106E-2 | Operate Forklift | C | 160000000346388 |\n\nThis is computer generated transcript. No signature is required.\n\nDate of issue: Sunday, 01 March 2020",
+      "document_details": [
+        {
+          "type": "Title",
+          "text": "WSQ - NSRS ASSESSMENT RESULTS SLIP",
+          "position": [
+            {
+              "points": [
+                {
+                  "x": 184,
+                  "y": 241
+                },
+                {
+                  "x": 846,
+                  "y": 241
+                },
+                {
+                  "x": 846,
+                  "y": 270
+                },
+                {
+                  "x": 184,
+                  "y": 270
+                }
+              ]
+            }
+          ],
+          "ocr_confidence": {
+            "ocr_mean_confidence": 0.999917399591486,
+            "ocr_min_confidence": 0.9993625177473876,
+            "is_overall_confidence": 1
+          }
+        },
+        {
+          "type": "Text",
+          "text": "Name: PANG HONG HIN\nIdentification: FIN\nNumber: G6609279N",
+          "position": [
+            {
+              "points": [
+                {
+                  "x": 184,
+                  "y": 317
+                },
+                {
+                  "x": 670,
+                  "y": 317
+                },
+                {
+                  "x": 670,
+                  "y": 389
+                },
+                {
+                  "x": 184,
+                  "y": 389
+                }
+              ]
+            }
+          ],
+          "ocr_confidence": {
+            "ocr_mean_confidence": 0.9999762577947324,
+            "ocr_min_confidence": 0.9997721237812781,
+            "is_overall_confidence": 1
+          }
+        },
+        {
+          "type": "Text",
+          "text": "It is here by certified that the candidate named above has completed the following WSQ/NSRS assessments and achieved the results as shown:",
+          "position": [
+            {
+              "points": [
+                {
+                  "x": 190,
+                  "y": 462
+                },
+                {
+                  "x": 1252,
+                  "y": 462
+                },
+                {
+                  "x": 1252,
+                  "y": 508
+                },
+                {
+                  "x": 190,
+                  "y": 508
+                }
+              ]
+            }
+          ],
+          "ocr_confidence": {
+            "ocr_mean_confidence": 0.999978329136834,
+            "ocr_min_confidence": 0.9998294406054757,
+            "is_overall_confidence": 1
+          }
+        },
+        {
+          "type": "Text",
+          "text": "(\"C\" - Competent / Passed; \"NYC\" - Not Yet Competent / Failed; \"WPLN\" - Workplace Literacy and Numeracy; \"EX\" - Exempted)",
+          "position": [
+            {
+              "points": [
+                {
+                  "x": 194,
+                  "y": 519
+                },
+                {
+                  "x": 1347,
+                  "y": 519
+                },
+                {
+                  "x": 1347,
+                  "y": 537
+                },
+                {
+                  "x": 194,
+                  "y": 537
+                }
+              ]
+            }
+          ],
+          "ocr_confidence": {
+            "ocr_mean_confidence": 0.9996887688113102,
+            "ocr_min_confidence": 0.9910161706552827,
+            "is_overall_confidence": 1
+          }
+        },
+        {
+          "type": "Text",
+          "text": "| Date of Assessment | Competency Standard Code | Competency Standard Name | Results | Certificate Serial Number |\n|---|---|---|---|---|\n| 07 Mar 2018 | MF-COM-402E-1 | Develop a Risk Management Implementation Plan | C | 180000000151920 |\n| 24 Mar 2017 | MF-COM-306E-1 | Supervise Safe Lifting Operations | C | 170000000173389 |\n| 15 Jun 2016 | MF-LOG-106E-2 | Operate Forklift | C | 160000000346388 |",
+          "position": [
+            {
+              "points": [
+                {
+                  "x": 184,
+                  "y": 560
+                },
+                {
+                  "x": 1264,
+                  "y": 560
+                },
+                {
+                  "x": 1264,
+                  "y": 818
+                },
+                {
+                  "x": 184,
+                  "y": 818
+                }
+              ]
+            }
+          ],
+          "ocr_confidence": {
+            "ocr_mean_confidence": 0.9997719174202965,
+            "ocr_min_confidence": 0.9764653749333205,
+            "is_overall_confidence": 1
+          }
+        },
+        {
+          "type": "Text",
+          "text": "This is computer generated transcript. No signature is required.",
+          "position": [
+            {
+              "points": [
+                {
+                  "x": 197,
+                  "y": 947
+                },
+                {
+                  "x": 794,
+                  "y": 947
+                },
+                {
+                  "x": 794,
+                  "y": 971
+                },
+                {
+                  "x": 197,
+                  "y": 971
+                }
+              ]
+            }
+          ],
+          "ocr_confidence": {
+            "ocr_mean_confidence": 0.9999985297576083,
+            "ocr_min_confidence": 0.999991297797926,
+            "is_overall_confidence": 1
+          }
+        },
+        {
+          "type": "Text",
+          "text": "Date of issue: Sunday, 01 March 2020",
+          "position": [
+            {
+              "points": [
+                {
+                  "x": 197,
+                  "y": 998
+                },
+                {
+                  "x": 562,
+                  "y": 998
+                },
+                {
+                  "x": 562,
+                  "y": 1021
+                },
+                {
+                  "x": 197,
+                  "y": 1021
+                }
+              ]
+            }
+          ],
+          "ocr_confidence": {
+            "ocr_mean_confidence": 0.9999983807537347,
+            "ocr_min_confidence": 0.9999831917733143,
+            "is_overall_confidence": 1
+          }
+        }
+      ]
+    }
+  ]
+}

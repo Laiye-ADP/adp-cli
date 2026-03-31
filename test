@@ -14,9 +14,9 @@ tests/test_api_client.py::test_get_headers_no_api_key PASSED             [  2%]
 tests/test_api_client.py::test_encode_file_to_base64 PASSED              [  2%]
 tests/test_api_client.py::test_get_mime_type PASSED                      [  3%]
 tests/test_api_client.py::test_parse_sync_with_url PASSED                [  3%]
-tests/test_api_client.py::test_parse_async_with_url PASSED               [  4%]
+tests/test_api_client.py::test_parse_async_with_url FAILED               [  4%]
 tests/test_api_client.py::test_extract_sync PASSED                       [  4%]
-tests/test_api_client.py::test_extract_async PASSED                      [  4%]
+tests/test_api_client.py::test_extract_async FAILED                      [  4%]
 tests/test_api_client.py::test_query_extract_task PASSED                 [  5%]
 tests/test_api_client.py::test_list_apps PASSED                          [  5%]
 tests/test_api_client.py::test_create_custom_app PASSED                  [  6%]
@@ -27,8 +27,8 @@ tests/test_api_client.py::test_delete_custom_app PASSED                  [  8%]
 tests/test_api_client.py::test_delete_custom_app_version PASSED          [  8%]
 tests/test_api_client.py::test_ai_generate_fields_with_url PASSED        [  8%]
 tests/test_api_client.py::test_ai_generate_fields_no_file PASSED         [  9%]
-tests/test_api_client.py::test_wait_for_task_success PASSED              [  9%]
-tests/test_api_client.py::test_wait_for_task_failed PASSED               [ 10%]
+tests/test_api_client.py::test_wait_for_task_success FAILED              [  9%]
+tests/test_api_client.py::test_wait_for_task_failed FAILED               [ 10%]
 tests/test_api_client.py::test_wait_for_task_timeout PASSED              [ 10%]
 tests/test_api_client.py::test_health_check_success PASSED               [ 11%]
 tests/test_api_client.py::test_health_check_failure PASSED               [ 11%]
@@ -48,7 +48,7 @@ tests/test_api_client_extended.py::test_list_apps_single PASSED          [ 17%]
 tests/test_api_client_extended.py::test_create_custom_app_with_labels PASSED [ 17%]
 tests/test_api_client_extended.py::test_create_custom_app_with_long_doc_config PASSED [ 18%]
 tests/test_api_client_extended.py::test_create_custom_app_with_long_doc_enabled_but_no_config PASSED [ 18%]
-tests/test_api_client_extended.py::test_create_custom_app_with_long_doc_config_but_disabled PASSED [ 19%]
+tests/test_api_client_extended.py::test_create_custom_app_with_long_doc_config_but_disabled FAILED [ 19%]
 tests/test_api_client_extended.py::test_get_custom_app_config_with_version PASSED [ 19%]
 tests/test_api_client_extended.py::test_list_custom_app_versions_empty PASSED [ 20%]
 tests/test_api_client_extended.py::test_list_custom_app_versions_with_data PASSED [ 20%]
@@ -123,8 +123,8 @@ tests/test_config.py::test_set_and_get_api_key PASSED                    [ 50%]
 tests/test_config.py::test_get_api_key_masked PASSED                     [ 51%]
 tests/test_config.py::test_set_and_get_config PASSED                     [ 51%]
 tests/test_config.py::test_get_default_value PASSED                      [ 52%]
-tests/test_config.py::test_clear_config PASSED                           [ 52%]
-tests/test_config.py::test_is_configured PASSED                          [ 52%]
+tests/test_config.py::test_clear_config FAILED                           [ 52%]
+tests/test_config.py::test_is_configured FAILED                          [ 52%]
 tests/test_config.py::test_get_config_summary PASSED                     [ 53%]
 tests/test_config_extended.py::test_set_api_key_encryption PASSED        [ 53%]
 tests/test_config_extended.py::test_get_api_key_decryption PASSED        [ 54%]
@@ -140,8 +140,8 @@ tests/test_config_extended.py::test_is_configured_without_api_key PASSED [ 58%]
 tests/test_config_extended.py::test_is_configured_without_api_base_url PASSED [ 58%]
 tests/test_config_extended.py::test_is_configured_with_empty_api_base_url PASSED [ 59%]
 tests/test_config_extended.py::test_is_configured_fully_configured PASSED [ 59%]
-tests/test_config_extended.py::test_get_config_summary_without_config FAILED [ 60%]
-tests/test_config_extended.py::test_get_config_summary_with_config PASSED [ 60%]
+tests/test_config_extended.py::test_get_config_summary_without_config PASSED [ 60%]
+tests/test_config_extended.py::test_get_config_summary_with_config FAILED [ 60%]
 tests/test_config_extended.py::test_multiple_managers_same_config PASSED [ 60%]
 tests/test_config_extended.py::test_key_file_persistence PASSED          [ 61%]
 tests/test_config_extended.py::test_config_file_persistence PASSED       [ 61%]
@@ -160,7 +160,7 @@ tests/test_file_handler.py::test_batch_process PASSED                    [ 67%]
 tests/test_file_handler_extended.py::test_is_valid_size_large_file PASSED [ 67%]
 tests/test_file_handler_extended.py::test_is_valid_size_exceeds_limit PASSED [ 68%]
 tests/test_file_handler_extended.py::test_validate_file_too_large PASSED [ 68%]
-tests/test_file_handler_extended.py::test_validate_file_directory_as_file PASSED [ 68%]
+tests/test_file_handler_extended.py::test_validate_file_directory_as_file FAILED [ 68%]
 tests/test_file_handler_extended.py::test_get_files_from_path_nonexistent PASSED [ 69%]
 tests/test_file_handler_extended.py::test_get_files_from_path_empty_directory PASSED [ 69%]
 tests/test_file_handler_extended.py::test_get_files_from_path_mixed_directory PASSED [ 70%]
@@ -234,22 +234,122 @@ tests/test_output_formatter.py::test_print_task_result_with_large_data PASSED [1
 
 =================================== ERRORS ====================================
 _______________ ERROR at setup of test_get_user_payment_status ________________
-file D:\ADP\adp-cli\tests\test_api_client_extended.py, line 475
+file D:\ADP\adp-cli\tests\test_api_client_extended.py, line 469
   def test_get_user_payment_status(mock_request, api_client):
 E       fixture 'mock_request' not found
 >       available fixtures: api_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cov, doctest_namespace, mock_config_manager, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
 >       use 'pytest --fixtures [testpath]' for help on them.
 
-D:\ADP\adp-cli\tests\test_api_client_extended.py:475
+D:\ADP\adp-cli\tests\test_api_client_extended.py:469
 ________________ ERROR at setup of test_health_check_with_mock ________________
-file D:\ADP\adp-cli\tests\test_api_client_extended.py, line 492
+file D:\ADP\adp-cli\tests\test_api_client_extended.py, line 486
   def test_health_check_with_mock(mock_request, api_client):
 E       fixture 'mock_request' not found
 >       available fixtures: api_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cov, doctest_namespace, mock_config_manager, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
 >       use 'pytest --fixtures [testpath]' for help on them.
 
-D:\ADP\adp-cli\tests\test_api_client_extended.py:492
+D:\ADP\adp-cli\tests\test_api_client_extended.py:486
 ================================== FAILURES ===================================
+__________________________ test_parse_async_with_url __________________________
+tests\test_api_client.py:163: in test_parse_async_with_url
+    assert task_id == "task-123"
+E   AssertionError: assert '' == 'task-123'
+E     
+E     - task-123
+_____________________________ test_extract_async ______________________________
+tests\test_api_client.py:191: in test_extract_async
+    assert task_id == "task-456"
+E   AssertionError: assert '' == 'task-456'
+E     
+E     - task-456
+_________________________ test_wait_for_task_success __________________________
+tests\test_api_client.py:365: in test_wait_for_task_success
+    result = api_client.wait_for_task("task-123", query_func, timeout=10, interval=0.1)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\adp_cli\adp\api_client.py:345: in wait_for_task
+    result = query_func(task_id)
+             ^^^^^^^^^^^^^^^^^^^
+D:\Programs\Python312\Lib\unittest\mock.py:1139: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+D:\Programs\Python312\Lib\unittest\mock.py:1143: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+D:\Programs\Python312\Lib\unittest\mock.py:1200: in _execute_mock_call
+    result = next(effect)
+             ^^^^^^^^^^^^
+E   StopIteration
+__________________________ test_wait_for_task_failed __________________________
+tests\test_api_client.py:376: in test_wait_for_task_failed
+    api_client.wait_for_task("task-123", query_func, timeout=10, interval=0.1)
+src\adp_cli\adp\api_client.py:356: in wait_for_task
+    raise TimeoutError(f"Task timeout after {timeout} seconds")
+E   TimeoutError: Task timeout after 10 seconds
+__________ test_create_custom_app_with_long_doc_config_but_disabled ___________
+.venv\Lib\site-packages\urllib3\connection.py:204: in _new_conn
+    sock = connection.create_connection(
+.venv\Lib\site-packages\urllib3\util\connection.py:85: in create_connection
+    raise err
+.venv\Lib\site-packages\urllib3\util\connection.py:73: in create_connection
+    sock.connect(sa)
+E   ConnectionRefusedError: [WinError 10061] 由于目标计算机积极拒绝，无法连接。
+
+The above exception was the direct cause of the following exception:
+.venv\Lib\site-packages\urllib3\connectionpool.py:787: in urlopen
+    response = self._make_request(
+.venv\Lib\site-packages\urllib3\connectionpool.py:493: in _make_request
+    conn.request(
+.venv\Lib\site-packages\urllib3\connection.py:500: in request
+    self.endheaders()
+D:\Programs\Python312\Lib\http\client.py:1333: in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+D:\Programs\Python312\Lib\http\client.py:1093: in _send_output
+    self.send(msg)
+D:\Programs\Python312\Lib\http\client.py:1037: in send
+    self.connect()
+.venv\Lib\site-packages\urllib3\connection.py:331: in connect
+    self.sock = self._new_conn()
+                ^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\urllib3\connection.py:219: in _new_conn
+    raise NewConnectionError(
+E   urllib3.exceptions.NewConnectionError: HTTPConnection(host='127.0.0.1', port=8000): Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。
+
+The above exception was the direct cause of the following exception:
+.venv\Lib\site-packages\requests\adapters.py:644: in send
+    resp = conn.urlopen(
+.venv\Lib\site-packages\urllib3\connectionpool.py:841: in urlopen
+    retries = retries.increment(
+.venv\Lib\site-packages\urllib3\util\retry.py:535: in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /open/agentic_doc_processor/laiye/v1/app-manage/create (Caused by NewConnectionError("HTTPConnection(host='127.0.0.1', port=8000): Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。"))
+
+During handling of the above exception, another exception occurred:
+src\adp_cli\adp\api_client.py:81: in _request
+    response = requests.request(method, url, headers=headers, json=data, timeout=300)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\requests\api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\requests\sessions.py:589: in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\requests\sessions.py:703: in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\requests\adapters.py:677: in send
+    raise ConnectionError(e, request=request)
+E   requests.exceptions.ConnectionError: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /open/agentic_doc_processor/laiye/v1/app-manage/create (Caused by NewConnectionError("HTTPConnection(host='127.0.0.1', port=8000): Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。"))
+
+During handling of the above exception, another exception occurred:
+tests\test_api_client_extended.py:337: in test_create_custom_app_with_long_doc_config_but_disabled
+    api_client.create_custom_app(
+src\adp_cli\adp\api_client.py:419: in create_custom_app
+    return self._request("POST", endpoint, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\adp_cli\adp\api_client.py:85: in _request
+    raise RequestException(f"API request failed: {str(e)}")
+E   requests.exceptions.RequestException: API request failed: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /open/agentic_doc_processor/laiye/v1/app-manage/create (Caused by NewConnectionError("HTTPConnection(host='127.0.0.1', port=8000): Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。"))
 _______________________________ test_query_help _______________________________
 tests\test_cli_commands.py:161: in test_query_help
     assert result.exit_code == 0
@@ -264,11 +364,27 @@ _____________________ TestCLIIntegration.test_query_help ______________________
 tests\test_cli_integration.py:63: in test_query_help
     assert returncode == 0
 E   assert 2 == 0
-___________________ test_get_config_summary_without_config ____________________
-tests\test_config_extended.py:183: in test_get_config_summary_without_config
-    summary = manager.get_config_summaryser()
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'ConfigManager' object has no attribute 'get_config_summaryser'. Did you mean: 'get_config_summary'?
+______________________________ test_clear_config ______________________________
+tests\test_config.py:87: in test_clear_config
+    assert manager.is_configured() is True
+E   assert False is True
+E    +  where False = is_configured()
+E    +    where is_configured = <adp_cli.adp.config.ConfigManager object at 0x0000026A19512690>.is_configured
+_____________________________ test_is_configured ______________________________
+tests\test_config.py:103: in test_is_configured
+    assert manager.is_configured() is True
+E   assert False is True
+E    +  where False = is_configured()
+E    +    where is_configured = <adp_cli.adp.config.ConfigManager object at 0x0000026A19513E90>.is_configured
+_____________________ test_get_config_summary_with_config _____________________
+tests\test_config_extended.py:198: in test_get_config_summary_with_config
+    assert summary["configured"] is True
+E   assert False is True
+____________________ test_validate_file_directory_as_file _____________________
+tests\test_file_handler_extended.py:50: in test_validate_file_directory_as_file
+    dir_path = temp_path() / "test_dir"
+               ^^^^^^^^^
+E   NameError: name 'temp_path' is not defined
 _____________________________ test_get_mime_type ______________________________
 tests\test_file_handler_extended.py:202: in test_get_mime_type
     assert expected_mime in mime or "application/octet-stream" in mime
@@ -379,20 +495,36 @@ src\adp_cli\_pyinstaller_hooks\rthook_pyi_rth_adp_encodings.py       8      8   
 src\adp_cli\adp\__init__.py                                          5      0   100%
 src\adp_cli\adp\api_client.py                                      188     12    94%   191, 287, 318-320, 465-470, 556-558
 src\adp_cli\adp\config.py                                           75      4    95%   65-66, 115-116
-src\adp_cli\adp\file_handler.py                                     83      1    99%   101
+src\adp_cli\adp\file_handler.py                                     83      2    98%   65, 101
 src\adp_cli\adp\output_formatter.py                                 88      4    95%   216-220
 src\adp_cli\cli.py                                                 679    388    43%   24-26, 41, 68, 90-91, 97, 184, 229-235, 252-258, 288-294, 311-317, 331-351, 367-388, 413-455, 487-489, 504-506, 528-529, 556-560, 619-658, 672-696, 709-743, 756-777, 791-812, 827-852, 888-905, 918-921, 939-977, 1001-1107, 1120, 1144-1252, 1256
 src\adp_cli\i18n.py                                                 37      5    86%   503-507
 ----------------------------------------------------------------------------------------------
-TOTAL                                                             1173    431    63%
+TOTAL                                                             1173    432    63%
 =========================== short test summary info ===========================
+FAILED tests/test_api_client.py::test_parse_async_with_url - AssertionError: assert '' == 'task-123'
+  
+  - task-123
+FAILED tests/test_api_client.py::test_extract_async - AssertionError: assert '' == 'task-456'
+  
+  - task-456
+FAILED tests/test_api_client.py::test_wait_for_task_success - StopIteration
+FAILED tests/test_api_client.py::test_wait_for_task_failed - TimeoutError: Task timeout after 10 seconds
+FAILED tests/test_api_client_extended.py::test_create_custom_app_with_long_doc_config_but_disabled - requests.exceptions.RequestException: API request failed: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /open/agentic_doc_processor/laiye/v1/app-manage/create (Caused by NewConnectionError("HTTPConnection(host='127.0.0.1', port=8000): Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。"))
 FAILED tests/test_cli_commands.py::test_query_help - assert 2 == 0
  +  where 2 = <Result SystemExit(2)>.exit_code
 FAILED tests/test_cli_commands.py::test_query_no_config - assert 2 == 1
  +  where 2 = <Result SystemExit(2)>.exit_code
 FAILED tests/test_cli_integration.py::TestCLIIntegration::test_query_help - assert 2 == 0
-FAILED tests/test_config_extended.py::test_get_config_summary_without_config - AttributeError: 'ConfigManager' object has no attribute 'get_config_summaryser'. Did you mean: 'get_config_summary'?
+FAILED tests/test_config.py::test_clear_config - assert False is True
+ +  where False = is_configured()
+ +    where is_configured = <adp_cli.adp.config.ConfigManager object at 0x0000026A19512690>.is_configured
+FAILED tests/test_config.py::test_is_configured - assert False is True
+ +  where False = is_configured()
+ +    where is_configured = <adp_cli.adp.config.ConfigManager object at 0x0000026A19513E90>.is_configured
+FAILED tests/test_config_extended.py::test_get_config_summary_with_config - assert False is True
+FAILED tests/test_file_handler_extended.py::test_validate_file_directory_as_file - NameError: name 'temp_path' is not defined
 FAILED tests/test_file_handler_extended.py::test_get_mime_type - AssertionError: assert ('application/vnd.openxmlformats-officedocument.spreadsheetmlml.sheet' in 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' or 'application/octet-stream' in 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 ERROR tests/test_api_client_extended.py::test_get_user_payment_status
 ERROR tests/test_api_client_extended.py::test_health_check_with_mock
-============= 5 failed, 218 passed, 7 warnings, 2 errors in 8.89s =============
+============ 13 failed, 210 passed, 7 warnings, 2 errors in 22.87s ============

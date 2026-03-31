@@ -82,6 +82,7 @@ def test_clear_config(temp_config_dir):
     manager = ConfigManager()
 
     manager.set_api_key("test-key")
+    manager.set("api_base_url", "https://api.example.com")
     manager.set("test_key", "test_value")
 
     assert manager.is_configured() is True
@@ -99,6 +100,7 @@ def test_is_configured(temp_config_dir):
     assert manager.is_configured() is False
 
     manager.set_api_key("test-key")
+    manager.set("api_base_url", "https://api.example.com")
 
     assert manager.is_configured() is True
 
