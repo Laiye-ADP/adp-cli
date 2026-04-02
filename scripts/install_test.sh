@@ -1,5 +1,5 @@
 #!/bin/bash
-# ADP CLI PyPI 安装脚本（Linux/Mac）- 支持国内镜像源
+# ADP CLI TestPyPI 安装脚本（Linux/Mac）- 用于测试版本安装
 
 set -e
 
@@ -7,29 +7,29 @@ PACKAGE_NAME="agentic_doc_parse_and_extract"
 MIN_PYTHON_VERSION="3.8"
 DO_UPGRADE=false
 CHECK_UPDATE_ONLY=false
-SELECTED_MIRROR="aliyun"
+
+# TestPyPI 官方地址
+DEFAULT_PIP_INDEX_URL="https://test.pypi.org/simple/"
 
 # 帮助信息
 show_help() {
-    echo "ADP CLI Installation Script"
+    echo "ADP CLI TestPyPI Installation Script"
     echo ""
     echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "This script installs from TestPyPI (test.pypi.org) for testing purposes."
     echo ""
     echo "Options:"
     echo "  --upgrade         Upgrade to the latest version if already installed"
     echo "  --check-update    Check for available updates without installing"
-    echo "  --mirror <name>   Use specific PyPI mirror:"
-    echo "                      - aliyun (default)"
-    echo "                      - tsinghua"
-    echo "                      - douban"
-    echo "                      - ustc"
+    echo "  --index-url <url> Use custom PyPI index URL (default: TestPyPI)"
     echo "  --help            Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $0                    # Install or upgrade only if needed"
-    echo "  $0 --upgrade          # Force upgrade to latest version"
-    echo "  $0 --check-update     # Check if a newer version is available"
-    echo "  $0 --mirror tsinghua  # Install using Tsinghua mirror"
+    echo "  $0                    # Install from TestPyPI"
+    echo "  $0 --upgrade          # Upgrade from TestPyPI"
+    echo "  $0 --check-update     # Check for updates on TestPyPI"
+    echo "  $0 --index-url https://pypi.org/simple/  # Install from production PyPI"
     exit 0
 }
 
@@ -44,12 +44,12 @@ while [[ $# -gt 0 ]]; do
             CHECK_UPDATE_ONLY=true
             shift
             ;;
-        --mirror)
+        --index-url)
             if [ -z "$2" ]; then
-                echo "Error: --mirror requires a value"
+                echo "Error: --index-url requires a value"
                 exit 1
             fi
-            SELECTED_MIRROR="$2"
+            DEFAULT_PIP_INDEX_URL="$2"
             shift 2
             ;;
         --help|-h)
@@ -63,28 +63,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# 国内镜像源映射
-declare -A PYPI_MIRRORS=(
-    ["aliyun"]="https://mirrors.aliyun.com/pypi/simple"
-    ["tsinghua"]="https://pypi.tuna.tsinghua.edu.cn/simple"
-    ["douban"]="https://pypi.douban.com/simple"
-    ["ustc"]="https://pypi.mirrors.ustc.edu.cn/simple"
-)
-
-# 默认使用阿里云源
-DEFAULT_PIP_INDEX_URL="${PYPI_MIRRORS[$SELECTED_MIRROR]}"
-if [ -z "$DEFAULT_PIP_INDEX_URL" ]; then
-    echo "Error: Invalid mirror name '$SELECTED_MIRROR'"
-    echo "Available mirrors: aliyun, tsinghua, douban, ustc"
-    exit 1
-fi
-
 echo "=========================================="
-echo "ADP CLI Installation from PyPI"
+echo "ADP CLI Installation from TestPyPI"
 echo "=========================================="
 echo "Package: $PACKAGE_NAME"
 echo "Minimum Python: $MIN_PYTHON_VERSION"
-echo "Mirror: $DEFAULT_PIP_INDEX_URL"
+echo "Index URL: $DEFAULT_PIP_INDEX_URL"
 if [ "$DO_UPGRADE" = true ]; then
     echo "Mode: Upgrade to latest"
 elif [ "$CHECK_UPDATE_ONLY" = true ]; then
@@ -134,19 +118,16 @@ else
     echo "✓ Not installed yet"
 fi
 
-# 4. 检查最新版本（从PyPI）
+# 4. 检查最新版本（从TestPyPI）
 echo ""
-echo "[4/5] Checking latest version from PyPI..."
-
-# 升级pip（使用国内源）
-echo "  - Upgrading pip..."
-$PYTHON_CMD -m pip install --upgrade pip -i "$DEFAULT_PIP_INDEX_URL" --user --quiet
+echo "[4/5] Checking latest version from TestPyPI..."
 
 # 获取最新版本
-LATEST_VERSION=$($PYTHON_CMD -m pip index versions $PACKAGE_NAME 2>/dev/null | head -1 || echo "")
+LATEST_VERSION=$($PYTHON_CMD -m pip index versions --index-url "$DEFAULT_PIP_INDEX_URL" $PACKAGE_NAME 2>/dev/null | head -1 || echo "")
 
 if [ -z "$LATEST_VERSION" ]; then
-    echo "Warning: Could not retrieve latest version from PyPI"
+    echo "Warning: Could not retrieve latest version from TestPyPI"
+    echo "  Make sure the package is published to TestPyPI"
     LATEST_VERSION="unknown"
 else
     echo "✓ Latest version: $LATEST_VERSION"
@@ -156,7 +137,7 @@ fi
 if [ "$CHECK_UPDATE_ONLY" = true ]; then
     echo ""
     echo "=========================================="
-    echo "Update Check Results"
+    echo "Update Check Results (TestPyPI)"
     echo "=========================================="
     if [ -z "$INSTALLED_VERSION" ]; then
         echo "Status: Not installed"
@@ -182,7 +163,7 @@ fi
 
 # 5. 安装/升级包
 echo ""
-echo "[5/5] Installing $PACKAGE_NAME from PyPI..."
+echo "[5/5] Installing $PACKAGE_NAME from TestPyPI..."
 
 if [ -n "$INSTALLED_VERSION" ]; then
     # 已安装
@@ -193,12 +174,12 @@ if [ -n "$INSTALLED_VERSION" ]; then
         elif [ "$LATEST_VERSION" = "unknown" ]; then
             echo "Warning: Could not determine latest version"
             echo "  Proceeding with upgrade attempt..."
-            $PYTHON_CMD -m pip install --upgrade $PACKAGE_NAME -i "$DEFAULT_PIP_INDEX_URL" --user --quiet
+            $PYTHON_CMD -m pip install --upgrade --index-url "$DEFAULT_PIP_INDEX_URL" $PACKAGE_NAME --user --quiet
             echo "✓ Package upgraded"
         else
             echo "  Current: $INSTALLED_VERSION"
             echo "  Upgrading to: $LATEST_VERSION"
-            $PYTHON_CMD -m pip install --upgrade $PACKAGE_NAME -i "$DEFAULT_PIP_INDEX_URL" --user --quiet
+            $PYTHON_CMD -m pip install --upgrade --index-url "$DEFAULT_PIP_INDEX_URL" $PACKAGE_NAME --user --quiet
             echo "✓ Package upgraded to $LATEST_VERSION"
         fi
     else
@@ -215,7 +196,7 @@ if [ -n "$INSTALLED_VERSION" ]; then
 else
     # 未安装
     echo "  Installing: $LATEST_VERSION"
-    $PYTHON_CMD -m pip install $PACKAGE_NAME -i "$DEFAULT_PIP_INDEX_URL" --user --quiet
+    $PYTHON_CMD -m pip install --index-url "$DEFAULT_PIP_INDEX_URL" $PACKAGE_NAME --user --quiet
     echo "✓ Package installed successfully"
 fi
 
@@ -231,7 +212,6 @@ if command -v adp &> /dev/null; then
     echo ""
     echo "You can now use: adp --help"
 else
-    #    # 如果不在PATH中，提供添加PATH的说明
     USER_BIN="$HOME/.local/bin"
     echo "✓ ADP CLI installed successfully"
     echo "  Location: $USER_BIN/adp"

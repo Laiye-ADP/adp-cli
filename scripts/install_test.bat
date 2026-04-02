@@ -1,5 +1,5 @@
 @echo off
-REM ADP CLI PyPI 安装脚本（Windows）- 支持国内镜像源
+REM ADP CLI TestPyPI 安装脚本（Windows）- 用于测试版本安装
 
 setlocal enabledelayedexpansion
 
@@ -7,7 +7,9 @@ set PACKAGE_NAME=agentic_doc_parse_and_extract
 set MIN_PYTHON_VERSION=3.8
 set DO_UPGRADE=false
 set CHECK_UPDATE_ONLY=false
-set SELECTED_MIRROR=aliyun
+
+REM TestPyPI 官方地址
+set DEFAULT_PIP_INDEX_URL=https://test.pypi.org/simple/
 
 REM 显示帮助信息
 if "%1"=="--help" goto show_help
@@ -26,12 +28,12 @@ if /i "%~1"=="--check-update" (
     shift
     goto parse_args
 )
-if /i "%~1"=="--mirror" (
+if /i "%~1"=="--index-url" (
     if "%~2"=="" (
-        echo Error: --mirror requires a value
+        echo Error: --index-url requires a value
         exit /b 1
     )
-    set SELECTED_MIRROR=%~2
+    set DEFAULT_PIP_INDEX_URL=%~2
     shift
     shift
     goto parse_args
@@ -42,24 +44,12 @@ exit /b 1
 
 :args_done
 
-REM 国内镜像源
-if /i "%SELECTED_MIRROR%"=="aliyun" set DEFAULT_PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple
-if /i "%SELECTED_MIRROR%"=="tsinghua" set DEFAULT_PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
-if /i "%SELECTED_MIRROR%"=="douban" set DEFAULT_PIP_INDEX_URL=https://pypi.douban.com/simple
-if /i "%SELECTED_MIRROR%"=="ustc" set DEFAULT_PIP_INDEX_URL=https://pypi.mirrors.ustc.edu.cn/simple
-
-if "%DEFAULT_PIP_INDEX_URL%"=="" (
-    echo Error: Invalid mirror name '%SELECTED_MIRROR%'
-    echo Available mirrors: aliyun, tsinghua, douban, ustc
-    exit /b 1
-)
-
 echo ==========================================
-echo ADP CLI Installation from PyPI
+echo ADP CLI Installation from TestPyPI
 echo ==========================================
 echo Package: %PACKAGE_NAME%
 echo Minimum Python: %MIN_PYTHON_VERSION%
-echo Mirror: %DEFAULT_PIP_INDEX_URL%
+echo Index URL: %DEFAULT_PIP_INDEX_URL%
 if /i "%DO_UPGRADE%"=="true" (
     echo Mode: Upgrade to latest
 ) else if /i "%CHECK_UPDATE_ONLY%"=="true" (
@@ -79,10 +69,11 @@ if errorlevel 1 (
 )
 
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
-echo Python version: %PYTHON_VERSION%
-echo.
+echo Python.
+echo %PYTHON_VERSION%
 
 REM 2. 验证Python版本
+echo.
 echo [2/3] Validating Python version...
 python -c "import sys; exit(0 if sys.version_info ^>= (3, 8) else 1)" >nul 2>&1
 if errorlevel 1 (
@@ -90,9 +81,9 @@ if errorlevel 1 (
     exit /b 1
 )
 echo Python version meets requirements
-echo.
 
 REM 3. 检查已安装版本
+echo.
 echo [3/5] Checking installed version...
 
 for /f "tokens=2" %%i in ('python -m pip show %PACKAGE_NAME% 2^>nul ^| findstr /C:"Version:"') do set INSTALLED_VERSION=%%i
@@ -103,23 +94,20 @@ if "%INSTALLED_VERSION%"=="" (
     echo Current version: %INSTALLED_VERSION%
 )
 
-REM 4. 检查最新版本（从PyPI）
+REM 4. 检查最新版本（从TestPyPI）
 echo.
-echo [4/5] Checking latest version from PyPI...
-
-REM 升级pip（使用国内源）
-echo   - Upgrading pip...
-python -m pip install --upgrade pip -i %DEFAULT_PIP_INDEX_URL% --user --quiet
+echo [4/5] Checking latest version from TestPyPI...
 
 REM 获取最新版本
-python -m pip index versions %PACKAGE_NAME% > temp_versions.txt 2>nul
+python -m pip index versions --index-url %DEFAULT_PIP_INDEX_URL% %PACKAGE_NAME% > temp_versions.txt 2>nul
 for /f "delims=" %%i in ('type temp_versions.txt ^| findstr /N "^" ^| findstr "^1:"') do set LATEST_LINE=%%i
 for /f "tokens=2*" %%i in ("%LATEST_LINE%") do set LATEST_VERSION=%%i
 del temp_versions.txt
 
 if "%LATEST_VERSION%"=="" (
-    echo Warning: Could not retrieve latest version from PyPI
-    set LATEST_VERSION=unknown
+    echo Warning: Could not retrieve latest version from TestPyPI
+    echo   Make sure the package is published to TestPyPI
+set LATEST_VERSION=unknown
 ) else (
     echo Latest version: %LATEST_VERSION%
 )
@@ -129,7 +117,7 @@ if /i "%CHECK_UPDATE_ONLY%"=="true" goto check_update_only
 
 REM 5. 安装/升级包
 echo.
-echo [5/5] Installing %PACKAGE_NAME% from PyPI...
+echo [5/5] Installing %PACKAGE_NAME% from TestPyPI...
 
 if not "%INSTALLED_VERSION%"=="" (
     REM 已安装
@@ -140,7 +128,7 @@ if not "%INSTALLED_VERSION%"=="" (
         ) else if "%LATEST_VERSION%"=="unknown" (
             echo Warning: Could not determine latest version
             echo   Proceeding with upgrade attempt...
-            python -m pip install --upgrade %PACKAGE_NAME% -i %DEFAULT_PIP_INDEX_URL% --user --quiet
+            python -m pip install --upgrade --index-url %DEFAULT_PIP_INDEX_URL% %PACKAGE_NAME% --user --quiet
             if errorlevel 1 (
                 echo Error: Package upgrade failed
                 exit /b 1
@@ -149,7 +137,7 @@ if not "%INSTALLED_VERSION%"=="" (
         ) else (
             echo   Current: %INSTALLED_VERSION%
             echo   Upgrading to: %LATEST_VERSION%
-            python -m pip install --upgrade %PACKAGE_NAME% -i %DEFAULT_PIP_INDEX_URL% --user --quiet
+            python -m pip install --upgrade --index-url %DEFAULT_PIP_INDEX_URL% %PACKAGE_NAME% --user --quiet
             if errorlevel 1 (
                 echo Error: Package upgrade failed
                 exit /b 1
@@ -162,7 +150,7 @@ if not "%INSTALLED_VERSION%"=="" (
         ) else if not "%LATEST_VERSION%"=="unknown" (
             echo Already installed ^(%INSTALLED_VERSION%^)
             echo   Note: New version available: %LATEST_VERSION%
-            echo   To upgrade: install.bat --upgrade
+            echo   To upgrade: install_test.bat --upgrade
         ) else (
             echo Already installed ^(%INSTALLED_VERSION%^)
         )
@@ -170,7 +158,7 @@ if not "%INSTALLED_VERSION%"=="" (
 ) else (
     REM 未安装
     echo   Installing: %LATEST_VERSION%
-    python -m pip install %PACKAGE_NAME% -i %DEFAULT_PIP_INDEX_URL% --user --quiet
+    python -m pip install --index-url %DEFAULT_PIP_INDEX_URL% %PACKAGE_NAME% --user --quiet
     if errorlevel 1 (
         echo Error: Package installation failed
         exit /b 1
@@ -183,13 +171,13 @@ goto verify_installation
 :check_update_only
 echo.
 echo ==========================================
-echo Update Check Results
+echo Update Check Results ^(TestPyPI^)
 echo ==========================================
 if "%INSTALLED_VERSION%"=="" (
     echo Status: Not installed
     echo Latest version: %LATEST_VERSION%
     echo.
-    echo To install: install.bat
+    echo To install: install_test.bat
 ) else if "%INSTALLED_VERSION%"=="%LATEST_VERSION%" (
     echo Status: Up to date
     echo Current version: %INSTALLED_VERSION%
@@ -201,7 +189,7 @@ if "%INSTALLED_VERSION%"=="" (
     echo Current version: %INSTALLED_VERSION%
     echo Latest version: %LATEST_VERSION%
     echo.
-    echo To upgrade: install.bat --upgrade
+    echo To upgrade: install_test.bat --upgrade
 )
 echo ==========================================
 exit /b 0
@@ -235,25 +223,23 @@ echo ==========================================
 goto :eof
 
 :show_help
-echo ADP CLI Installation Script
+echo ADP CLI TestPyPI Installation Script
 echo.
 echo Usage: %~nx0 [OPTIONS]
+echo.
+echo This script installs from TestPyPI ^(test.pypi.org^) for testing purposes.
 echo.
 echo Options:
 echo   --upgrade         Upgrade to the latest version if already installed
 echo   --check-update    Check for available updates without installing
-echo   --mirror ^<name^>   Use specific PyPI mirror:
-echo                      - aliyun ^(default^)
-echo                      - tsinghua
-echo                      - douban
-echo                      - ustc
+echo   --index-url ^<url^> Use custom PyPI index URL ^(default: TestPyPI^)
 echo   --help            Show this help message
 echo.
 echo Examples:
-echo   %~nx0                  Install or upgrade only if needed
-echo   %~nx0 --upgrade        Force upgrade to latest version
-echo   %~nx0 --check-update   Check if a newer version is available
-echo   %~nx0 --mirror tsinghua Install using Tsinghua mirror
+echo   %~nx0                              Install from TestPyPI
+echo   %~nx0 --upgrade                    Upgrade from TestPyPI
+echo   %~nx0 --check-update               Check for updates on TestPyPI
+echo   %~nx0 --index-url https://pypi.org/simple/
 exit /b 0
 
 endlocal

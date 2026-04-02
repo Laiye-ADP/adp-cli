@@ -22,12 +22,12 @@
 
 ### Linux/macOS
 ```bash
-curl -fsSL https://raw.githubusercontent.com/adp/adp-aiem/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Laiye-ADP/adp-cli/main/scripts/install.sh | bash
 ```
 
 ### Windows
 ```cmd
-powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/adp/adp-aiem/main/scripts/install.bat' -OutFile install.bat'; .\install.bat"
+powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Laiye-ADP/adp-cli/main/scripts/install.bat' -OutFile install.bat'; .\install.bat"
 ```
 
 ### 使用Python脚本
@@ -42,7 +42,7 @@ python install_adp_cli.py
 
 # 自动安装ADP CLI
 if ! command -v adp &> /dev/null; then
-    curl -fsSL https://raw.githubusercontent.com/adp/adp-aiem/main/scripts/install.sh | bash
+    curl -fsSL https://raw.githubusercontent.com/Laiye-ADP/adp-cli/main/scripts/install.sh | bash
     export PATH="$HOME/.local/bin:$PATH"
 fi
 

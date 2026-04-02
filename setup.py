@@ -15,7 +15,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     keywords=["adp", "cli", "document", "parse", "extract", "ai"],
-    url="https://github.com/adp/adp-aiem",
+    url="https://github.com/Laiye-ADP/adp-cli",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     classifiers=[
@@ -53,7 +53,7 @@ setup(
         ],
     },
     project_urls={
-        "Bug Reports": "https://github.com/adp/adp-aiem/issues",
-        "Source": "https://github.com/adp/adp-aiem",
+        "Bug Reports": "https://github.com/Laiye-ADP/adp-cli/issues",
+        "Source": "https://github.com/Laiye-ADP/adp-cli",
     },
 )

@@ -2,7 +2,7 @@
 
 本指南说明如何从PyPI直接安装ADP CLI工具，无需虚拟环境。
 
-**安装脚本默认使用清华源（国内镜像）以加速下载。**
+**安装脚本默认使用阿里云源（国内镜像）以加速下载。**
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 源名称 | URL |
 |--------|-----|
-| 阘里云源（默认） | https://mirrors.aliyun.com/pypi/simple |
+| 阿里云源（默认） | https://mirrors.aliyun.com/pypi/simple |
 | 清华源 | https://pypi.tuna.tsinghua.edu.cn/simple |
 | 豆瓣源 | https://pypi.douban.com/simple |
 | 中科大源 | https://pypi.mirrors.ustc.edu.cn/simple |
@@ -25,20 +25,20 @@
 
 ```bash
 # 一键安装（从GitHub获取脚本）
-curl -fsSL https://raw.githubusercontent.com/adp/adp-aiem/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Laiye-ADP/adp-cli/main/scripts/install.sh | bash
 
 # 或使用Python脚本
-python3 -c "import urllib.request, subprocess, sys; exec(urllib.request.urlopen('https://raw.githubusercontent.com/adp/adp-aiem/main/scripts/install_adp_cli.py').read().decode())"
+python3 -c "import urllib.request, subprocess, sys; exec(urllib.request.urlopen('https://raw.githubusercontent.com/Laiye-ADP/adp-cli/main/scripts/install_adp_cli.py').read().decode())"
 ```
 
 ### Windows
 
 ```cmd
 REM 一键安装
-powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/adp/adp-aiem/main/scripts/install.bat' -OutFile install.bat'; .\install.bat"
+powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Laiye-ADP/adp-cli/main/scripts/install.bat' -OutFile install.bat'; .\install.bat"
 
 REM 或使用Python脚本
-python -c "import urllib.request; exec(urllib.request.urlopen('https://raw.githubusercontent.com/adp/adp-aiem/main/scripts/install_adp_cli.py').read().decode())"
+python -c "import urllib.request; exec(urllib.request.urlopen('https://raw.githubusercontent.com/Laiye-ADP/adp-cli/main/scripts/install_adp_cli.py').read().decode())"
 ```
 
 ---
@@ -276,7 +276,7 @@ pip install --user --proxy http://proxy.example.com:8080 agentic_doc_parse_and_e
 
 ## 相关资源
 
-- **项目主页**: https://github.com/adp/adp-aiem
+- **项目主页**: https://github.com/Laiye-ADP/adp-cli
 - **PyPI页面**: https://pypi.org/project/agentic_doc_parse_and_extract/
 - **用户手册**: [ADP-CLI-USER-MANUAL.md](ADP-CLI-USER-MANUAL.md)
 - **构建指南**: [BUILD.md](BUILD.md)
