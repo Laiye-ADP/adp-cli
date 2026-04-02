@@ -62,7 +62,8 @@ REM 3. 安装包
 echo.
 echo [3/3] Installing %PACKAGE_NAME% from TestPyPI...
 
-python -m pip install --index-url %DEFAULT_PIP_INDEX_URL% %PACKAGE_NAME% --user --quiet --no-warn-script-location
+set EXTRA_INDEX_URL=https://mirrors.aliyun.com/pypi/simple
+python -m pip install --index-url %DEFAULT_PIP_INDEX_URL% --extra-index-url %EXTRA_INDEX_URL% %PACKAGE_NAME% --user --quiet --no-warn-script-location
 
 if errorlevel 1 (
     echo Error: Package installation failed

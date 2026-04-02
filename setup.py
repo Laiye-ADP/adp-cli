@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="agentic_doc_parse_and_extract",
-    version="1.10.0",
+    version="1.10.1",
     author="ADP Team",
     author_email="support@adp.ai",
     license="Commercial license required. New users receive 100 free credits monthly to offset usage.",
@@ -33,9 +33,7 @@ setup(
         "click>=8.0.0",
         "requests>=2.28.0",
         "cryptography>=41.0.0",
-        "pygments>=2.14.0",
         "rich>=13.0.0",
-        "pydantic>=2.0.0",
     ],
     extras_require={
         "dev": [

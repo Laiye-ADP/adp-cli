@@ -67,7 +67,8 @@ echo "✓ Python version meets requirements"
 echo ""
 echo "[3/3] Installing $PACKAGE_NAME from TestPyPI..."
 
-$PYTHON_CMD -m pip install --index-url "$DEFAULT_PIP_INDEX_URL" $PACKAGE_NAME --user --quiet --no-warn-script-location
+EXTRA_INDEX_URL="https://mirrors.aliyun.com/pypi/simple"
+$PYTHON_CMD -m pip install --index-url "$DEFAULT_PIP_INDEX_URL" --extra-index-url "$EXTRA_INDEX_URL" $PACKAGE_NAME --user --quiet --no-warn-script-location
 
 echo "✓ Package installed successfully"
 
