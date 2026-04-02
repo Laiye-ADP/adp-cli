@@ -80,10 +80,6 @@ powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/L
 # 自动安装 ADP CLI
 if ! command -v adp &> /dev/null; then
     curl -fsSL https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/install.sh | bash
-<<<<<<< HEAD
-=======
-    export PATH="$HOME/.local/bin:$PATH"
->>>>>>> 8234e95471247490720e4dc308796ec98a972a7e
 fi
 
 # 使用 ADP CLI（脚本已自动配置 PATH）
