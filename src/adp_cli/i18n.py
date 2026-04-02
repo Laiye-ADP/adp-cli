@@ -414,7 +414,6 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
         # Common
         "error": "错误:",
-        "error_invalid_concurrency": "并发数无效。批量处理时：免费用户最高为1，付费用户最高为2。若输入其他数值，并发将不生效，请等待处理。",
         "no_supported_files": "未找到支持的文件:",
         "skipped_invalid_files": "跳过 {count} 个无效文件:",
         "no_valid_files": "没有有效的文件需要处理",

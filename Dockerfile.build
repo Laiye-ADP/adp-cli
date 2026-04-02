@@ -1,0 +1,74 @@
+# Dockerfile for building ADP CLI Linux binaries with compatible GLIBC
+# 支持多基础镜像，通过 BUILD-ARG BASE_IMAGE 指定
+# 用途：在不同 glibc 版本环境下构建，解决 glibc 兼容性问题
+
+ARG BASE_IMAGE=python:3.8-slim
+FROM ${BASE_IMAGE}
+
+# 安装构建依赖（支持 Debian/Ubuntu 和 CentOS/RHEL/Fedora）
+RUN if command -v apt-get >/dev/null 2>&1; then \
+        sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
+        sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
+        apt-get update && apt-get install -y \
+            build-essential \
+            wget \
+            libssl-dev \
+            libffi-dev \
+            && apt-get clean && rm -rf /var/lib/apt/lists/*; \
+    else \
+        if command -v dnf >/dev/null 2>&1; then \
+            dnf install -y \
+                gcc \
+                gcc-c++ \
+                make \
+                wget \
+                openssl-devel \
+                libffi-devel \
+                python3-pip \
+                && dnf clean all; \
+        elif command -v yum >/dev/null 2>&1; then \
+            yum install -y \
+                gcc \
+                gcc-c++ \
+                make \
+                wget \
+                openssl-devel \
+                libffi-devel \
+                python3-pip \
+                && yum clean all; \
+        else \
+            echo "Error: Unsupported package manager" && exit 1; \
+        fi; \
+    fi
+
+# 使用清华 pip 镜像加速
+# 确保使用 python3 -m pip，兼容不同发行版
+# 先确保 pip 可用，然后升级并配置镜像源
+RUN python3 -m pip install --upgrade pip setuptools wheel && \
+    python3 -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制 spec 文件和依赖文件（用于缓存）
+COPY adp_cli.spec .
+COPY requirements-prod.txt .
+
+# 安装 PyInstaller 和生产依赖
+# 分开安装以便调试
+RUN python3 -m pip install --no-cache-dir pyinstaller
+RUN python3 -m pip install --no-cache-dir -r requirements-prod.txt
+
+# 复制源代码
+COPY src ./src
+
+# 构建可执行文件（在运行时执行，以支持多平台构建）
+# RUN pyinstaller --clean adp_cli.spec
+
+# 输出目录
+VOLUME /output
+
+# 显示构建环境信息
+RUN echo "=== Build Environment Info ===" && \
+    echo "GLIBC version:" && ldd --version | head -1 && \
+    echo "Python version:" && python --version

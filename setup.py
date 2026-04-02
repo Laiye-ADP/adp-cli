@@ -14,6 +14,7 @@ setup(
     description="AI Document Platform Command Line Tool - Document Parse & Extract Tool",
     long_description=long_description,
     long_description_content_type="text/markdown",
+    keywords=["adp", "cli", "document", "parse", "extract", "ai"],
     url="https://github.com/adp/adp-aiem",
     packages=find_packages(where="src"),
     package_dir={"": "src"},

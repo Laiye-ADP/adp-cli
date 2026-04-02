@@ -3,7 +3,7 @@
 import os
 import json
 from pathlib import Path
-from typing import List, Optional, Iterator
+from typing import List, Optional, Tuple, Iterator
 import mimetypes
 
 
@@ -48,7 +48,7 @@ class FileHandler:
         return file_path.stat().st_size <= cls.MAX_FILE_SIZE
 
     @classmethod
-    def validate_file(cls, file_path: Path) -> tuple[bool, Optional[str]]:
+    def validate_file(cls, file_path: Path) -> Tuple[bool, Optional[str]]:
         """
         验证文件。
 
@@ -101,7 +101,7 @@ class FileHandler:
         return []
 
     @classmethod
-    def validate_files(cls, file_paths: List[Path]) -> tuple[List[Path], List[tuple[Path, str]]]:
+    def validate_files(cls, file_paths: List[Path]) -> Tuple[List[Path], List[Tuple[Path, str]]]:
         """
         验证多个文件。
 

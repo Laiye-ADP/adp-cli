@@ -1,7 +1,6 @@
 """API client for ADP backend."""
 
 import re
-from tarfile import data_filter
 import time
 import mimetypes
 import uuid
@@ -39,7 +38,7 @@ class APIClient:
 
     def _get_api_base_url(self) -> str:
         """获取 API 基础 URL。"""
-        return self.config_manager.get("api_base_url", "http://127.0.0.1:8000")
+        return self.config_manager.get("api_base_url", "")
 
     def _get_headers(self) -> Dict[str, str]:
         """
@@ -82,7 +81,16 @@ class APIClient:
             response.raise_for_status()
             return response.json()
         except RequestException as e:
-            raise RequestException(f"API request failed: {str(e)}")
+            # 尝试获取响应内容以提供更多调试信息
+            error_msg = f"API request failed: {str(e)}"
+            if hasattr(e, 'response') and e.response is not None:
+                try:
+                    response_text = e.response.text
+                    if response_text:
+                        error_msg += f"\nResponse: {response_text}"
+                except:
+                    pass
+            raise RequestException(error_msg)
 
 
     def _encode_file_to_base64(self, file_path: Path) -> str:

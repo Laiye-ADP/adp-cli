@@ -132,7 +132,7 @@ class OutputFormatter:
             result: 任务结果（可选）
         """
         self.print_info(f"Task_ID: {task_id}")
-        self.print_info(f"Status: {self.status.get(status,"UNKNOWN")}")
+        self.print_info(f"Status: {self.status.get(status, 'UNKNOWN')}")
 
         if result:
             self.print("Result:", style="bold")

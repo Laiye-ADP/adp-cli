@@ -44,42 +44,48 @@ def check_config(func):
 
 def _validate_concurrency(api_client: APIClient, concurrency: int) -> int:
     """
-    Validate and adjust concurrency based on user payment status.
+    Validate and adjust concurrency limit based on user payment status.
 
     Args:
         api_client: APIClient instance
-        concurrency: User-provided concurrency value
+        concurrency: Requested concurrency from user input
 
     Returns:
-        Adjusted concurrency value (1 for free users, 1-2 for paid users)
+        int: Allowed concurrency value based on user's payment level
 
     Raises:
-        ValueError: If concurrency is invalid
+        ValueError: Only re-raises original ValueError from API
     """
+    # 性能优化: 先处理最常见和最限制的分支，最大程度减少外部 API 请求
     if concurrency <= 1:
         return 1
 
+    # 常量定义，便于维护与升级
+    FREE_LIMIT = 1
+    PAID_LIMIT = 2
+
     try:
+        # 只在需要请求时才访问接口，提高性能
         payment_status = api_client.get_user_payment_status()
         payment_type = payment_status.get("payment_type", "")
 
         if payment_type == "paid":
-            # Paid users can use up to 2
-            if concurrency > 2:
-                raise ValueError(t('error_invalid_concurrency'))
-            return concurrency
+            allowed = min(concurrency, PAID_LIMIT)
+            if concurrency > PAID_LIMIT:
+                formatter.print_warning(f"{t('warning')}: {t('error_invalid_concurrency')}")
+            return allowed
         else:
-            # Free users limited to 1
-            if concurrency > 1:
-                raise ValueError(t('error_not_paid_user'))
-            return 1
-    except Exception as e:
-        # If payment status check fails or validation error, re-raise
-        if isinstance(e, ValueError):
-            raise
-        # If API call fails, default to 1 for safety
+            if concurrency > FREE_LIMIT:
+                formatter.print_warning(f"{t('warning')}: {t('error_not_paid_user')}")
+            return FREE_LIMIT
+
+    except ValueError:
+        # 可预期异常直接抛出，后续上层捕获处理
+        raise
+    except Exception:
+        # 所有其他异常（比如网络、未知API错误），保守降级
         formatter.print_warning(f"{t('warning')}: {t('error_invalid_concurrency')}")
-        return 1
+        return FREE_LIMIT
 
 
 class CLI(click.Group):

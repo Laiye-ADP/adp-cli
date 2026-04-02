@@ -1,0 +1,22 @@
+# MANIFEST.in - Additional files to include in the package distribution
+
+# Include README and license
+include README.md
+include LICENSE
+include CHANGELOG.md
+include pyproject.toml
+
+# Include documentation
+recursive-include docs *.md
+
+# Include scripts
+recursive-include scripts *.sh *.bat *.py
+
+# Include PyInstaller spec file
+include adp_cli.spec
+
+# Include all Python source
+recursive-include src/adp_cli *.py
+
+# Include PyInstaller hooks
+recursive-include src/adp_cli/_pyinstaller_hooks *.py

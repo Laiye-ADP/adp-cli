@@ -26,6 +26,7 @@ wheels/
 htmlcov/
 .tox/
 test_data/
+.coverage.*
 
 # Virtual environments
 venv/
@@ -33,6 +34,7 @@ ENV/
 env/
 .venv/
 .venv-linux/
+.venv38/
 
 # IDEs
 .vscode/
@@ -40,10 +42,23 @@ env/
 *.swp
 *.swo
 *~
+*.sublime-*
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Project specific
 *.log
+parse_result.json
+result.json
+test_report*.txt
+coverage.json
+
+# Docker
+docker-daemon.json
+
+# Claude Code - ignore local settings with sensitive info
+.claude/settings.local.json
+.claude/settings.json

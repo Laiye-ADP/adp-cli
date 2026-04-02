@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Maximum concurrency limits: 1 for free users, 2 for paid users
 - Internationalized error messages for concurrency validation
 
-## [1.0.0] - 2026-03-19
+## [1.10.0] - 2026-03-19
 
 ### Added
 - Initial release of ADP CLI tool
