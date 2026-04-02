@@ -200,26 +200,63 @@ else
     echo "✓ Package installed successfully"
 fi
 
-# 6. 验证安装
+# 6. 验证安装并自动添加到PATH
 echo ""
 echo "Verifying installation..."
 
-# 检查adp命令是否在PATH中
+# 检测当前使用的shell
+CURRENT_SHELL=$(basename "$SHELL")
+
+# 确定配置文件路径
+if [ "$CURRENT_SHELL" = "zsh" ]; then
+    SHELL_RC="$HOME/.zshrc"
+else
+    SHELL_RC="$HOME/.bashrc"
+fi
+
+# 检查 PATH 是否已包含 ~/.local/bin
+USER_BIN="$HOME/.local/bin"
+PATH_ADDED=false
+
+if echo ":$PATH:" | grep -q ":$USER_BIN:"; then
+    PATH_ADDED=true
+fi
+
+# 如果不在PATH中，自动添加
+if [ "$PATH_ADDED" = false ]; then
+    echo "  Adding $USER_BIN to PATH in $SHELL_RC..."
+
+    # 检查配置文件中是否已有 PATH 配置
+    if [ -f "$SHELL_RC" ] && grep -q "export PATH=.*\.local/bin" "$SHELL_RC"; then
+        echo "  ✓ PATH configuration already exists in $SHELL_RC"
+    else
+        # 添加 PATH 配置到配置文件
+        if [ -f "$SHELL_RC" ]; then
+            echo "" >> "$SHELL_RC"
+            echo "# ADP CLI" >> "$SHELL_RC"
+            echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> "$SHELL_RC"
+        else
+            echo "# ADP CLI" > "$SHELL_RC"
+            echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> "$SHELL_RC"
+        fi
+        echo "  ✓ Added to $SHELL_RC"
+    fi
+
+    # 在当前会话中立即生效
+    export PATH="$USER_BIN:$PATH"
+    echo "  ✓ PATH updated in current session"
+else
+    echo "  ✓ PATH already configured"
+fi
+
+# 再次验证安装（PATH已更新）
 if command -v adp &> /dev/null; then
     ADP_VERSION=$(adp --version 2>&1 || true)
     echo "✓ ADP CLI installed successfully"
     echo "  Version: $ADP_VERSION"
-    echo ""
-    echo "You can now use: adp --help"
 else
-    USER_BIN="$HOME/.local/bin"
     echo "✓ ADP CLI installed successfully"
     echo "  Location: $USER_BIN/adp"
-    echo ""
-    echo "To use ADP CLI, add the following to your ~/.bashrc or ~/.zshrc:"
-    echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
-    echo
-    echo "Then run: source ~/.bashrc  (或 source ~/.zshrc)"
 fi
 
 echo ""

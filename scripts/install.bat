@@ -207,19 +207,62 @@ echo ==========================================
 exit /b 0
 
 :verify_installation
-REM 6. 验证安装
+REM 6. 验证安装并自动添加到PATH
 echo.
 echo Verifying installation...
 
-where adp >nul 2>&1
-if errorlevel 1 (
-    echo Package installed successfully
-    echo.
-    echo To use ADP CLI, add the following to your PATH:
-    echo %%USERPROFILE%%\AppData\Roaming\Python\Python3x\Scripts
-    echo.
-    echo Or add %%USERPROFILE%%\.local\bin to PATH
+REM 检测 adp 命令的实际安装位置
+for /f "delims=" %%i in ('where adp 2^>nul') do set ADP_PATH=%%i
+
+if "%ADP_PATH%"=="" (
+    REM 未在 PATH 中找到，尝试常见位置
+    if exist "%USERPROFILE%\.local\bin\adp.exe" (
+        set "ADP_BIN=%USERPROFILE%\.local\bin"
+    ) else if exist "%USERPROFILE%\AppData\Roaming\Python\Python*\Scripts\adp.exe" (
+        for /d %%i in ("%USERPROFILE%\AppData\Roaming\Python\Python*") do set "ADP_BIN=%%i\Scripts"
+    )
+
+    REM 找到了安装目录，添加到 PATH
+    if defined ADP_BIN (
+        echo   Adding %ADP_BIN% to PATH...
+
+        REM 检查是否已在 PATH 中
+        echo %PATH% | findstr /C:"%ADP_BIN%" >nul
+        if errorlevel 1 (
+            REM 添加到用户环境变量（永久生效）
+            for /f "delims=" %%i in ('reg query "HKCU\Environment" /v PATH 2^>nul') do set REG_PATH_VALUE=%%i
+
+            if "%REG_PATH_VALUE%"=="" (
+                REM PATH 不存在，创建新的
+                setx PATH "%ADP_BIN%;%PATH%" >nul 2>&1
+            ) else (
+                REM PATH 已存在，追加
+                setx PATH "%ADP_BIN%;%PATH%" >nul 2>&1
+            )
+
+            echo   PATH updated (may require reopening terminal)
+        ) else (
+            echo   PATH already configured
+        )
+
+        REM 在当前会话中更新 PATH
+        set "PATH=%ADP_BIN%;%PATH%"
+        echo   PATH updated in current session
+
+        REM 验证
+        where adp >nul 2>&1
+        if not errorlevel 1 (
+            adp --version
+            echo ADP CLI installed successfully
+        ) else (
+            echo Package installed successfully
+        )
+    ) else (
+        echo Package installed successfully
+        echo   Location: ADP binaries not found in expected locations
+    )
 ) else (
+    REM 已在 PATH 中
     adp --version
     echo ADP CLI installed successfully
 )
