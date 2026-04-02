@@ -12,7 +12,6 @@
   - 使用国内镜像源（默认阿里云，支持切换）
   - 安装到用户目录（无需 sudo）
   - **自动添加到 PATH**（无需手动配置）
-  - 支持版本检测和升级
 
 ### `install_test.sh` / `install_test.bat`
 - **用途**: 从 TestPyPI 安装测试版本
@@ -27,17 +26,9 @@
 ### install.sh / install.bat
 
 ```bash
-# 默认安装/检查
-install.sh                    # 已安装则跳过升级
+# 默认安装
+install.sh
 install.bat
-
-# 强制升级到最新版本
-install.sh --upgrade
-install.bat --upgrade
-
-# 仅检查更新（不安装）
-install.sh --check-update
-install.bat --check-update
 
 # 使用指定镜像源
 install.sh --mirror tsinghua   # 清华源
@@ -69,7 +60,7 @@ curl -fsSL https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/in
 
 ### Windows
 ```cmd
-powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/install.bat' -OutFile install.bat'; .\install.bat"
+powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/install.bat' -OutFile install.bat"; .\install.bat
 ```
 
 ## Agent 使用示例
@@ -101,12 +92,6 @@ adp --version
 |-----|------|
 | TestPyPI | `https://test.pypi.org/simple/` (默认) |
 | PyPI | `https://pypi.org/simple/` |
-
-## 升级说明
-
-- **默认行为**: 已安装则不自动升级，提示有新版本可用
-- **--upgrade**: 强制升级到最新版本
-- **--check-update**: 仅检查版本，不执行安装
 
 ## 其他脚本
 
