@@ -3,7 +3,7 @@
 import sys
 import functools
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 
 import click
 from click.core import F
@@ -29,6 +29,178 @@ if sys.platform == 'win32':
 # Global shared formatter
 formatter = OutputFormatter()
 
+# Exit codes for CLI
+EXIT_SUCCESS = 0
+EXIT_GENERAL_ERROR = 1
+EXIT_PARAMETER_ERROR = 2
+EXIT_RESOURCE_NOT_FOUND = 3
+EXIT_PERMISSION_DENIED = 4
+EXIT_CONFLICT = 5
+
+# Error types for structured error output
+ERROR_TYPE_API = "API_ERROR"
+ERROR_TYPE_NETWORK = "NETWORK_ERROR"
+ERROR_TYPE_AUTH = "AUTH_ERROR"
+ERROR_TYPE_PARAM = "PARAM_ERROR"
+ERROR_TYPE_RESOURCE = "RESOURCE_ERROR"
+ERROR_TYPE_SYSTEM = "SYSTEM_ERROR"
+
+
+class CLIError(Exception):
+    """Structured CLI error with full context for Agent handling."""
+
+    def __init__(
+        self,
+        message: str,
+        error_type: str,
+        exit_code: int,
+        fix: str = None,
+        retryable: bool = False,
+        details: Dict[str, Any] = None
+    ):
+        """
+        Initialize CLI error.
+
+        Args:
+            message: Human-readable error description
+            error_type: Machine-readable error type (ERROR_TYPE_*)
+            exit_code: Exit code (EXIT_*)
+            fix: Suggested fix for Agent
+            retryable: Whether this error is retryable
+            details: Additional error details
+        """
+        super().__init__(message)
+        self.message = message
+        self.error_type = error_type
+        self.exit_code = exit_code
+        self.fix = fix or ""
+        self.retryable = retryable
+        self.details = details or {}
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for JSON output."""
+        return {
+            "type": self.error_type,
+            "code": self.exit_code,
+            "message": self.message,
+            "fix": self.fix,
+            "retryable": self.retryable,
+            "details": self.details
+        }
+
+
+def print_error_and_exit(error: CLIError) -> None:
+    """
+    Print structured error and exit with appropriate code.
+
+    Args:
+        error: CLIError instance
+    """
+    formatter.print_error(error.to_dict())
+    sys.exit(error.exit_code)
+
+
+def classify_exception(e: Exception, context: str = "") -> CLIError:
+    """
+    Classify an exception and return appropriate CLIError.
+
+    Args:
+        e: The exception to classify
+        context: Additional context about where the error occurred
+
+    Returns:
+        CLIError with appropriate type, exit code, and fix suggestion
+    """
+    error_str = str(e).lower()
+    message = str(e)
+
+    # 网络相关错误
+    if any(keyword in error_str for keyword in ['timeout', 'connection', 'network', 'dns', 'ECONNREFUSED', ' ConnectionError']):
+        return CLIError(
+            message=f"Network error: {message}",
+            error_type=ERROR_TYPE_NETWORK,
+            exit_code=EXIT_GENERAL_ERROR,
+            fix="Check your network connection and try again. If the issue persists, the API server may be down.",
+            retryable=True,
+            details={"context": context} if context else {}
+        )
+
+    # API 认证错误
+    if any(keyword in error_str for keyword in ['401', 'unauthorized', 'auth', 'invalid api key', 'api key']):
+        return CLIError(
+            message=f"Authentication error: {message}",
+            error_type=ERROR_TYPE_AUTH,
+            exit_code=EXIT_PERMISSION_DENIED,
+            fix="Check your API key is correct. Run 'adp config set --api-key YOUR_KEY' to update.",
+            retryable=False,
+            details={"context": context} if context else {}
+        )
+
+    # 权限不足
+    if any(keyword in error_str for keyword in ['403', 'forbidden', 'permission']):
+        return CLIError(
+            message=f"Permission denied: {message}",
+            error_type=ERROR_TYPE_AUTH,
+            exit_code=EXIT_PERMISSION_DENIED,
+            fix="Your account may not have permission for this operation. Contact support.",
+            retryable=False,
+            details={"context": context} if context else {}
+        )
+
+    # 资源不存在
+    if any(keyword in error_str for keyword in ['404', 'not found', 'does not exist', 'version_not_found']):
+        return CLIError(
+            message=f"Resource not found: {message}",
+            error_type=ERROR_TYPE_RESOURCE,
+            exit_code=EXIT_RESOURCE_NOT_FOUND,
+            fix="Verify the resource exists or check if the ID is correct.",
+            retryable=False,
+            details={"context": context} if context else {}
+        )
+
+    # 文件/路径错误
+    if any(keyword in error_str for keyword in ['file not found', 'path not found', 'no such file', 'ENOENT']):
+        return CLIError(
+            message=f"File not found: {message}",
+            error_type=ERROR_TYPE_RESOURCE,
+            exit_code=EXIT_RESOURCE_NOT_FOUND,
+            fix="Check the file path is correct and the file exists.",
+            retryable=False,
+            details={"context": context} if context else {}
+        )
+
+    # JSON 解析错误
+    if any(keyword in error_str for keyword in ['json', 'decode', 'parse']):
+        return CLIError(
+            message=f"JSON parse error: {message}",
+            error_type=ERROR_TYPE_PARAM,
+            exit_code=EXIT_PARAMETER_ERROR,
+            fix="Check the JSON format is valid.",
+            retryable=False,
+            details={"context": context} if context else {}
+        )
+
+    # 路径遍历
+    if any(keyword in error_str for keyword in ['path traversal', 'invalid path']):
+        return CLIError(
+            message=f"Path security error: {message}",
+            error_type=ERROR_TYPE_PARAM,
+            exit_code=EXIT_PARAMETER_ERROR,
+            fix="The path contains invalid characters. Use relative paths without '../'.",
+            retryable=False,
+            details={"context": context} if context else {}
+        )
+
+    # 默认：一般错误
+    return CLIError(
+        message=f"Error: {message}",
+        error_type=ERROR_TYPE_SYSTEM,
+        exit_code=EXIT_GENERAL_ERROR,
+        fix="Check the error message and try again. If the issue persists, contact support.",
+        retryable=False,
+        details={"context": context} if context else {}
+    )
+
 
 def check_config(func):
     """Decorator: Check if configuration is complete."""
@@ -36,8 +208,14 @@ def check_config(func):
     def wrapper(*args, **kwargs):
         config_manager = ConfigManager()
         if not config_manager.is_configured():
-            formatter.print_error(t('error_not_configured'))
-            sys.exit(1)
+            error = CLIError(
+                message=t('error_not_configured'),
+                error_type=ERROR_TYPE_PARAM,
+                exit_code=EXIT_PARAMETER_ERROR,
+                fix="Run 'adp config set --api-key YOUR_KEY --api-base-url YOUR_URL' to configure",
+                retryable=False
+            )
+            print_error_and_exit(error)
         return func(*args, **kwargs)
     return wrapper
 
@@ -202,8 +380,14 @@ def set(api_key, api_base_url):
     Set or update API Key and API Base URL.
     """
     if not api_key and not api_base_url:
-        formatter.print_error(t('error_api_key_or_url_required'))
-        sys.exit(1)
+        error = CLIError(
+            message=t('error_api_key_or_url_required'),
+            error_type=ERROR_TYPE_PARAM,
+            exit_code=EXIT_PARAMETER_ERROR,
+            fix="Provide at least one of --api-key or --api-base-url",
+            retryable=False
+        )
+        print_error_and_exit(error)
 
     config_manager = ConfigManager()
 
@@ -225,22 +409,24 @@ def get():
     """
     config_manager = ConfigManager()
     summary = config_manager.get_config_summary()
+    formatter.print_json(summary)
 
-    if formatter.json_mode:
-        formatter.print_json(summary)
-    else:
-        formatter.print_config_summary(summary)
+    # if formatter.json_mode:
+    #     formatter.print_json(summary)
+    # else:
+    #     formatter.print_config_summary(summary)
 
 get.help_key = 'config_get_title'
 
 
 @config.command(help=t('config_clear_title'))
-def clear():
+@click.option('--force', '-y', is_flag=True, help="__option_force_clear__")
+def clear(force):
     """
     Clear local configuration.
     """
     config_manager = ConfigManager()
-    if click.confirm(t('confirm_clear_config')):
+    if force or click.confirm(t('confirm_clear_config')):
         config_manager.clear()
         formatter.print_success(t('config_cleared'))
 
@@ -265,8 +451,8 @@ parse.is_group = True
 @click.option('--app-id', required=True, help="__option_app_id_parse__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=int, default=300, help="__option_timeout__")
-@click.option('--concurrency', type=int, default=1, help="__option_concurrency__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_timeout__")
+@click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
 def local(path, app_id, async_mode, export, timeout, concurrency):
     """
@@ -275,8 +461,7 @@ def local(path, app_id, async_mode, export, timeout, concurrency):
     try:
         _process_local_files(path, async_mode, export, timeout, mode="parse", app_id=app_id, concurrency=concurrency)
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e, "parse local"))
 
 local.help_key = 'parse_local_title'
 
@@ -286,8 +471,8 @@ local.help_key = 'parse_local_title'
 @click.option('--app-id', required=True, help="__option_app_id_parse__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=int, default=300, help="__option_timeout__")
-@click.option('--concurrency', type=int, default=1, help="__option_concurrency__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_timeout__")
+@click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
 def url(url, app_id, async_mode, export, timeout, concurrency):
     """
@@ -296,8 +481,7 @@ def url(url, app_id, async_mode, export, timeout, concurrency):
     try:
         _process_url_file(url, async_mode, export, timeout, mode="parse", app_id=app_id, concurrency=concurrency)
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 url.help_key = 'parse_url_title'
 
@@ -307,9 +491,9 @@ url.help_key = 'parse_url_title'
 @click.option('--app-id', required=True, help="__option_app_id_parse__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=int, default=300, help="__option_timeout__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_timeout__")
 @click.option('--file-name', default="document", help="__option_file_name__")
-@click.option('--concurrency', type=int, default=1, help="__option_concurrency__")
+@click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
 def parse_base64(file_base64, app_id, async_mode, export, timeout, file_name, concurrency):
     """
@@ -321,8 +505,7 @@ def parse_base64(file_base64, app_id, async_mode, export, timeout, file_name, co
             export, timeout, mode="parse", concurrency=concurrency
         )
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 parse_base64.help_key = 'parse_base64_title'
 
@@ -345,8 +528,8 @@ extract.is_group = True
 @click.option('--app-id', required=True, help="__option_app_id_extract__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=int, default=300, help="__option_timeout__")
-@click.option('--concurrency', type=int, default=1, help="__option_concurrency__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_timeout__")
+@click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
 def local(path, app_id, async_mode, export, timeout, concurrency):
     """
@@ -355,8 +538,7 @@ def local(path, app_id, async_mode, export, timeout, concurrency):
     try:
         _process_local_files(path, async_mode, export, timeout, mode="extract", app_id=app_id, concurrency=concurrency)
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 local.help_key = 'extract_local_title'
 
@@ -366,8 +548,8 @@ local.help_key = 'extract_local_title'
 @click.option('--app-id', required=True, help="__option_app_id_extract__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=int, default=300, help="__option_timeout__")
-@click.option('--concurrency', type=int, default=1, help="__option_concurrency__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_timeout__")
+@click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
 def url(url, app_id, async_mode, export, timeout, concurrency):
     """
@@ -376,8 +558,7 @@ def url(url, app_id, async_mode, export, timeout, concurrency):
     try:
         _process_url_file(url, async_mode, export, timeout, mode="extract", app_id=app_id, concurrency=concurrency)
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 url.help_key = 'extract_url_title'
 
@@ -387,9 +568,9 @@ url.help_key = 'extract_url_title'
 @click.option('--app-id', required=True, help="__option_app_id_extract__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=int, default=300, help="__option_timeout__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_timeout__")
 @click.option('--file-name', default="document", help="__option_file_name__")
-@click.option('--concurrency', type=int, default=1, help="__option_concurrency__")
+@click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
 def extract_base64(file_base64, app_id, async_mode, export, timeout, file_name, concurrency):
     """
@@ -401,8 +582,7 @@ def extract_base64(file_base64, app_id, async_mode, export, timeout, file_name, 
             export, timeout, mode="extract", concurrency=concurrency
         )
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 extract_base64.help_key = 'extract_base64_title'
 
@@ -411,7 +591,7 @@ extract_base64.help_key = 'extract_base64_title'
 @click.argument('task-id')
 @click.option('--watch', is_flag=True, help="__option_watch__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=int, default=300, help="__option_watch_timeout__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_watch_timeout__")
 @check_config
 def extract_query(task_id, watch, export,timeout):
     """
@@ -439,8 +619,7 @@ def extract_query(task_id, watch, export,timeout):
             formatter.print_success(f"{t('results_exported_to')} {export}")
             
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 extract_query.help_key = 'extract_query_title'
 
@@ -451,7 +630,7 @@ extract_query.help_key = 'extract_query_title'
 @click.argument('task-id')
 @click.option('--watch', is_flag=True, help="__option_watch__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=int, default=300, help="__option_watch_timeout__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_watch_timeout__")
 @check_config
 def parse_query(task_id, watch,export, timeout):
     """
@@ -480,8 +659,7 @@ def parse_query(task_id, watch,export, timeout):
             
 
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 parse_query.help_key = 'parse_query_title'
 
@@ -524,31 +702,14 @@ def list_apps(app_label):
                         filtered_apps.append(app)
             apps = filtered_apps
 
-        if formatter.json_mode:
+        # 直接输出 JSON 格式
+        if apps:
             formatter.print_json({"apps": apps})
-        elif apps:
-            table_data = []
-            for app in apps:
-                app_label_value = app.get("app_label", "")
-                # Convert app_label to string if it's a list
-                if isinstance(app_label_value, type([])):
-                    app_label_value = ", ".join(app_label_value)
-                table_data.append([
-                    app.get("app_id", ""),
-                    app.get("app_name", ""),
-                    app_label_value,
-                ])
-            formatter.print_table(
-                ["App ID", "App Name", "App Label"],
-                table_data,
-                title=t('available_applications')
-            )
         else:
-            formatter.print_info(f"applist:{apps} {t('no_applications_found')}")
+            formatter.print_json({"apps": [], "message": t('no_applications_found')})
 
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 list_apps.help_key = 'app_id_list_title'
 
@@ -581,8 +742,7 @@ def _parse_json_param_value(value: str):
             with open(path, 'r', encoding='utf-8') as f:
                 json_str = f.read()
         except Exception as e:
-            formatter.print_error(t('error_read_json_file', error=str(e)))
-            sys.exit(1)
+            print_error_and_exit(classify_exception(e, "read JSON file"))
     else:
         json_str = value
 
@@ -598,8 +758,14 @@ def _parse_json_param_value(value: str):
     try:
         return json.loads(json_str)
     except json.JSONDecodeError as e:
-        formatter.print_error(t('error_invalid_json_format', error=str(e)))
-        sys.exit(1)
+        error = CLIError(
+            message=f"Invalid JSON format: {str(e)}",
+            error_type=ERROR_TYPE_PARAM,
+            exit_code=EXIT_PARAMETER_ERROR,
+            fix="Check the JSON syntax is correct. Use a JSON validator if needed.",
+            retryable=False
+        )
+        print_error_and_exit(error)
 
 
 def parse_bool_param(_ctx, _param, value):
@@ -621,8 +787,14 @@ def parse_bool_param(_ctx, _param, value):
     elif value.lower() in ('false', '0', 'no'):
         return False
     else:
-        formatter.print_error(t('error_invalid_json_format', error=f"Invalid boolean value: {value}"))
-        sys.exit(1)
+        error = CLIError(
+            message=f"Invalid boolean value: {value}",
+            error_type=ERROR_TYPE_PARAM,
+            exit_code=EXIT_PARAMETER_ERROR,
+            fix="Use one of: true, false, 1, 0, yes, no",
+            retryable=False
+        )
+        print_error_and_exit(error)
 
 
 def parse_json_list_param(_ctx, _param, value):
@@ -649,8 +821,14 @@ def parse_json_list_param(_ctx, _param, value):
             if isinstance(labels, type([])):
                 return labels
             else:
-                formatter.print_error(t('error_invalid_json_format', error=f"app-label must be a list: {value}"))
-                sys.exit(1)
+                error = CLIError(
+                    message=f"app-label must be a list, got: {value}",
+                    error_type=ERROR_TYPE_PARAM,
+                    exit_code=EXIT_PARAMETER_ERROR,
+                    fix="Provide app-label as a JSON array, e.g., [\"tag1\", \"tag2\"]",
+                    retryable=False
+                )
+                print_error_and_exit(error)
         except json.JSONDecodeError:
             # 不是有效的 JSON，尝试作为逗号分隔的字符串处理
             pass
@@ -673,18 +851,37 @@ def validate_create_app_params(app_name, app_label, enable_long_doc, long_doc_co
     """
     # 验证 app_name 长度不超过 50 字符
     if len(app_name) > 50:
-        formatter.print_error(t('error_invalid_json_format', error=f"app_name must be 50 characters or less (got {len(app_name)})"))
-        sys.exit(1)
+        error = CLIError(
+            message=f"app_name must be 50 characters or less (got {len(app_name)})",
+            error_type=ERROR_TYPE_PARAM,
+            exit_code=EXIT_PARAMETER_ERROR,
+            fix="Shorten the app_name to 50 characters or fewer",
+            retryable=False
+        )
+        print_error_and_exit(error)
 
     # 验证 app_label 最多 5 个
     if app_label and len(app_label) > 5:
-        formatter.print_error(t('error_invalid_json_format', error=f"app_label must have 5 or fewer labels (got {len(app_label)})"))
-        sys.exit(1)
+        error = CLIError(
+            message=f"app_label must have 5 or fewer labels (got {len(app_label)})",
+            error_type=ERROR_TYPE_PARAM,
+            exit_code=EXIT_PARAMETER_ERROR,
+            fix="Remove extra labels to keep only 5 or fewer",
+            retryable=False
+        )
+        print_error_and_exit(error)
 
     # 验证 long_doc_config 仅在 enable_long_doc=true 时生效
     if long_doc_config is not None and not enable_long_doc:
-        formatter.print_error(t('error_invalid_json_format', error="long_doc_config is only valid when enable_long_doc=true"))
-        sys.exit(1)
+        error = CLIError(
+            message="long_doc_config is only valid when enable_long_doc=true",
+            error_type=ERROR_TYPE_PARAM,
+            exit_code=EXIT_PARAMETER_ERROR,
+            fix="Set --enable-long-doc to true when using --long-doc-config",
+            retryable=False
+        )
+        print_error_and_exit(error)
+        sys.exit(EXIT_PARAMETER_ERROR)
 
 
 @cli.group(help=t('custom_app_description'), cls=CLI)
@@ -703,7 +900,9 @@ custom_app.is_group = True
 @click.option('--app-name', required=True, help="__custom_app_create_app_name__")
 @click.option('--app-label', callback=parse_json_list_param, help="__custom_app_create_app_label__")
 @click.option('--extract-fields', required=True, help="__custom_app_create_extract_fields__")
-@click.option('--parse-mode', required=True, help="__custom_app_create_parse_mode__")
+@click.option('--parse-mode', required=True,
+              type=click.Choice(['standard', 'advance', 'agentic'], case_sensitive=False),
+              help="__custom_app_create_parse_mode__")
 @click.option('--enable-long-doc', callback=parse_bool_param, help="__custom_app_create_enable_long_doc__")
 @click.option('--long-doc-config', help="__custom_app_create_long_doc_config__")
 @check_config
@@ -750,10 +949,67 @@ def create(api_key, app_name, app_label, extract_fields, parse_mode, enable_long
                 config_manager.set_api_key(original_key)
 
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 create.help_key = 'custom_app_create_title'
+
+
+@custom_app.command(help="__custom_app_update_title__")
+@click.option('--api-key', help="__custom_app_update_api_key__")
+@click.option('--app-id', required=True, help="__custom_app_update_app_id__")
+@click.option('--app-name', help="__custom_app_update_app_name__")
+@click.option('--app-label', callback=parse_json_list_param, help="__custom_app_update_app_label__")
+@click.option('--extract-fields', required=True, help="__custom_app_update_extract_fields__")
+@click.option('--parse-mode', required=True,
+              type=click.Choice(['standard', 'advance', 'agentic'], case_sensitive=False),
+              help="__custom_app_update_parse_mode__")
+@click.option('--enable-long-doc', 'enable_long_doc', required=True,
+              callback=parse_bool_param, help="__custom_app_update_enable_long_doc__")
+@click.option('--long-doc-config', help="__custom_app_update_long_doc_config__")
+@check_config
+def update(api_key, app_id, app_name, app_label, extract_fields,
+           parse_mode, enable_long_doc, long_doc_config):
+    """
+    Update a custom extraction application (full coverage update).
+    """
+    try:
+        # 解析 JSON 参数
+        extract_fields = _parse_json_param_value(extract_fields)
+        if long_doc_config:
+            long_doc_config = _parse_json_param_value(long_doc_config)
+
+        # 临时覆盖 API Key
+        if api_key:
+            config_manager = ConfigManager()
+            original_key = config_manager.get_api_key()
+            config_manager.set_api_key(api_key)
+        else:
+            config_manager = ConfigManager()
+
+        api_client = APIClient(config_manager)
+
+        result = api_client.update_custom_app(
+            app_id=app_id,
+            extract_fields=extract_fields,
+            parse_mode=parse_mode,
+            enable_long_doc=enable_long_doc,
+            app_name=app_name,
+            app_label=app_label,
+            long_doc_config=long_doc_config,
+        )
+
+        formatter.print_success(t('app_updated'))
+        formatter.print_json(result)
+
+        # 恢复原始 API Key
+        if api_key:
+            if original_key:
+                config_manager.set_api_key(original_key)
+
+    except Exception as e:
+        print_error_and_exit(classify_exception(e))
+
+update.help_key = 'custom_app_update_title'
 
 
 @custom_app.command(help="__custom_app_get_config_title__")
@@ -788,57 +1044,9 @@ def get_config(api_key, app_id, config_version):
                 config_manager.set_api_key(original_key)
 
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 get_config.help_key = 'custom_app_get_config_title'
-
-
-@custom_app.command(help="__custom_app_list_versions_title__")
-@click.option('--api-key', help="__custom_app_list_versions_api_key__")
-@click.option('--app-id', required=True, help="__custom_app_list_versions_app_id__")
-@check_config
-def list_versions(api_key, app_id):
-    """
-    List configuration versions of a custom app.
-    """
-    try:
-        if api_key:
-            config_manager = ConfigManager()
-            original_key = config_manager.get_api_key()
-            config_manager.set_api_key(api_key)
-        else:
-            config_manager = ConfigManager()
-
-        api_client = APIClient(config_manager)
-
-        versions = api_client.list_custom_app_versions(app_id)
-
-        if formatter.json_mode:
-            formatter.print_json({"versions": versions})
-        elif versions:
-            table_data = []
-            for version in versions:
-                # 提取版本信息（根据实际返回结构调整）
-                version_str = str(version.get("version", version.get("config_version", "N/A")))
-                table_data.append([version_str])
-            formatter.print_table(
-                ["Version"],
-                table_data,
-                title=t('available_versions')
-            )
-        else:
-            formatter.print_info(t('no_versions_found'))
-
-        if api_key:
-            if original_key:
-                config_manager.set_api_key(original_key)
-
-    except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
-
-list_versions.help_key = 'custom_app_list_versions_title'
 
 
 @custom_app.command(help="__custom_app_delete_title__")
@@ -861,16 +1069,28 @@ def delete(api_key, app_id):
 
         result = api_client.delete_custom_app(app_id)
 
-        formatter.print_success(t('app_deleted'))
-        formatter.print_json(result)
+        # 检查业务级删除结果
+        if result.get("code") == "success" and result.get("data", {}).get("success"):
+            formatter.print_success(t('app_deleted'))
+        else:
+            # 删除失败（可能是应用不存在）
+            error_msg = result.get("data", {}).get("message", "Failed to delete app")
+            error = CLIError(
+                message=f"Failed to delete app: {error_msg}",
+                error_type=ERROR_TYPE_RESOURCE,
+                exit_code=EXIT_RESOURCE_NOT_FOUND,
+                fix="Verify the app-id is correct. Run 'adp custom-app get-config --app-id YOUR_APP_ID' to check if the app exists.",
+                retryable=False,
+                details={"app_id": app_id}
+            )
+            print_error_and_exit(error)
 
         if api_key:
             if original_key:
                 config_manager.set_api_key(original_key)
 
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 delete.help_key = 'custom_app_delete_title'
 
@@ -896,16 +1116,28 @@ def delete_version(api_key, app_id, config_version):
 
         result = api_client.delete_custom_app_version(app_id, config_version)
 
-        formatter.print_success(t('version_deleted'))
-        formatter.print_json(result)
+        # 检查业务级删除结果
+        if result.get("code") == "success":
+            formatter.print_success(t('version_deleted'))
+        else:
+            # 删除失败（可能是版本不存在）
+            error_msg = result.get("message", "Failed to delete version")
+            error = CLIError(
+                message=f"Failed to delete version: {error_msg}",
+                error_type=ERROR_TYPE_RESOURCE,
+                exit_code=EXIT_RESOURCE_NOT_FOUND,
+                fix="Verify the app-id and config-version are correct.",
+                retryable=False,
+                details={"app_id": app_id, "config_version": config_version}
+            )
+            print_error_and_exit(error)
 
         if api_key:
             if original_key:
                 config_manager.set_api_key(original_key)
 
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 delete_version.help_key = 'custom_app_delete_version_title'
 
@@ -915,15 +1147,22 @@ delete_version.help_key = 'custom_app_delete_version_title'
 @click.option('--app-id', required=True, help="__custom_app_ai_generate_app_id__")
 @click.option('--file-url', help="__custom_app_ai_generate_file_url__")
 @click.option('--file-local', help="__custom_app_ai_generate_file_local__")
+@click.option('--base64', 'file_base64', help="__custom_app_ai_generate_file_base64__")
 @check_config
-def ai_generate(api_key, app_id, file_url, file_local):
+def ai_generate(api_key, app_id, file_url, file_local, file_base64):
     """
     AI generate extraction field recommendations.
     """
     try:
-        if not file_url and not file_local:
-            formatter.print_error(t('error_file_url_or_local_required'))
-            sys.exit(1)
+        if not file_url and not file_local and not file_base64:
+            error = CLIError(
+                message="One of --file-url, --file-local, or --base64 must be provided",
+                error_type=ERROR_TYPE_PARAM,
+                exit_code=EXIT_PARAMETER_ERROR,
+                fix="Provide at least one of: --file-url, --file-local, or --base64",
+                retryable=False
+            )
+            print_error_and_exit(error)
 
         if api_key:
             config_manager = ConfigManager()
@@ -934,7 +1173,7 @@ def ai_generate(api_key, app_id, file_url, file_local):
 
         api_client = APIClient(config_manager)
 
-        result = api_client.ai_generate_fields(app_id, file_url, file_local)
+        result = api_client.ai_generate_fields(app_id, file_url, file_local, file_base64)
 
         formatter.print_section(t('custom_app_ai_generate_title'))
         formatter.print_json(result)
@@ -944,8 +1183,7 @@ def ai_generate(api_key, app_id, file_url, file_local):
                 config_manager.set_api_key(original_key)
 
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 ai_generate.help_key = 'custom_app_ai_generate_title'
 
@@ -999,8 +1237,7 @@ def credit(api_key):
                 config_manager.set_api_key(original_key)
 
     except Exception as e:
-        formatter.print_error(f"{t('error')} {str(e)}")
-        sys.exit(1)
+        print_error_and_exit(classify_exception(e))
 
 
 # ==================== Help Command ====================
@@ -1015,6 +1252,501 @@ def help(ctx):
     return
 
 help.help_key = 'help_description'
+
+
+# ==================== Schema Command ====================
+
+@cli.command(help="__schema_description__")
+@click.argument('command', required=False, nargs=-1)
+def schema(command):
+    """
+    Display command schema for Agent introspection.
+
+    Use this command to query the CLI's capabilities and parameter definitions.
+
+    Examples:
+        adp schema              # Show full command tree
+        adp schema parse       # Show parse command group
+        adp schema parse local # Show parse local command details
+    """
+    if command:
+        # command is a tuple of parts, e.g. ('parse', 'local')
+        # Navigate through the command tree
+        cmd = cli
+        cmd_name_parts = []
+        for part in command:
+            next_cmd = cmd.get_command(None, part) if hasattr(cmd, 'get_command') else None
+            if next_cmd is None:
+                full_path = " ".join(command[:len(cmd_name_parts) + 1])
+                error = CLIError(
+                    message=f"Command not found: {full_path}",
+                    error_type=ERROR_TYPE_RESOURCE,
+                    exit_code=EXIT_RESOURCE_NOT_FOUND,
+                    fix=f"Run 'adp schema' to see available commands",
+                    retryable=False,
+                    details={"requested_command": full_path}
+                )
+                print_error_and_exit(error)
+            cmd = next_cmd
+            cmd_name_parts.append(part)
+
+        full_command_name = " ".join(command)
+        schema_data = _get_command_schema(full_command_name, cmd)
+    else:
+        # 输出完整命令树
+        schema_data = _get_full_schema()
+
+    formatter.print_json(schema_data)
+
+schema.help_key = 'schema_description'
+
+
+def _get_command_schema(command_name: str, cmd) -> Dict[str, Any]:
+    """
+    获取单个命令的 schema。
+
+    Args:
+        command_name: 命令名称
+        cmd: Click 命令对象
+
+    Returns:
+        命令 schema 字典
+    """
+    schema = {
+        "name": command_name,
+        "help": cmd.help or "",
+        "type": "group" if hasattr(cmd, 'is_group') and cmd.is_group else "command",
+        "options": [],
+        "arguments": [],
+        "subcommands": {}
+    }
+
+    # 如果是命令组，获取子命令列表
+    if hasattr(cmd, 'list_commands'):
+        for sub_name in cmd.list_commands({}):
+            sub_cmd = cmd.get_command({}, sub_name)
+            if sub_cmd:
+                schema["subcommands"][sub_name] = {
+                    "help": sub_cmd.help or ""
+                }
+
+    # 如果是具体命令，获取参数和选项
+    if hasattr(cmd, 'params'):
+        for param in cmd.params:
+            if param.param_type_name == 'argument':
+                schema["arguments"].append({
+                    "name": param.name,
+                    "required": param.required,
+                    "help": getattr(param, 'help', '') or ""
+                })
+            elif param.param_type_name == 'option':
+                option_info = {
+                    "name": param.name,
+                    "required": param.required,
+                    "help": getattr(param, 'help', '') or "",
+                    "flags": param.opts
+                }
+                if hasattr(param, 'default') and param.default is not None:
+                    # 过滤不可 JSON 序列化的值（如 Sentinel 对象）
+                    try:
+                        import json
+                        json.dumps(param.default)
+                        option_info["default"] = param.default
+                    except (TypeError, ValueError):
+                        pass
+                if hasattr(param, 'choices') and param.choices:
+                    option_info["choices"] = list(param.choices)
+                schema["options"].append(option_info)
+
+    return schema
+
+
+def _get_full_schema() -> Dict[str, Any]:
+    """
+    获取完整命令树 schema。
+
+    Returns:
+        完整命令树 schema
+    """
+    schema = {
+        "version": "1.10.0",
+        "commands": {}
+    }
+
+    for subcommand_name in cli.list_commands(None):
+        subcommand = cli.get_command(None, subcommand_name)
+        if subcommand:
+            schema["commands"][subcommand_name] = {
+                "help": subcommand.help or "",
+                "is_group": hasattr(subcommand, 'is_group') and subcommand.is_group,
+                "subcommands": {}
+            }
+            # 如果是命令组，获取子命令
+            if hasattr(subcommand, 'list_commands'):
+                for sub_name in subcommand.list_commands({}):
+                    sub_cmd = subcommand.get_command({}, sub_name)
+                    if sub_cmd:
+                        schema["commands"][subcommand_name]["subcommands"][sub_name] = {
+                            "help": sub_cmd.help or ""
+                        }
+
+    return schema
+
+
+# ==================== Batch Processor Classes ====================
+
+from typing import Tuple, List, Any, Dict, Optional
+
+
+class BatchProcessor:
+    """批量处理器基类，处理通用流程."""
+
+    def __init__(self, mode: str, app_id: str, async_mode: bool,
+                 export_path: Optional[str], timeout: int, concurrency: int):
+        self.mode = mode
+        self.app_id = app_id
+        self.async_mode = async_mode
+        self.export_path = export_path
+        self.timeout = timeout
+        self.concurrency = concurrency
+        self.config_manager = ConfigManager()
+        self.api_client = APIClient(self.config_manager)
+
+    def run(self, items: List) -> None:
+        """执行处理流程."""
+        # 1. 验证并发
+        try:
+            self.concurrency = _validate_concurrency(self.api_client, self.concurrency)
+        except ValueError as e:
+            error = CLIError(
+                message=str(e),
+                error_type=ERROR_TYPE_PARAM,
+                exit_code=EXIT_PARAMETER_ERROR,
+                fix="Set concurrency to 1 (free users) or 2 (paid users)",
+                retryable=False
+            )
+            print_error_and_exit(error)
+
+        # 2. 获取有效项目
+        valid_items, invalid_items = self._validate_items(items)
+
+        # 3. 输出无效项目警告
+        self._display_invalid_items(invalid_items)
+
+        if not valid_items:
+            error = CLIError(
+                message="No valid files to process",
+                error_type=ERROR_TYPE_RESOURCE,
+                exit_code=EXIT_RESOURCE_NOT_FOUND,
+                fix="Check the file path is correct and files are supported formats (PDF, DOCX, XLSX, PPTX, images)",
+                retryable=False
+            )
+            print_error_and_exit(error)
+
+        formatter.print_section(self._get_section_title(valid_items))
+
+        # 4. 处理项目（并发或串行）
+        if len(valid_items) > 1 and self.concurrency > 1:
+            results = self._process_concurrent(valid_items)
+        else:
+            results = self._process_sequential(valid_items)
+
+        # 5. 排序并输出结果
+        results = _sort_and_clean_results(results)
+        OutputFormatter.print_results(results, valid_items, self.mode, formatter, t)
+
+        # 6. 导出
+        self._export_if_needed(results, valid_items)
+
+    # --- 子类必须实现的方法 ---
+
+    def _validate_items(self, items: List) -> Tuple[List, List]:
+        """验证项目，返回 (有效列表, 无效列表)."""
+        raise NotImplementedError
+
+    def _process_single(self, item: Any, index: int, total: int) -> Dict[str, Any]:
+        """处理单个项目."""
+        raise NotImplementedError
+
+    def _get_item_name(self, item: Any) -> str:
+        """获取项目显示名称."""
+        raise NotImplementedError
+
+    def _get_section_title(self, items: List) -> str:
+        """获取section标题."""
+        raise NotImplementedError
+
+    # --- 可选覆盖的方法 ---
+
+    def _display_invalid_items(self, invalid_items: List) -> None:
+        """显示无效项目警告，默认实现."""
+        if invalid_items:
+            formatter.print_warning(t('skipped_invalid_files', count=len(invalid_items)))
+            for item, error in invalid_items:
+                formatter.print(f"  - {item}: {error}", style="dim")
+
+    def _get_error_message_key(self) -> str:
+        """获取错误消息的i18n key."""
+        return 'failed_to_process'
+
+    # --- 内部辅助方法 ---
+
+    def _process_concurrent(self, items: List) -> List[Dict[str, Any]]:
+        """并发处理."""
+        return _process_items_concurrently(
+            items, self._process_single,
+            self.concurrency,
+            self._display_submit, self._display_result, t
+        )
+
+    def _process_sequential(self, items: List) -> List[Dict[str, Any]]:
+        """串行处理."""
+        results = []
+        for i, item in enumerate(items, 1):
+            result = self._process_single(item, i, len(items))
+            if "error" not in result:
+                results.append(result)
+            if "task_id" in result:
+                formatter.print_progress(i, len(items), f"{self._get_item_name(item)} - Task_ID: {result['task_id']} - Completed")
+            elif not self.async_mode:
+                formatter.print_progress(i, len(items), f"{self._get_item_name(item)}")
+        return results
+
+    def _display_submit(self, index: int, item: Any, total: int) -> None:
+        """显示提交信息."""
+        print(f"[{index}/{total}] Submitted: {self._get_item_name(item)}")
+
+    def _display_result(self, result: Dict[str, Any]) -> None:
+        """显示结果信息."""
+        item = result.get("file") or result.get("url") or result
+        item_name = self._get_item_name(item) if not isinstance(item, str) else item
+        if "error" in result:
+            print(f"✗ Failed: {item_name} - {result['error']}")
+        elif "task_id" in result:
+            print(f"✓ Completed: {item_name} - Task_ID: {result['task_id']}")
+        else:
+            print(f"✓ Completed: {item_name}")
+
+    def _export_if_needed(self, results: List[Dict], valid_items: List) -> None:
+        """导出结果."""
+        if not self.export_path:
+            return
+        data = results[0]["result"] if len(results) == 1 else {"results": results}
+        FileHandler.write_json_output(data, Path(self.export_path))
+        formatter.print_success(f"{t('results_exported_to')} {self.export_path}")
+
+    def _call_api(self, item: Any, file_name: str, index: int) -> Dict[str, Any]:
+        """调用API处理单个项目."""
+        try:
+            if self.mode == "parse":
+                if self.async_mode:
+                    task_id = self.api_client.parse_async(None, self.app_id, file_path=item)
+                    result = self.api_client.wait_for_task(
+                        task_id, self.api_client.query_parse_task, timeout=self.timeout
+                    )
+                    return {"file": str(item), "task_id": task_id, "result": result, "index": index}
+                else:
+                    result = self.api_client.parse_sync(None, self.app_id, file_path=item)
+                    return {"file": str(item), "result": result, "index": index}
+            else:  # extract
+                if self.async_mode:
+                    task_id = self.api_client.extract_async(None, self.app_id, file_path=item)
+                    result = self.api_client.wait_for_task(
+                        task_id, self.api_client.query_extract_task, timeout=self.timeout
+                    )
+                    return {"file": str(item), "task_id": task_id, "result": result, "index": index}
+                else:
+                    result = self.api_client.extract_sync(None, self.app_id, file_path=item)
+                    return {"file": str(item), "result": result, "index": index}
+        except Exception as e:
+            formatter.print_error(t(self._get_error_message_key(), name=str(item), error=str(e)))
+            return {"file": str(item), "error": str(e), "index": index}
+
+
+class LocalFileProcessor(BatchProcessor):
+    """本地文件批量处理器."""
+
+    def _validate_items(self, items: List) -> Tuple[List, List]:
+        """验证文件项目."""
+        # items[0] is path string, get all files from this path
+        path = Path(items[0])
+        files = FileHandler.get_files_from_path(path)
+        return FileHandler.validate_files(files)
+
+    def _process_single(self, file_path: Path, index: int, total: int) -> Dict[str, Any]:
+        """处理单个文件."""
+        return self._call_api(file_path, file_path.name, index)
+
+    def _get_item_name(self, item: Any) -> str:
+        """获取文件显示名称."""
+        return Path(item).name
+
+    def _get_section_title(self, items: List) -> str:
+        """获取section标题."""
+        return t('processing_files', count=len(items))
+
+
+class UrlProcessor(BatchProcessor):
+    """URL批量处理器."""
+
+    def __init__(self, mode: str, app_id: str, async_mode: bool,
+                 export_path: Optional[str], timeout: int, concurrency: int,
+                 source_file: Optional[str] = None):
+        super().__init__(mode, app_id, async_mode, export_path, timeout, concurrency)
+        self.source_file = source_file  # Optional: if URLs were read from a file
+
+    def _validate_items(self, items: List) -> Tuple[List, List]:
+        """验证URL项目."""
+        valid_urls = []
+        invalid_urls = []
+
+        for url in items:
+            if _is_valid_url(url):
+                valid_urls.append(url)
+            else:
+                invalid_urls.append((url, t('invalid_url_format', url=url)))
+
+        return valid_urls, invalid_urls
+
+    def _process_single(self, url: str, index: int, total: int) -> Dict[str, Any]:
+        """处理单个URL."""
+        try:
+            if self.mode == "parse":
+                if self.async_mode:
+                    task_id = self.api_client.parse_async(url, self.app_id)
+                    result = self.api_client.wait_for_task(
+                        task_id, self.api_client.query_parse_task, timeout=self.timeout
+                    )
+                    return {"url": url, "task_id": task_id, "result": result, "index": index}
+                else:
+                    result = self.api_client.parse_sync(url, self.app_id)
+                    return {"url": url, "result": result, "index": index}
+            else:  # extract
+                if self.async_mode:
+                    task_id = self.api_client.extract_async(url, self.app_id)
+                    result = self.api_client.wait_for_task(
+                        task_id, self.api_client.query_extract_task, timeout=self.timeout
+                    )
+                    return {"url": url, "task_id": task_id, "result": result, "index": index}
+                else:
+                    result = self.api_client.extract_sync(url, self.app_id)
+                    return {"url": url, "result": result, "index": index}
+        except Exception as e:
+            formatter.print_error(t('failed_to_process_url', url=url, error=str(e)))
+            return {"url": url, "error": str(e), "index": index}
+
+    def _get_item_name(self, item: Any) -> str:
+        """获取URL显示名称（截断处理）."""
+        url = str(item)
+        return url[:80] + ('...' if len(url) > 80 else '')
+
+    def _get_section_title(self, items: List) -> str:
+        """获取section标题."""
+        if len(items) == 1 and not self.source_file:
+            return t('processing_url', count=1, url=items[0])
+        elif self.source_file:
+            return t('processing_urls', count=len(items), file=self.source_file)
+        return t('processing_urls', count=len(items), file='')
+
+    def _display_submit(self, index: int, item: Any, total: int) -> None:
+        """显示提交信息."""
+        url = str(item)
+        url_display = url[:80] + ('...' if len(url) > 80 else '')
+        print(f"[{index}/{total}] Submitted: {url_display}")
+
+    def _display_result(self, result: Dict[str, Any]) -> None:
+        """显示结果信息."""
+        url = result.get("url", "")
+        url_display = url[:60] + ('...' if len(url) > 60 else '')
+        if "error" in result:
+            print(f"✗ Failed: {url_display} - {result['error']}")
+        elif "task_id" in result:
+            print(f"✓ Completed: {url_display} - Task_ID: {result['task_id']}")
+        else:
+            print(f"✓ Completed: {url_display}")
+
+    def _get_error_message_key(self) -> str:
+        """获取错误消息的i18n key."""
+        return 'failed_to_process_url'
+
+
+class Base64Processor(BatchProcessor):
+    """Base64批量处理器."""
+
+    def __init__(self, mode: str, app_id: str, async_mode: bool,
+                 export_path: Optional[str], timeout: int, concurrency: int,
+                 file_name: str = "document"):
+        super().__init__(mode, app_id, async_mode, export_path, timeout, concurrency)
+        self.file_name = file_name
+
+    def _validate_items(self, items: List) -> Tuple[List, List]:
+        """Base64不需要验证，直接返回."""
+        return items, []
+
+    def _process_single(self, b64_str: str, index: int, total: int) -> Dict[str, Any]:
+        """处理单个base64字符串."""
+        current_file_name = self.file_name if total == 1 else f"{self.file_name}_{index}"
+        try:
+            if self.mode == "parse":
+                if self.async_mode:
+                    task_id = self.api_client.parse_async(None, self.app_id, file_base64=b64_str, file_name=current_file_name)
+                    result = self.api_client.wait_for_task(
+                        task_id, self.api_client.query_parse_task, timeout=self.timeout
+                    )
+                    return {"index": index, "task_id": task_id, "result": result}
+                else:
+                    result = self.api_client.parse_sync(None, self.app_id, file_base64=b64_str, file_name=current_file_name)
+                    return {"index": index, "result": result}
+            else:  # extract
+                if self.async_mode:
+                    task_id = self.api_client.extract_async(None, self.app_id, file_base64=b64_str, file_name=current_file_name)
+                    result = self.api_client.wait_for_task(
+                        task_id, self.api_client.query_extract_task, timeout=self.timeout
+                    )
+                    return {"index": index, "task_id": task_id, "result": result}
+                else:
+                    result = self.api_client.extract_sync(None, self.app_id, file_base64=b64_str, file_name=current_file_name)
+                    return {"index": index, "result": result}
+        except Exception as e:
+            formatter.print_error(t('failed_to_process', name=f"base64_{index}", error=str(e)))
+            return {"index": index, "error": str(e)}
+
+    def _get_item_name(self, item: Any) -> str:
+        """获取显示名称."""
+        return f"base64_{item}" if isinstance(item, int) else "base64"
+
+    def _get_section_title(self, items: List) -> str:
+        """获取section标题."""
+        return t('processing_files', count=len(items))
+
+    def _display_submit(self, index: int, item: Any, total: int) -> None:
+        """显示提交信息."""
+        print(f"[{index}/{total}] Submitted base64_{index}")
+
+    def _display_result(self, result: Dict[str, Any]) -> None:
+        """显示结果信息."""
+        if "error" in result:
+            print(f"✗ Failed: base64_{result['index']} - {result['error']}")
+        elif "task_id" in result:
+            print(f"✓ Completed: base64_{result['index']} - Task_ID: {result['task_id']}")
+        else:
+            print(f"✓ Completed: base64_{result['index']}")
+
+    def _export_if_needed(self, results: List[Dict], valid_items: List) -> None:
+        """导出结果（使用index作为标识）."""
+        if not self.export_path:
+            return
+        # Reconstruct results with base64 index for display
+        display_results = []
+        for r in results:
+            display_results.append({
+                "base64_index": r.get("index"),
+                "result": r.get("result"),
+                "task_id": r.get("task_id")
+            })
+        data = display_results[0] if len(display_results) == 1 else {"results": display_results}
+        FileHandler.write_json_output(data, Path(self.export_path))
+        formatter.print_success(f"{t('results_exported_to')} {self.export_path}")
 
 
 # ==================== Helper Functions ====================
@@ -1112,125 +1844,13 @@ def _process_local_files(
         app_id: Application ID (required for extract mode)
         concurrency: Number of concurrent tasks (only effective for batch processing)
     """
-    import concurrent.futures
-
-    path = Path(path_str)
-    config_manager = ConfigManager()
-    api_client = APIClient(config_manager)
-
-    # Validate and adjust concurrency based on payment status
-    try:
-        concurrency = _validate_concurrency(api_client, concurrency)
-    except ValueError as e:
-        formatter.print_error(str(e))
-        sys.exit(1)
-
-    # Get file list
-    files = FileHandler.get_files_from_path(path)
-
-    if not files:
-        formatter.print_error(f"{t('no_supported_files')} {path}")
-        return
-
-    # Validate files
-    valid_files, invalid_files = FileHandler.validate_files(files)
-
-    if invalid_files:
-        formatter.print_warning(t('skipped_invalid_files', count=len(invalid_files)))
-        for file_path, error in invalid_files:
-            formatter.print(f"  - {file_path}: {error}", style="dim")
-
-    if not valid_files:
-        formatter.print_error(t('no_valid_files'))
-        return
-
-    formatter.print_section(t('processing_files', count=len(valid_files)))
-
-    def process_file(file_path, index, total):
-        """Process a single file."""
-        try:
-            if mode == "parse":
-                if async_mode:
-                    task_id = api_client.parse_async(None, app_id, file_path)
-                    # Query task and wait for completion
-                    result = api_client.wait_for_task(
-                        task_id,
-                        api_client.query_parse_task,
-                        timeout=timeout
-                    )
-                    return {"file": str(file_path), "task_id": task_id, "result": result, "index": index}
-                else:
-                    result = api_client.parse_sync(None, app_id, file_path)
-                    return {"file": str(file_path), "result": result, "index": index}
-            elif mode == "extract":
-                if async_mode:
-                    task_id = api_client.extract_async(None, app_id, file_path)
-                    # Query task and wait for completion
-                    result = api_client.wait_for_task(
-                        task_id,
-                        api_client.query_extract_task,
-                        timeout=timeout
-                    )
-                    return {"file": str(file_path), "task_id": task_id, "result": result, "index": index}
-                else:
-                    result = api_client.extract_sync(None, app_id, file_path)
-                    return {"file": str(file_path), "result": result, "index": index}
-        except Exception as e:
-            formatter.print_error(t('failed_to_process', name=file_path.name, error=str(e)))
-            return {"file": str(file_path), "error": str(e), "index": index}
-
-    # Display functions for concurrent processing
-    def display_file_submit(index, file_path, total):
-        print(f"[{index}/{total}] Submitted: {file_path.name}")
-
-    def display_file_result(result):
-        if "error" in result:
-            print(f"✗ Failed: {Path(result['file']).name} - {result['error']}")
-        else:
-            file_path = Path(result["file"])
-            if "task_id" in result:
-                print(f"✓ Completed: {file_path.name} - Task_ID: {result['task_id']}")
-            else:
-                print(f"✓ Completed: {file_path.name}")
-
-    # Check if batch processing (more than 1 file)
-    is_batch = len(valid_files) > 1
-
-    if is_batch and concurrency > 1:
-        # Concurrent processing for batch
-        results = _process_items_concurrently(
-            valid_files, process_file, concurrency,
-            display_file_submit, display_file_result, t
-        )
-    else:
-        # Sequential processing (single file or sync mode or concurrency=1)
-        results = []
-        print(f"valid_files:{len(valid_files)}")
-        for i, file_path in enumerate(valid_files, 1):
-            result = process_file(file_path, i, len(valid_files))
-            if "error" not in result:
-                results.append(result)
-                # Show progress for each file
-                if "task_id" in result:
-                    formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name} - Task_ID: {result['task_id']} - Completed")
-                elif not async_mode:
-                    formatter.print_progress(i, len(valid_files), f"Processing: {file_path.name}")
-
-    # Sort results by index and remove index
-    results = _sort_and_clean_results(results)
-
-    # Output results
-    OutputFormatter.print_results(results, valid_files, mode, formatter, t)
-
-    if export_path:
-        data = results[0]["result"] if len(results) == 1 else {"results": results}
-        FileHandler.write_json_output(data, Path(export_path))
-        formatter.print_success(f"{t('results_exported_to')} {export_path}")
+    processor = LocalFileProcessor(mode, app_id, async_mode, export_path, timeout, concurrency)
+    processor.run([path_str])
 
 
 def _is_valid_url(url: str) -> bool:
     """
-    Validate if URL format is valid.
+    Validate if URL format is valid and safe.
 
     Args:
         url: URL string
@@ -1238,7 +1858,29 @@ def _is_valid_url(url: str) -> bool:
     Returns:
         Whether it is a valid URL
     """
-    return url.startswith(("http://", "https://"))
+    # 只允许 http:// 和 https://
+    if not url.startswith(("http://", "https://")):
+        return False
+
+    # 拒绝危险的协议
+    dangerous_schemes = ("javascript:", "file:", "data:", "vbscript:", "mailto:")
+    lower_url = url.lower()
+    for scheme in dangerous_schemes:
+        if lower_url.startswith(scheme):
+            return False
+
+    # 拒绝嵌入凭据的URL (user:password@host)
+    if "@" in url and "://" in url:
+        # 检查 @ 是否在 path 中而非 authority 中
+        scheme_end = url.index("://") + 3
+        authority_end = url.find("/", scheme_end)
+        if authority_end == -1:
+            authority_end = len(url)
+        authority = url[scheme_end:authority_end]
+        if "@" in authority:
+            return False
+
+    return True
 
 
 def _process_url_file(
@@ -1262,121 +1904,48 @@ def _process_url_file(
         app_id: Application ID (required for extract mode)
         concurrency: Number of concurrent tasks (only effective for batch processing)
     """
-    config_manager = ConfigManager()
-    api_client = APIClient(config_manager)
-
-    # Validate and adjust concurrency based on payment status
-    try:
-        concurrency = _validate_concurrency(api_client, concurrency)
-    except ValueError as e:
-        formatter.print_error(str(e))
-        sys.exit(1)
-
     # Determine if url parameter is a file path or a single URL
     input_path = Path(url)
     is_file_path = input_path.exists() and input_path.is_file()
+    source_file = None
 
     if is_file_path:
         # Read URL list from file
         try:
             urls = FileHandler.read_url_list_file(input_path)
         except Exception as e:
-            formatter.print_error(f"{t('error')} {str(e)}")
-            raise
+            print_error_and_exit(classify_exception(e, "read URL list file"))
 
         if not urls:
-            formatter.print_error(f"{t('no_valid_urls')} {input_path}")
-            return
+            error = CLIError(
+                message=f"No valid URLs found in file: {input_path}",
+                error_type=ERROR_TYPE_RESOURCE,
+                exit_code=EXIT_RESOURCE_NOT_FOUND,
+                fix="Check the file contains valid URLs (one per line, starting with http:// or https://)",
+                retryable=False,
+                details={"file": str(input_path)}
+            )
+            print_error_and_exit(error)
 
-        formatter.print_section(t('processing_urls', count=len(urls), file=input_path))
+        source_file = str(input_path)
     else:
         # Single URL - validate URL format
         if not _is_valid_url(url):
-            formatter.print_error(t('invalid_url_format', url=url))
-            return
+            error = CLIError(
+                message=f"Invalid URL format: {url}. URL must start with http:// or https://",
+                error_type=ERROR_TYPE_PARAM,
+                exit_code=EXIT_RESOURCE_NOT_FOUND,
+                fix="Provide a valid URL starting with http:// or https://",
+                retryable=False,
+                details={"url": url}
+            )
+            print_error_and_exit(error)
 
         urls = [url]
-        formatter.print_section(t('processing_url', count=1, url=url))
 
-    def process_url(current_url, index, total):
-        """Process a single URL."""
-        try:
-            if mode == "parse":
-                if async_mode:
-                    task_id = api_client.parse_async(current_url, app_id)
-                    # Query task and wait for completion
-                    result = api_client.wait_for_task(
-                        task_id,
-                        api_client.query_parse_task,
-                        timeout=timeout
-                    )
-                    return {"url": current_url, "task_id": task_id, "result": result, "index": index}
-                else:
-                    result = api_client.parse_sync(current_url, app_id)
-                    return {"url": current_url, "result": result, "index": index}
-            elif mode == "extract":
-                if async_mode:
-                    task_id = api_client.extract_async(current_url, app_id)
-                    # Query task and wait for completion
-                    result = api_client.wait_for_task(
-                        task_id,
-                        api_client.query_extract_task,
-                        timeout=timeout
-                    )
-                    return {"url": current_url, "task_id": task_id, "result": result, "index": index}
-                else:
-                    result = api_client.extract_sync(current_url, app_id)
-                    return {"url": current_url, "result": result, "index": index}
-        except Exception as e:
-            formatter.print_error(t('failed_to_process_url', url=current_url, error=str(e)))
-            return {"url": current_url, "error": str(e), "index": index}
-
-    # Display functions for concurrent processing
-    def display_url_submit(index, url, total):
-        url_display = url[:80] + ('...' if len(url) > 80 else '')
-        print(f"[{index}/{total}] Submitted: {url_display}")
-
-    def display_url_result(result):
-        url_display = result['url'][:60] + ('...' if len(result['url']) > 60 else '')
-        if "error" in result:
-            print(f"✗ Failed: {url_display} - {result['error']}")
-        elif "task_id" in result:
-            print(f"✓ Completed: {url_display} - Task_ID: {result['task_id']}")
-        else:
-            print(f"✓ Completed: {url_display}")
-
-    # Check if batch processing (more than 1 URL)
-    is_batch = len(urls) > 1
-
-    if is_batch and concurrency > 1:
-        # Concurrent processing for batch mode
-        results = _process_items_concurrently(
-            urls, process_url, concurrency,
-            display_url_submit, display_url_result, t
-        )
-    else:
-        # Sequential processing (single URL or sync mode or concurrency=1)
-        results = []
-        for i, current_url in enumerate(urls, 1):
-            result = process_url(current_url, i, len(urls))
-            if "error" not in result:
-                results.append(result)
-                # Show progress for each URL
-                if "task_id" in result:
-                    formatter.print_progress(i, len(urls), f"Processing: {current_url} - Task_ID: {result['task_id']} - Completed")
-                elif not async_mode:
-                    formatter.print_progress(i, len(urls), f"Processing: {current_url}")
-
-    # Sort results by index and remove index
-    results = _sort_and_clean_results(results)
-
-    # Output results
-    OutputFormatter.print_results(results, urls, mode, formatter, t)
-
-    if export_path:
-        data = results[0]["result"] if len(results) == 1 else {"results": results}
-        FileHandler.write_json_output(data, Path(export_path))
-        formatter.print_success(f"{t('results_exported_to')} {export_path}")
+    # Use UrlProcessor to handle the URLs
+    processor = UrlProcessor(mode, app_id, async_mode, export_path, timeout, concurrency, source_file=source_file)
+    processor.run(urls)
 
 
 def _process_base64_files(
@@ -1402,102 +1971,8 @@ def _process_base64_files(
         mode: Mode (parse or extract)
         concurrency: Number of concurrent tasks (only effective for batch processing)
     """
-    import concurrent.futures
-
-    config_manager = ConfigManager()
-    api_client = APIClient(config_manager)
-
-    # Validate and adjust concurrency based on payment status
-    try:
-        concurrency = _validate_concurrency(api_client, concurrency)
-    except ValueError as e:
-        formatter.print_error(str(e))
-        sys.exit(1)
-
-    # Check if batch processing (multiple base64 strings)
-    is_batch = len(base64_strings) > 1
-
-    formatter.print_section(t('processing_files', count=len(base64_strings)))
-
-    def process_base64(b64_str, index, total):
-        """Process a single base64 string."""
-        try:
-            current_file_name = file_name if len(base64_strings) == 1 else f"{file_name}_{index}"
-            if mode == "parse":
-                if async_mode:
-                    task_id = api_client.parse_async(None, app_id, file_base64=b64_str, file_name=current_file_name)
-                    # Query task and wait for completion
-                    result = api_client.wait_for_task(
-                        task_id,
-                        api_client.query_parse_task,
-                        timeout=timeout
-                    )
-                    return {"index": index, "task_id": task_id, "result": result}
-                else:
-                    result = api_client.parse_sync(None, app_id, file_base64=b64_str, file_name=current_file_name)
-                    return {"index": index, "result": result}
-            elif mode == "extract":
-                if async_mode:
-                    task_id = api_client.extract_async(None, app_id, file_base64=b64_str, file_name=current_file_name)
-                    # Query task and wait for completion
-                    result = api_client.wait_for_task(
-                        task_id,
-                        api_client.query_extract_task,
-                        timeout=timeout
-                    )
-                    return {"index": index, "task_id": task_id, "result": result}
-                else:
-                    result = api_client.extract_sync(None, app_id, file_base64=b64_str, file_name=current_file_name)
-                    return {"index": index, "result": result}
-        except Exception as e:
-            formatter.print_error(t('failed_to_process', name=f"base64_{index}", error=str(e)))
-            return {"index": index, "error": str(e)}
-
-    # Display functions for concurrent processing
-    def display_submit(index, b64_str, total):
-        print(f"[{index}/{total}] Submitted base64_{index}")
-
-    def display_result(result):
-        if "error" in result:
-            print(f"✗ Failed: base64_{result['index']} - {result['error']}")
-        else:
-            if "task_id" in result:
-                print(f"✓ Completed: base64_{result['index']} - Task_ID: {result['task_id']}")
-            else:
-                print(f"✓ Completed: base64_{result['index']}")
-
-    # Check if batch processing (more than 1 base64 string)
-    is_batch = len(base64_strings) > 1
-
-    if is_batch and concurrency > 1:
-        # Concurrent processing for batch
-        results = _process_items_concurrently(
-            base64_strings, process_base64, concurrency,
-            display_submit, display_result, t
-        )
-    else:
-        # Sequential processing (single base64 or sync mode or concurrency=1)
-        results = []
-        for i, b64_str in enumerate(base64_strings, 1):
-            result = process_base64(b64_str, i, len(base64_strings))
-            if "error" not in result:
-                results.append(result)
-                # Show progress for each base64 string
-                if "task_id" in result:
-                    formatter.print_progress(i, len(base64_strings), f"Processing: base64_{i} - Task_ID: {result['task_id']} - Completed")
-                elif not async_mode:
-                    formatter.print_progress(i, len(base64_strings), f"Processing: base64_{i}")
-
-    # Sort results by index and remove index
-    results = _sort_and_clean_results(results)
-
-    # Output results
-    OutputFormatter.print_results(results, base64_strings, mode, formatter, t)
-
-    if export_path:
-        data = results[0]["result"] if len(results) == 1 else {"results": results}
-        FileHandler.write_json_output(data, Path(export_path))
-        formatter.print_success(f"{t('results_exported_to')} {export_path}")
+    processor = Base64Processor(mode, app_id, async_mode, export_path, timeout, concurrency, file_name=file_name)
+    processor.run(base64_strings)
 
 
 if __name__ == "__main__":

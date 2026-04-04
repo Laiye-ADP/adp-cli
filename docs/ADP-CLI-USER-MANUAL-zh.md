@@ -11,6 +11,8 @@
 7. [文件格式支持](#文件格式支持)
 8. [使用示例](#使用示例)
 9. [错误处理](#错误处理)
+   - [常见错误](#常见错误)
+   - [退出码](#退出码)
 10. [最佳实践](#最佳实践)
 11. [常见问题](#常见问题)
 12. [API参考](#api参考)
@@ -241,6 +243,13 @@ adp parse query TASK_ID --watch
 adp extract query TASK_ID --watch
 ```
 
+#### 步骤 6：查询剩余额度
+
+```bash
+# 查询剩余额度
+adp credit
+```
+
 ---
 
 ## 命令参考
@@ -310,6 +319,7 @@ adp parse [COMMAND]
 |------|------|
 | `local` | 解析本地文件或文件夹 |
 | `url` | 解析URL文件或URL列表文件 |
+| `base64` | 解析Base64编码的文件内容 |
 | `query` | 查询解析异步任务状态 |
 
 **parse local**
@@ -357,6 +367,28 @@ adp parse url ./urls.txt --app-id YOUR_APP_ID --async
 adp parse url ./urls.txt --app-id YOUR_APP_ID --async --concurrency 5
 ```
 
+**parse base64**
+
+```bash
+adp parse base64 BASE64_STRING [OPTIONS]
+```
+
+| 参数 | 说明 | 必填 |
+|------|------|------|
+| `file_base64` | Base64编码的文件内容（一个或多个） | 是 |
+| `--app-id` | 解析应用ID | 是 |
+| `--async` | 提交异步任务并等待完成返回结果 | 否 |
+| `--export` | 导出结果到JSON文件 | 否 |
+| `--timeout` | 任务超时时间（秒） | 否 |
+| `--file-name` | Base64内容的基础文件名（默认：document） | 否 |
+| `--concurrency` | 批量处理的并发数（默认：1） | 否 |
+
+```bash
+# 示例
+adp parse base64 SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID
+adp parse base64 SGVsbG8gV29ybGQ= SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID --file-name document
+```
+
 **parse query**
 
 ```bash
@@ -367,12 +399,14 @@ adp parse query TASK_ID [OPTIONS]
 |------|------|------|
 | `task-id` | 解析异步任务ID | 是 |
 | `--watch` | 监视模式，持续查询直到任务完成 | 否 |
+| `--export` | 导出结果到JSON文件 | 否 |
 | `--timeout` | 监视模式超时时间（秒） | 否 |
 
 ```bash
 # 示例
 adp parse query 12345678-1234-1234-1234-123456789012
 adp parse query 12345678-1234-1234-1234-123456789012 --watch
+adp parse query 12345678-1234-1234-1234-123456789012 --export result.json
 ```
 
 #### 文档抽取命令
@@ -384,9 +418,10 @@ adp extract [COMMAND]
 ```
 
 | 命令 | 说明 |
-|------|------|------|------|
+|------|------|
 | `local` | 抽取本地文件或文件夹 |
 | `url` | 抽取URL文件或URL列表文件 |
+| `base64` | 抽取Base64编码的文件内容 |
 | `query` | 查询抽取异步任务状态 |
 
 **extract local**
@@ -396,7 +431,7 @@ adp extract local PATH [OPTIONS]
 ```
 
 | 参数 | 说明 | 必填 |
-|------|------|------|------|
+|------|------|------|
 | `path` | 文件或文件夹路径 | 是 |
 | `--app-id` | 抽取应用ID | 是 |
 | `--async` | 提交异步任务并等待完成返回结果 | 否 |
@@ -418,7 +453,7 @@ adp extract url URL [OPTIONS]
 ```
 
 | 参数 | 说明 | 必填 |
-|------|------|------|------|
+|------|------|------|
 | `url` | 文件URL或URL列表文件路径 | 是 |
 | `--app-id` | 抽取应用ID | 是 |
 | `--async` | 提交异步任务并等待完成返回结果 | 否 |
@@ -440,6 +475,28 @@ adp extract url ./urls.txt \
   --concurrency 5
 ```
 
+**extract base64**
+
+```bash
+adp extract base64 BASE64_STRING [OPTIONS]
+```
+
+| 参数 | 说明 | 必填 |
+|------|------|------|
+| `file_base64` | Base64编码的文件内容（一个或多个） | 是 |
+| `--app-id` | 抽取应用ID | 是 |
+| `--async` | 提交异步任务并等待完成返回结果 | 否 |
+| `--export` | 导出结果到JSON文件 | 否 |
+| `--timeout` | 任务超时时间（秒） | 否 |
+| `--file-name` | Base64内容的基础文件名（默认：document） | 否 |
+| `--concurrency` | 批量处理的并发数（默认：1） | 否 |
+
+```bash
+# 示例
+adp extract base64 SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID
+adp extract base64 SGVsbG8gV29ybGQ= SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID --file-name document
+```
+
 **extract query**
 
 ```bash
@@ -447,15 +504,17 @@ adp extract query TASK_ID [OPTIONS]
 ```
 
 | 参数 | 说明 | 必填 |
-|------|------|------|------|
+|------|------|------|
 | `task-id` | 抽取异步任务ID | 是 |
 | `--watch` | 监视模式，持续查询直到任务完成 | 否 |
+| `--export` | 导出结果到JSON文件 | 否 |
 | `--timeout` | 监视模式超时时间（秒） | 否 |
 
 ```bash
 # 示例
 adp extract query 12345678-1234-1234-1234-123456789012
 adp extract query 12345678-1234-1234-1234-123456789012 --watch
+adp extract query 12345678-1234-1234-1234-123456789012 --export result.json
 ```
 
 #### 应用管理命令
@@ -495,10 +554,10 @@ adp custom-app [COMMAND]
 ```
 
 | 命令 | 说明 |
-|------|------|------|------|
+|------|------|
 | `create` | 创建自定义抽取应用 |
+| `update` | 更新自定义抽取应用（全量更新） |
 | `get-config` | 查询应用配置 |
-| `list-versions` | 列出配置版本 |
 | `delete` | 删除应用 |
 | `delete-version` | 删除指定配置版本 |
 | `ai-generate` | AI生成抽取字段推荐 |
@@ -510,7 +569,7 @@ adp custom-app create [OPTIONS]
 ```
 
 | 参数 | 说明 | 必填 |
-|------|------|------|------|
+|------|------|------|
 | `--api-key` | API认证密钥（可选，如果已配置则不需要） | 否 |
 | `--app-name` | 应用名称（最多50字符） | 是 |
 | `--app-label` | 应用标签（最多5个，可选） | 否 |
@@ -542,28 +601,44 @@ adp custom-app create \
   --long-doc-config long-doc-config.json
 ```
 
+**custom-app update**
+
+```bash
+adp custom-app update [OPTIONS]
+```
+
+| 参数 | 说明 | 必填 |
+|------|------|------|
+| `--api-key` | API认证密钥（可选，如果已配置则不需要） | 否 |
+| `--app-id` | 要更新的应用ID | 是 |
+| `--app-name` | 应用名称（最多50字符） | 否 |
+| `--app-label` | 应用标签（最多5个，可选） | 否 |
+| `--extract-fields` | 字段配置（JSON格式或文件路径） | 是 |
+| `--parse-mode` | 解析模式（standard=标准；advance=增强；agentic=智能体） | 是 |
+| `--enable-long-doc` | 启用长文档支持（true/false） | 是 |
+| `--long-doc-config` | 长文档配置 | 否 |
+
+```bash
+# 示例
+adp custom-app update \
+  --app-id YOUR_APP_ID \
+  --app-name "更新的票据抽取" \
+  --extract-fields extract-fields.json \
+  --parse-mode "advance" \
+  --enable-long-doc true
+```
+
 **custom-app get-config**
 
 ```bash
 adp custom-app get-config [OPTIONS]
 ```
 
-| 参数 | 说明 | `必填` |
-|------|------|------|------|
+| 参数 | 说明 | 必填 |
+|------|------|------|
 | `--api-key` | API认证密钥（可选） | 否 |
 | `--app-id` | 应用ID | 是 |
 | `--config-version` | 配置版本（可选，默认最新版） | 否 |
-
-**custom-app list-versions**
-
-```bash
-adp custom-app list-versions [OPTIONS]
-```
-
-| 参数 | 说明 | 必填 |
-|------|------|------|------|
-| `--api-key` | API认证密钥（可选） | 否 |
-| `--app-id` | 应用ID | 是 |
 
 **custom-app delete**
 
@@ -572,7 +647,7 @@ adp custom-app delete [OPTIONS]
 ```
 
 | 参数 | 说明 | 必填 |
-|------|------|------|------|
+|------|------|------|
 | `--api-key` | API认证密钥（可选） | 否 |
 | `--app-id` | 应用ID | 是 |
 
@@ -583,7 +658,7 @@ adp custom-app delete-version [OPTIONS]
 ```
 
 | 参数 | 说明 | 必填 |
-|------|------|------|------|
+|------|------|------|
 | `--api-key` | API认证密钥（可选） | 否 |
 | `--app-id` | 应用ID | 是 |
 | `--config-version` | 要删除的配置版本 | 是 |
@@ -595,7 +670,7 @@ adp custom-app ai-generate [OPTIONS]
 ```
 
 | 参数 | 说明 | 必填 |
-|------|------|------|------|
+|------|------|------|
 | `--api-key` | API认证密钥（可选） | 否 |
 | `--app-id` | 应用ID | 是 |
 | `--file-url` | 示例文档URL | 否（与--file-local二选一） |
@@ -610,6 +685,24 @@ adp custom-app ai-generate \
 adp custom-app ai-generate \
   --app-id YOUR_APP_ID \
   --file-local ./sample.pdf
+```
+
+#### 额度查询命令
+
+**查询剩余额度**
+
+```bash
+adp credit [OPTIONS]
+```
+
+| 参数 | 说明 | 必填 |
+|------|------|------|
+| `--api-key` | API认证密钥（可选，如果已配置则不需要） | 否 |
+
+```bash
+# 示例
+adp credit
+adp credit --api-key sk-xxxxxxxxxxxx
 ```
 
 ---
@@ -733,6 +826,71 @@ adp parse local ./document.pdf --app-id YOUR_APP_ID || echo "Parse failed, retry
 | `Invalid API Key` | API Key无效 | 检查API Key是否正确 |
 | `Network error` | 网络连接失败 | 检查网络连接 |
 | `Task timeout` | 任务超时 | 增加超时时间或使用异步模式 |
+| `Free users: 1, paid users: 2, other values are invalid` | 无效的并发数 | 免费用户使用1，付费用户使用2 |
+| `You are a free user, maximum concurrency is 1` | 免费用户无法使用并发2 | 设置并发为1或升级为付费账户 |
+
+#### 退出码
+
+CLI 返回特定的退出码以区分不同类型的错误，使自动化脚本能够正确处理错误：
+
+| 退出码 | 名称 | 含义 | Agent 应对 |
+|--------|------|------|------------|
+| 0 | `EXIT_SUCCESS` | 成功 | 继续执行 |
+| 1 | `EXIT_GENERAL_ERROR` | 一般错误（API失败、网络错误、运行时异常） | 读取 stderr 诊断问题 |
+| 2 | `EXIT_PARAMETER_ERROR` | 参数错误、缺少必需参数、JSON格式错误 | 修正参数后重试 |
+| 3 | `EXIT_RESOURCE_NOT_FOUND` | 资源不存在（文件、URL等） | 跳过或创建资源 |
+| 4 | `EXIT_PERMISSION_DENIED` | 权限不足 | 提示用户授权 |
+| 5 | `EXIT_CONFLICT` | 冲突或已存在 | 跳过或更新 |
+
+**示例 - 使用退出码的脚本处理：**
+
+```bash
+# Linux/macOS
+adp parse local ./document.pdf --app-id YOUR_APP_ID
+case $? in
+    0) echo "成功" ;;
+    1) echo "一般错误 - 检查 stderr" ;;
+    2) echo "参数错误 - 修正后重试" ;;
+    3) echo "文件不存在" ;;
+    4) echo "权限不足" ;;
+    5) echo "资源冲突" ;;
+esac
+```
+
+#### 结构化错误输出
+
+在非 TTY 环境（脚本、CI、Agent）中，错误以 JSON 格式输出：
+
+```json
+{
+  "type": "NETWORK_ERROR",
+  "code": 1,
+  "message": "Connection timeout after 30 seconds",
+  "fix": "Check your network connection and try again.",
+  "retryable": true,
+  "details": {}
+}
+```
+
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| `type` | 机器可读错误类型 | `NETWORK_ERROR`, `API_ERROR`, `PARAM_ERROR` |
+| `code` | 退出码 | 1, 2, 3, 4, 5 |
+| `message` | 人类可读描述 | "Connection timeout..." |
+| `fix` | 修复建议 | "Check your network..." |
+| `retryable` | 是否值得重试 | `true` / `false` |
+| `details` | 额外上下文 | `{"context": "..."}` |
+
+**错误类型：**
+
+| type | 说明 | retryable |
+|------|------|-----------|
+| `NETWORK_ERROR` | 网络连接错误 | true |
+| `API_ERROR` | API 调用错误 | false |
+| `AUTH_ERROR` | 认证/权限错误 | false |
+| `PARAM_ERROR` | 参数错误 | false |
+| `RESOURCE_ERROR` | 资源不存在 | false |
+| `SYSTEM_ERROR` | 系统错误 | false |
 
 ---
 
@@ -840,7 +998,7 @@ export ADP_LANG=zh
 
 **ADP CLI 版本**: 1.10.0
 
-**最后更新**: 2026-03-25
+**最后更新**: 2026-04-03
 
 ---
 

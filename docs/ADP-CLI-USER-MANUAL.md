@@ -11,6 +11,8 @@
 7. [Supported File Formats](#supported-file-formats)
 8. [Usage Examples](#usage-examples)
 9. [Error Handling](#error-handling)
+   - [Common Errors](#common-errors)
+   - [Exit Codes](#exit-codes)
 10. [Best Practices](#best-practices)
 11. [FAQ](#faq)
 12. [API Reference](#api-reference)
@@ -29,7 +31,7 @@
 - **Application Management**: View and manage available applications
 
 **Main Features:**
--` Support for synchronous/asynchronous processing modes
+- Support for synchronous/asynchronous processing modes
 - Local file and URL processing
 - Batch file processing
 - Multi-format support (images, PDFs, Office documents)
@@ -241,6 +243,13 @@ adp parse query TASK_ID --watch
 adp extract query TASK_ID --watch
 ```
 
+#### Step 6: Query Remaining Credits
+
+```bash
+# Query remaining credits
+adp credit
+```
+
 ---
 
 ## Command Reference
@@ -310,6 +319,7 @@ adp parse [COMMAND]
 |---------|-------------|
 | `local` | Parse local file or folder |
 | `url` | Parse URL file or URL list file |
+| `base64` | Parse base64 encoded file content |
 | `query` | Query parse async task status |
 
 **parse local**
@@ -357,6 +367,28 @@ adp parse url ./urls.txt --app-id YOUR_APP_ID --async
 adp parse url ./urls.txt --app-id YOUR_APP_ID --async --concurrency 5
 ```
 
+**parse base64**
+
+```bash
+adp parse base64 BASE64_STRING [OPTIONS]
+```
+
+| Parameter | Description | Required |
+|-----------|-------------|----------|
+| `file_base64` | Base64 encoded file content (one or more) | Yes |
+| `--app-id` | Parsing application ID | Yes |
+| `--async` | Submit async task and wait for completion with results | No |
+| `--export` | Export results to JSON file | No |
+| `--timeout` | Task timeout (seconds) | No |
+| `--file-name` | Base file name for the base64 content (default: document) | No |
+| `--concurrency` | Concurrent tasks count for batch processing (default: 1) | No |
+
+```bash
+# Example
+adp parse base64 SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID
+adp parse base64 SGVsbG8gV29ybGQ= SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID --file-name document
+```
+
 **parse query**
 
 ```bash
@@ -367,12 +399,14 @@ adp parse query TASK_ID [OPTIONS]
 |-----------|-------------|----------|
 | `task-id` | Parse async task ID | Yes |
 | `--watch` | Watch mode, continuously query until task completes | No |
+| `--export` | Export results to JSON file | No |
 | `--timeout` | Watch mode timeout (seconds) | No |
 
 ```bash
 # Example
 adp parse query 12345678-1234-1234-1234-123456789012
 adp parse query 12345678-1234-1234-1234-123456789012 --watch
+adp parse query 12345678-1234-1234-1234-123456789012 --export result.json
 ```
 
 #### Document Extraction Commands
@@ -387,6 +421,7 @@ adp extract [COMMAND]
 |---------|-------------|
 | `local` | Extract local file or folder |
 | `url` | Extract URL file or URL list file |
+| `base64` | Extract base64 encoded file content |
 | `query` | Query extract async task status |
 
 **extract local**
@@ -440,6 +475,28 @@ adp extract url ./urls.txt \
   --concurrency 5
 ```
 
+**extract base64**
+
+```bash
+adp extract base64 BASE64_STRING [OPTIONS]
+```
+
+| Parameter | Description | Required |
+|-----------|-------------|----------|
+| `file_base64` | Base64 encoded file content (one or more) | Yes |
+| `--app-id` | Extraction application ID | Yes |
+| `--async` | Submit async task and wait for completion with results | No |
+| `--export` | Export results to JSON file | No |
+| `--timeout` | Task timeout (seconds) | No |
+| `--file-name` | Base file name for the base64 content (default: document) | No |
+| `--concurrency` | Concurrent tasks count for batch processing (default: 1) | No |
+
+```bash
+# Example
+adp extract base64 SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID
+adp extract base64 SGVsbG8gV29ybGQ= SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID --file-name document
+```
+
 **extract query**
 
 ```bash
@@ -450,12 +507,14 @@ adp extract query TASK_ID [OPTIONS]
 |-----------|-------------|----------|
 | `task-id` | Extract async task ID | Yes |
 | `--watch` | Watch mode, continuously query until task completes | No |
+| `--export` | Export results to JSON file | No |
 | `--timeout` | Watch mode timeout (seconds) | No |
 
 ```bash
 # Example
 adp extract query 12345678-1234-1234-1234-123456789012
 adp extract query 12345678-1234-1234-1234-123456789012 --watch
+adp extract query 12345678-1234-1234-1234-123456789012 --export result.json
 ```
 
 #### Application Management Commands
@@ -497,8 +556,8 @@ adp custom-app [COMMAND]
 | Command | Description |
 |---------|-------------|
 | `create` | Create custom extraction application |
+| `update` | Update custom extraction application (full coverage update) |
 | `get-config` | Query application configuration |
-| `list-versions` | List configuration versions |
 | `delete` | Delete application |
 | `delete-version` | Delete specified configuration version |
 | `ai-generate` | AI generate extraction field recommendations |
@@ -542,6 +601,33 @@ adp custom-app create \
   --long-doc-config long-doc-config.json
 ```
 
+**custom-app update**
+
+```bash
+adp custom-app update [OPTIONS]
+```
+
+| Parameter | Description | Required |
+|-----------|-------------|----------|
+| `--api-key` | API authentication key (optional if already configured) | No |
+| `--app-id` | Application ID to update | Yes |
+| `--app-name` | Application name (max 50 characters) | No |
+| `--app-label` | Application labels (max 5 labels, optional) | No |
+| `--extract-fields` | Field configuration (JSON format or file path) | Yes |
+| `--parse-mode` | Parsing mode (standard=standard; advance=advanced; agentic=agentic) | Yes |
+| `--enable-long-doc` | Enable long document support (true/false) | Yes |
+| `--long-doc-config` | Long document configuration | No |
+
+```bash
+# Example
+adp custom-app update \
+  --app-id YOUR_APP_ID \
+  --app-name "Updated Invoice Extraction" \
+  --extract-fields extract-fields.json \
+  --parse-mode "advance" \
+  --enable-long-doc true
+```
+
 **custom-app get-config**
 
 ```bash
@@ -553,17 +639,6 @@ adp custom-app get-config [OPTIONS]
 | `--api-key` | API authentication key (optional) | No |
 | `--app-id` | Application ID | Yes |
 | `--config-version` | Configuration version (optional, default: latest) | No |
-
-**custom-app list-versions**
-
-```bash
-adp custom-app list-versions [OPTIONS]
-```
-
-| Parameter | Description | Required |
-|-----------|-------------|----------|
-| `--api-key` | API authentication key (optional) | No |
-| `--app-id` | Application ID | Yes |
 
 **custom-app delete**
 
@@ -610,6 +685,24 @@ adp custom-app ai-generate \
 adp custom-app ai-generate \
   --app-id YOUR_APP_ID \
   --file-local ./sample.pdf
+```
+
+#### Credit Query Commands
+
+**Query remaining credits**
+
+```bash
+adp credit [OPTIONS]
+```
+
+| Parameter | Description | Required |
+|-----------|-------------|----------|
+| `--api-key` | API authentication key (optional if already configured) | No |
+
+```bash
+# Example
+adp credit
+adp credit --api-key sk-xxxxxxxxxxxx
 ```
 
 ---
@@ -736,6 +829,69 @@ adp parse local ./document.pdf --app-id YOUR_APP_ID || echo "Parse failed, retry
 | `Free users: 1, paid users: 2, other values are invalid` | Invalid concurrency value | Use 1 for free users, or 2 for paid users |
 | `You are a free user, maximum concurrency is 1` | Free user cannot use concurrency 2 | Set concurrency to 1 or upgrade to paid account |
 
+#### Exit Codes
+
+The CLI returns specific exit codes for different error types, enabling automated scripts to handle errors appropriately:
+
+| Exit Code | Name | Meaning | Agent Response |
+|-----------|------|---------|----------------|
+| 0 | `EXIT_SUCCESS` | Success | Continue execution |
+| 1 | `EXIT_GENERAL_ERROR` | General errors (API failures, network errors, runtime exceptions) | Read stderr to diagnose |
+| 2 | `EXIT_PARAMETER_ERROR` | Invalid parameters, missing required arguments, JSON format errors | Fix parameters and retry |
+| 3 | `EXIT_RESOURCE_NOT_FOUND` | Resource not found (file, URL, etc.) | Skip or create resource |
+| 4 | `EXIT_PERMISSION_DENIED` | Permission denied | Prompt user for authorization |
+| 5 | `EXIT_CONFLICT` | Conflict or already exists | Skip or update |
+
+**Example - Script with Exit Code Handling:**
+
+```bash
+# Linux/macOS
+adp parse local ./document.pdf --app-id YOUR_APP_ID
+case $? in
+    0) echo "Success" ;;
+    1) echo "General error - check stderr" ;;
+    2) echo "Invalid parameters - fix and retry" ;;
+    3) echo "File not found" ;;
+    4) echo "Permission denied" ;;
+    5) echo "Resource conflict" ;;
+esac
+```
+
+#### Structured Error Output
+
+In non-TTY environments (scripts, CI, Agent), errors are output as JSON:
+
+```json
+{
+  "type": "NETWORK_ERROR",
+  "code": 1,
+  "message": "Connection timeout after 30 seconds",
+  "fix": "Check your network connection and try again.",
+  "retryable": true,
+  "details": {}
+}
+```
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| `type` | Machine-readable error type | `NETWORK_ERROR`, `API_ERROR`, `PARAM_ERROR` |
+| `code` | Exit code | 1, 2, 3, 4, 5 |
+| `message` | Human-readable description | "Connection timeout..." |
+| `fix` | Fix suggestion | "Check your network..." |
+| `retryable` | Whether retry is worthwhile | `true` / `false` |
+| `details` | Additional context | `{"context": "..."}` |
+
+**Error Types:**
+
+| type | Description | retryable |
+|------|-------------|-----------|
+| `NETWORK_ERROR` | Network connection error | true |
+| `API_ERROR` | API call error | false |
+| `AUTH_ERROR` | Authentication/permission error | false |
+| `PARAM_ERROR` | Parameter error | false |
+| `RESOURCE_ERROR` | Resource not found | false |
+| `SYSTEM_ERROR` | System error | false |
+
 ---
 
 ## Best Practices
@@ -850,7 +1006,7 @@ If you try to use concurrency 2 as a free user, you will receive an error messag
 
 **ADP CLI Version**: 1.10.0
 
-**Last Updated**: 2026-03-25
+**Last Updated**: 2026-04-03
 
 ---
 

@@ -147,7 +147,6 @@ def test_translate_all_keys():
         'custom_app_description',
         'custom_app_create_title',
         'custom_app_get_config_title',
-        'custom_app_list_versions_title',
         'custom_app_delete_title',
         'custom_app_delete_version_title',
         'custom_app_ai_generate_title',

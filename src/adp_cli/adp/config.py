@@ -121,11 +121,12 @@ class ConfigManager:
             json.dump(config, f, indent=2)
 
     def clear(self) -> None:
-        """清除所有配置。"""
+        """清除所有配置。幂等操作：已清空时不会报错。"""
         if self.CONFIG_FILE.exists():
             self.CONFIG_FILE.unlink()
         if self.KEY_FILE.exists():
             self.KEY_FILE.unlink()
+        # 幂等：目录不存在也没关系
 
     def is_configured(self) -> bool:
         """检查是否已配置 API Key 和 API Base URL。"""

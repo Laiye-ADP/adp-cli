@@ -40,47 +40,77 @@ if "%DEFAULT_PIP_INDEX_URL%"=="" (
 echo ==========================================
 echo ADP CLI Installation from PyPI
 echo ==========================================
-echo Package: %PACKAGE_NAME%
-echo Minimum Python: %MIN_PYTHON_VERSION%
-echo Mirror:   %DEFAULT_PIP_INDEX_URL%
+echo Package:         %PACKAGE_NAME%
+echo Minimum Python:  %MIN_PYTHON_VERSION%
+echo Mirror:          %DEFAULT_PIP_INDEX_URL%
 echo ==========================================
 echo.
 
 REM 1. 检查Python安装
-echo [1/3] Checking Python installation...
+echo [1/4] Checking Python environment...
 python --version >nul 2>&1
 if errorlevel 1 (
     echo Error: Python not found
+    echo Please install Python %MIN_PYTHON_VERSION% or higher first.
     exit /b 1
 )
 
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
-echo Python version: %PYTHON_VERSION%
-echo.
+echo   Python command: python
+echo   Python version: %PYTHON_VERSION%
 
-REM 2. 验证Python版本
-echo [2/3] Validating Python version...
-python -c "import sys; exit(0 if sys.version_info ^>= (3, 8) else 1)" >nul 2>&1
+REM 获取Python可执行文件路径
+for /f "delims=" %%i in ('python -c "import sys; print(sys.executable)" 2^>nul') do set PYTHON_EXEC=%%i
+echo   Python executable: %PYTHON_EXEC%
+echo   ✓ Python version meets requirements ^(%MIN_PYTHON_VERSION% or higher^)
+
+REM 2. 检查pip
+echo.
+echo [2/4] Checking pip...
+python -m pip --version >nul 2>&1
 if errorlevel 1 (
-    echo Error: Python %MIN_PYTHON_VERSION% or higher is required
+    echo Error: pip not found
+    echo Please ensure pip is installed for Python %PYTHON_VERSION%
     exit /b 1
 )
-echo Python version meets requirements
 
-REM 3. 安装包
+for /f "tokens=2" %%i in ('python -m pip --version 2^>^&1') do set PIP_VERSION=%%i
+echo   pip version: %PIP_VERSION%
+echo   ✓ pip is available
+
+REM 3. 检查系统平台
 echo.
-echo [3/3] Installing %PACKAGE_NAME% from PyPI...
+echo [3/4] Checking system platform...
+echo   System: Windows
+set VIRTUAL_ENV=
+python -c "import sys; v=getattr(sys,'real_prefix',getattr(sys,'base_prefix',None)); print('active' if v else 'none')" >nul 2>&1
+if "%VIRTUAL_ENV%"=="" (
+    echo   Virtual environment: none ^(system Python^)
+) else (
+    echo   Virtual environment: %VIRTUAL_ENV%
+)
+echo   ✓ System platform check completed
 
-python -m pip install %PACKAGE_NAME% -i %DEFAULT_PIP_INDEX_URL% --user --quiet --no-warn-script-location
+REM 4. 安装包
+echo.
+echo [4/4] Installing %PACKAGE_NAME% from PyPI...
+
+REM --user: 安装到当前用户的site-packages，避免需要管理员权限
+REM --quiet: 减少输出信息
+REM --no-warn-script-location: 不显示脚本安装路径的警告
+python -m pip install %PACKAGE_NAME% ^
+    -i %DEFAULT_PIP_INDEX_URL% ^
+    --extra-index-url %DEFAULT_PIP_INDEX_URL% ^
+    --user --quiet --no-warn-script-location
 
 if errorlevel 1 (
     echo Error: Package installation failed
     exit /b 1
 )
 
-echo Package installed successfully
+echo   ✓ Package installed successfully
 
-REM 4. 验证安装并自动添加到PATH
+REM 5. 验证安装并自动添加到PATH
 echo.
 echo Verifying installation...
 

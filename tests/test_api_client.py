@@ -283,23 +283,6 @@ def test_get_custom_app_config(mock_request, api_client):
 
 
 @patch('requests.request')
-def test_list_custom_app_versions(mock_request, api_client):
-    """Test list custom app versions."""
-    mock_response = Mock()
-    mock_response.json.return_value = {
-        "data": {
-            "versions": [1, 2, 3]
-        }
-    }
-    mock_response.raise_for_status = Mock()
-    mock_request.return_value = mock_response
-
-    versions = api_client.list_custom_app_versions("app-123")
-
-    assert versions == [1, 2, 3]
-
-
-@patch('requests.request')
 def test_delete_custom_app(mock_request, api_client):
     """Test delete custom app."""
     mock_response = Mock()
@@ -350,7 +333,7 @@ def test_ai_generate_fields_with_url(mock_request, api_client):
 
 def test_ai_generate_fields_no_file(api_client):
     """Test AI generate fields without file raises error."""
-    with pytest.raises(ValueError, match="Either file_url or file_local must be provided"):
+    with pytest.raises(ValueError, match="Either file_url or file_local or file_base64 must be provided"):
         api_client.ai_generate_fields(app_id="app-123")
 
 

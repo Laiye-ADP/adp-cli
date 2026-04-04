@@ -16,10 +16,11 @@ from .config import ConfigManager
 class TaskStatus:
     """任务状态常量。"""
 
-    PENDING = 1
+    PENDING = 0
     RUNNING = 2
     SUCCESS = 4
     FAILED = 5
+    CANCELLED = 6
     
 
 
@@ -78,7 +79,6 @@ class APIClient:
 
         try:
             response = requests.request(method, url, headers=headers, json=data, timeout=300)
-            response.raise_for_status()
             return response.json()
         except RequestException as e:
             # 尝试获取响应内容以提供更多调试信息
@@ -375,6 +375,8 @@ class APIClient:
                 return result
             elif status == TaskStatus.FAILED:
                 raise ValueError(f"Task failed with status: {status}, Failed Message: {data.get('message', '')}")
+            elif status == TaskStatus.CANCELLED:
+                raise ValueError(f"Task cancelled")
 
             time.sleep(interval)
 
@@ -467,32 +469,49 @@ class APIClient:
 
         return self._request("POST", endpoint, data)
 
-    def list_custom_app_versions(self, app_id: str) -> List[Dict[str, Any]]:
+    def update_custom_app(
+        self,
+        app_id: str,
+        extract_fields: List[Dict[str, Any]],
+        parse_mode: str,
+        enable_long_doc: bool,
+        app_name: Optional[str] = None,
+        app_label: Optional[List[str]] = None,
+        long_doc_config: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
         """
-        查询自定义抽取应用的配置版本列表。
+        更新自定义抽取应用（覆盖更新）。
 
         Args:
-            app_id: 应用唯一标识
+            app_id: 应用ID（必填）
+            extract_fields: 抽取字段配置（必填）
+            parse_mode: 解析模式（必填）
+            enable_long_doc: 是否启用长文档（必填）
+            app_name: 应用名称（选填）
+            app_label: 应用标签（选填）
+            long_doc_config: 长文档配置（仅 enable_long_doc=true 时生效）
 
         Returns:
-            配置版本列表
+            更新结果，包含 config_version
         """
-        # 获取应用配置，从中提取版本列表
-        config = self.get_custom_app_config(app_id)
+        tenant_name = self.config_manager.get("tenant_name", "laiye")
+        endpoint = f"/open/agentic_doc_processor/{tenant_name}/v1/app-manage/update"
 
-        # 根据实际 API 返回格式提取版本列表
-        if isinstance(config, dict) and "config_version" in config:
-            return config["config_version"]
-        elif isinstance(config, dict) and "data" in config:
-            data = config["data"]
-            if isinstance(data, dict) and "versions" in data:
-                return data["versions"]
-            elif isinstance(data, list):
-                return data
-        elif isinstance(config, list):
-            return config
+        data = {
+            "app_id": app_id,
+            "extract_fields": extract_fields,
+            "parse_mode": parse_mode,
+            "enable_long_doc": enable_long_doc,
+        }
 
-        return []
+        if app_name is not None:
+            data["app_name"] = app_name
+        if app_label is not None:
+            data["app_label"] = app_label
+        if enable_long_doc is True and long_doc_config is not None:
+            data["long_doc_config"] = long_doc_config
+
+        return self._request("POST", endpoint, data)
 
     def delete_custom_app(self, app_id: str) -> Dict[str, Any]:
         """

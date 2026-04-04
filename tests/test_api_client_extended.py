@@ -368,42 +368,6 @@ def test_get_custom_app_config_with_version(mock_request, api_client):
 
 
 @patch('requests.request')
-def test_list_custom_app_versions_empty(mock_request, api_client):
-    """Test list custom app versions with empty list."""
-    mock_response = Mock()
-    mock_response.json.return_value = {
-        "config_version": []
-    }
-    mock_response.raise_for_status = Mock()
-    mock_request.return_value = mock_response
-
-    versions = api_client.list_custom_app_versions("app-123")
-
-    assert versions == []
-
-
-@patch('requests.request')
-def test_list_custom_app_versions_with_data(mock_request, api_client):
-    """Test list custom app versions with data."""
-    mock_response = Mock()
-    mock_response.json.return_value = {
-        "data": {
-            "versions": [
-                {"version": "v1", "created": "2024-01-01"},
-                {"version": "v2", "created": "2024-01-15"}
-            ]
-        }
-    }
-    mock_response.raise_for_status = Mock()
-    mock_request.return_value = mock_response
-
-    versions = api_client.list_custom_app_versions("app-123")
-
-    assert len(versions) == 2
-    assert versions[0]["version"] == "v1"
-
-
-@patch('requests.request')
 def test_ai_generate_fields_with_local_file(mock_request, api_client, tmp_path):
     """Test AI generate fields with local file."""
     mock_response = Mock()
@@ -433,7 +397,7 @@ def test_ai_generate_fields_with_local_file(mock_request, api_client, tmp_path):
 def test_ai_generate_fields_with_both_url_and_local(api_client):
     """Test AI generate fields with both URL and local file should work."""
     # Should use one of them (implementation specific)
-    with pytest.raises(ValueError, match="Either file_url or file_local must be provided"):
+    with pytest.raises(ValueError, match="Either file_url or file_local or file_base64 must be provided"):
         api_client.ai_generate_fields(app_id="app-123")
 
 
@@ -455,7 +419,7 @@ def test_wait_for_task_cancelled(api_client):
     """Test wait for task with cancelled status."""
     query_func = Mock(return_value={"data": {"status": TaskStatus.CANCELLED}})
 
-    with pytest.raises(ValueError, match="Task failed"):
+    with pytest.raises(ValueError, match="Task cancelled"):
         api_client.wait_for_task("task-123", query_func, timeout=10, interval=0.1)
 
 

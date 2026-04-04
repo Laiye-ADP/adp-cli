@@ -209,12 +209,6 @@ def test_custom_app_get_config_help(runner):
     assert result.exit_code == 0
 
 
-def test_custom_app_list_versions_help(runner):
-    """Test custom-app list-versions help command."""
-    result = runner.invoke(cli, ['custom-app', 'list-versions', '--help'])
-    assert result.exit_code == 0
-
-
 def test_custom_app_delete_help(runner):
     """Test custom-app delete help command."""
     result = runner.invoke(cli, ['custom-app', 'delete', '--help'])

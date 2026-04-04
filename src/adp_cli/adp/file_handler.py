@@ -1,6 +1,7 @@
 """File handling utilities for ADP CLI."""
 
 import os
+import sys
 import json
 from pathlib import Path
 from typing import List, Optional, Tuple, Iterator
@@ -20,6 +21,50 @@ class FileHandler:
 
     # 最大文件大小：50MB
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB in bytes
+
+    @classmethod
+    def is_path_traversal(cls, path: Path) -> bool:
+        """
+        检查路径是否包含路径遍历尝试。
+
+        Args:
+            path: 文件路径
+
+        Returns:
+            True 如果存在路径遍历风险
+        """
+        path_str = str(path)
+        # 检查常见的路径遍历模式
+        if ".." in path_str or path_str.startswith("/"):
+            return True
+
+        try:
+            resolved = path.resolve()
+            resolved_str = str(resolved)
+
+            # 敏感系统目录（Linux/macOS）
+            sensitive_dirs = [
+                "/etc", "/root", "/home",
+                "/.ssh", "/.gnupg", "/.aws",
+                "/.config", "/.local/share"
+            ]
+            # Windows 敏感目录
+            if sys.platform == "win32":
+                import os
+                user_home = os.path.expanduser("~")
+                sensitive_dirs.extend([
+                    os.path.join(user_home, ".ssh"),
+                    os.path.join(user_home, ".gnupg"),
+                    os.path.join(user_home, ".aws"),
+                ])
+
+            for sensitive in sensitive_dirs:
+                if resolved_str.startswith(sensitive):
+                    return True
+
+        except (OSError, RuntimeError):
+            return True
+        return False
 
     @classmethod
     def is_supported_file(cls, file_path: Path) -> bool:
@@ -58,6 +103,10 @@ class FileHandler:
         Returns:
             (是否有效, 错误信息)
         """
+        # 安全检查：路径遍历防护
+        if cls.is_path_traversal(file_path):
+            return False, f"Invalid path (possible path traversal): {file_path}"
+
         if not file_path.exists():
             return False, f"File not found: {file_path}"
 
@@ -154,7 +203,14 @@ class FileHandler:
         Args:
             data: 要写入的数据
             output_path: 输出文件路径
+
+        Raises:
+            ValueError: 如果路径存在路径遍历风险
         """
+        # 安全检查：路径遍历防护
+        if cls.is_path_traversal(output_path):
+            raise ValueError(f"Invalid output path (possible path traversal): {output_path}")
+
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(output_path, "w", encoding="utf-8") as f:

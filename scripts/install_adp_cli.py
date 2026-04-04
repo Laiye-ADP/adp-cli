@@ -43,47 +43,75 @@ def print_header():
 
 def check_python_version():
     """检查Python版本"""
-    print(f"[1/3] Checking Python installation...")
+    print("[1/4] Checking Python environment...")
     version = sys.version_info
-    print(f"✓ Python version: {version.major}.{version.minor}.{version.micro}")
+    print(f"  Python executable: {sys.executable}")
+    print(f"  Python version: {version.major}.{version.minor}.{version.micro}")
 
     if version < MIN_PYTHON_VERSION:
         print(f"✗ Error: Python {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]} or higher required")
         sys.exit(1)
+    print(f"  ✓ Python version meets requirements (>= {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]})")
+    print()
 
-    print("✓ Python version meets requirements")
+def check_pip():
+    """检查pip"""
+    print("[2/4] Checking pip...")
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "--version"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        pip_version = result.stdout.strip().split()[1]
+        print(f"  pip version: {pip_version}")
+        print("  ✓ pip is available")
+        print()
+    except subprocess.CalledProcessError:
+        print("✗ Error: pip not found")
+        print(f"Please ensure pip is installed for Python {sys.version_info.major}.{sys.version_info.minor}")
+        sys.exit(1)
+
+def check_platform():
+    """检查系统平台"""
+    print("[3/4] Checking system platform...")
+    print(f"  Platform: {sys.platform}")
+
+    # 检查虚拟环境
+    venv = getattr(sys, 'real_prefix', None) or getattr(sys, 'base_prefix', None)
+    if venv:
+        print(f"  Virtual environment: active ({venv})")
+    else:
+        print("  Virtual environment: none (system Python)")
+
+    print("  ✓ System platform check completed")
     print()
 
 def install_package():
     """安装包"""
-    print(f"[2/3] Installing {PACKAGE_NAME} from PyPI...")
-
-    # 升级pip（使用国内源）
-    print("Upgrading pip...")
-    subprocess.run(
-        [
-            sys.executable, "-m", "pip", "install", "--upgrade", "pip",
-            "-i", DEFAULT_PIP_INDEX_URL, "--user", "--quiet"
-        ],
-        check=True
-    )
+    print(f"[4/4] Installing {PACKAGE_NAME} from PyPI...")
 
     # 安装包（使用国内源）
-    print("Installing package...")
+    # --user: 安装到当前用户的site-packages，避免需要管理员权限
+    # --quiet: 减少输出信息
+    # --no-warn-script-location: 不显示脚本安装路径的警告
     subprocess.run(
         [
             sys.executable, "-m", "pip", "install", PACKAGE_NAME,
-            "-i", DEFAULT_PIP_INDEX_URL, "--user", "--quiet"
+            "-i", DEFAULT_PIP_INDEX_URL,
+            "--extra-index-url", DEFAULT_PIP_INDEX_URL,
+            "--user", "--quiet", "--no-warn-script-location"
         ],
         check=True
     )
 
-    print("✓ Package installed successfully")
+    print("  ✓ Package installed successfully")
     print()
 
 def verify_installation():
     """验证安装"""
-    print("[3/3] Verifying installation...")
+    print("[5/5] Verifying installation...")
 
     # 检查adp命令是否可用
     try:
@@ -94,30 +122,30 @@ def verify_installation():
             timeout=5
         )
         if result.returncode == 0:
-            print("✓ ADP CLI installed successfully")
-            print(f"  Version: {result.stdout.strip()}")
+            print("  ✓ ADP CLI installed successfully")
+            print(f"    Version: {result.stdout.strip()}")
             print()
-            print("You can now use: adp --help")
+            print("  You can now use: adp --help")
             return True
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
 
     # 如果adp不在PATH中，提供添加PATH的说明
     if sys.platform == "win32":
-        print("✓ ADP CLI installed successfully")
+        print("  ✓ ADP CLI installed successfully")
         print()
-        print("To use ADP CLI, add the following to your PATH:")
-        print("  %USERPROFILE%\\AppData\\Roaming\\Python\\Python3x\\Scripts")
+        print("  To use ADP CLI, add the following to your PATH:")
+        print("    %USERPROFILE%\\AppData\\Roaming\\Python\\Python3x\\Scripts")
         print()
-        print("Or add %USERPROFILE%\\.local\\bin to PATH")
+        print("  Or add %USERPROFILE%\\.local\\bin to PATH")
     else:
-        print("✓ ADP CLI installed successfully")
-        print(f"  Location: ~/.local/bin/adp")
+        print("  ✓ ADP CLI installed successfully")
+        print("    Location: ~/.local/bin/adp")
         print()
-        print("To use ADP CLI, add the following to your ~/.bashrc or ~/.zshrc:")
-        print("  export PATH=\"$HOME/.local/bin:$PATH\"")
+        print("  To use ADP CLI, add the following to your ~/.bashrc or ~/.zshrc:")
+        print('    export PATH="$HOME/.local/bin:$PATH"')
         print()
-        print("Then run: source ~/.bashrc  (or source ~/.zshrc)")
+        print("  Then run: source ~/.bashrc  (or source ~/.zshrc)")
 
     return False
 
@@ -136,6 +164,12 @@ def main():
 
     # 检查Python版本
     check_python_version()
+
+    # 检查pip
+    check_pip()
+
+    # 检查系统平台
+    check_platform()
 
     # 安装包
     install_package()

@@ -235,6 +235,64 @@ adp --help
 - `zh` - 中文（简体、繁体都会识别为中文）
 - `en` - 英文（所有非中文语言默认使用英文）
 
+## Agent 使用
+
+本 CLI 工具专为 AI Agent 优化，支持结构化错误输出和幂等操作。
+
+### 结构化错误输出
+
+非 TTY 环境下，错误以 JSON 格式输出：
+
+```json
+{
+  "type": "NETWORK_ERROR",
+  "code": 1,
+  "message": "Connection timeout after 30 seconds",
+  "fix": "Check your network connection and try again.",
+  "retryable": true,
+  "details": {}
+}
+```
+
+### 错误类型
+
+| type | 说明 | retryable |
+|------|------|-----------|
+| `NETWORK_ERROR` | 网络连接错误 | true |
+| `API_ERROR` | API 调用错误 | false |
+| `AUTH_ERROR` | 认证/权限错误 | false |
+| `PARAM_ERROR` | 参数错误 | false |
+| `RESOURCE_ERROR` | 资源不存在 | false |
+| `SYSTEM_ERROR` | 系统错误 | false |
+
+### 退出码
+
+| 退出码 | 说明 |
+|--------|------|
+| 0 | 成功 |
+| 1 | 一般错误 |
+| 2 | 参数错误 |
+| 3 | 资源不存在 |
+| 4 | 权限不足 |
+| 5 | 冲突/已存在 |
+
+### Schema 自省
+
+Agent 可通过 schema 命令查询 CLI 能力：
+
+```bash
+adp schema                    # 查看完整命令树
+adp schema parse local       # 查看特定命令参数
+```
+
+### 幂等操作
+
+所有命令均支持幂等执行：
+
+- `config clear --force` - 重复清除不会报错
+- `custom-app delete` - 删除不存在的应用返回退出码 3
+- `custom-app delete-version` - 删除不存在的版本返回退出码 3
+
 ## 开发
 
 ### 安装开发依赖
