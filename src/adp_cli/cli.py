@@ -13,6 +13,7 @@ from adp_cli.adp import (
     APIClient,
     FileHandler,
     OutputFormatter,
+    ADPCacheManager,
 )
 from adp_cli.i18n import t, set_language, reset_help_formatter, get_language
 
@@ -682,27 +683,24 @@ app_id.is_group = True
 @check_config
 def list_apps(app_label):
     """
-    List all available application IDs and their descriptions.
+    List all available application IDs from API.
     """
     try:
         config_manager = ConfigManager()
         api_client = APIClient(config_manager)
-
         apps = api_client.list_apps()
 
-        # Filter by app_label if provided (fuzzy matching)
+        # Filter by app_label if provided
         if app_label:
             filtered_apps = []
             for app in apps:
                 app_labels = app.get("app_label", [])
                 if app_labels:
-                    # Check if app_label input is contained in any of the app's labels
                     label_str = ", ".join(app_labels) if isinstance(app_labels, list) else str(app_labels)
                     if app_label in label_str:
                         filtered_apps.append(app)
             apps = filtered_apps
 
-        # 直接输出 JSON 格式
         if apps:
             formatter.print_json({"apps": apps})
         else:
@@ -712,6 +710,38 @@ def list_apps(app_label):
         print_error_and_exit(classify_exception(e))
 
 list_apps.help_key = 'app_id_list_title'
+
+
+@app_id.command('cache', help=t('app_id_list_cache_title'))
+@click.option('--app-label', help="__app_id_list_cache_app_label__")
+def list_apps_cache(app_label):
+    """
+    List high-frequency application IDs from cache (fast).
+    """
+    cache = ADPCacheManager()
+
+    # 如果提供了 app-label，尝试从缓存匹配
+    if app_label:
+        matched_app_id = cache.get_app_id(app_label, fuzzy=True)
+        if matched_app_id:
+            matched_apps = [{
+                "app_label": app_label,
+                "app_id": matched_app_id,
+                "hit": True
+            }]
+            formatter.print_json({"apps": matched_apps, "hit": True})
+        else:
+            formatter.print_json({"apps": [], "message": "No cached app found", "hit": False})
+        return
+
+    # 显示所有缓存的高频应用
+    cached_apps_list = [
+        {"app_label": name, "app_id": app_id, "hit": True}
+        for name, app_id in cache.get_all_app_ids().items()
+    ]
+    formatter.print_json({"apps": cached_apps_list, "hit": True})
+
+list_apps_cache.help_key = 'app_id_list_cache_title'
 
 
 # ==================== Custom App Commands ====================

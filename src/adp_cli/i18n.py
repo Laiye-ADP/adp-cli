@@ -157,6 +157,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "app_id_detail": "Manage applications available for document extraction.",
         "app_id_list_desc": "List all available application IDs and their descriptions",
         "app_id_list_app_label": "Filter applications by label (optional)",
+        "app_id_list_cache_title": "List high-frequency application IDs from cache (fast).",
+        "app_id_list_cache_desc": "List high-frequency application IDs from cache (fast).",
+        "app_id_list_cache_app_label": "Filter cached applications by label (optional)",
         "output_example": "Output Example:",
 
         # Help command
@@ -474,6 +477,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "custom_app_get_config_config_version": "配置版本 (可选，默认: 最新版)",
         "custom_app_delete_title": "删除自定义应用。",
         "app_id_list_app_label": "按标签过滤应用（可选）",
+        "app_id_list_cache_title": "从缓存获取高频应用ID列表（快速）。",
+        "app_id_list_cache_desc": "从缓存获取高频应用ID列表（快速）。",
+        "app_id_list_cache_app_label": "按标签过滤缓存应用（可选）",
         "custom_app_delete_api_key": "API 认证密钥",
         "custom_app_delete_app_id": "应用 ID",
         "custom_app_delete_version_title": "删除指定配置版本。",

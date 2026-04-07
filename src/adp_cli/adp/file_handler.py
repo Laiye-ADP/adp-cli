@@ -34,8 +34,8 @@ class FileHandler:
             True 如果存在路径遍历风险
         """
         path_str = str(path)
-        # 检查常见的路径遍历模式
-        if ".." in path_str or path_str.startswith("/"):
+        # 检查路径遍历模式（../ 或包含 .. 的相对路径）
+        if ".." in path_str:
             return True
 
         try:
@@ -44,7 +44,7 @@ class FileHandler:
 
             # 敏感系统目录（Linux/macOS）
             sensitive_dirs = [
-                "/etc", "/root", "/home",
+                "/etc",
                 "/.ssh", "/.gnupg", "/.aws",
                 "/.config", "/.local/share"
             ]

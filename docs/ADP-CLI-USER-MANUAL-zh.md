@@ -562,6 +562,44 @@ adp custom-app [COMMAND]
 | `delete-version` | 删除指定配置版本 |
 | `ai-generate` | AI生成抽取字段推荐 |
 
+**schema**
+
+```bash
+adp schema [COMMAND]
+```
+
+| 参数 | 说明 | 必填 |
+|------|------|------|
+| `command` | 命令路径（可选），如 `parse local`、`extract url` | 否 |
+
+```bash
+# 示例
+adp schema              # 显示完整命令树
+adp schema parse        # 显示 parse 命令组
+adp schema parse local  # 显示 parse local 命令详情
+```
+
+**app-id cache**
+
+```bash
+adp app-id cache [OPTIONS]
+```
+
+| 参数 | 说明 | 必填 |
+|------|------|------|
+| `--app-label` | 按标签过滤缓存应用（可选） | 否 |
+
+```bash
+# 示例
+adp app-id cache                    # 列出所有缓存的高频应用
+adp app-id cache --app-label invoice # 查询指定标签的缓存应用
+```
+
+| 命令 | 说明 |
+|------|------|
+| `list` | 列出所有可用应用 |
+| `cache` | 列出缓存的高频应用（快速，无需网络） |
+
 **custom-app create**
 
 ```bash
@@ -673,8 +711,9 @@ adp custom-app ai-generate [OPTIONS]
 |------|------|------|
 | `--api-key` | API认证密钥（可选） | 否 |
 | `--app-id` | 应用ID | 是 |
-| `--file-url` | 示例文档URL | 否（与--file-local二选一） |
-| `--file-local` | 本地示例文档路径 | 否（与--file-url二选一） |
+| `--file-url` | 示例文档URL | 否（与--file-local或--base64三选一） |
+| `--file-local` | 本地示例文档路径 | 否（与--file-url或--base64三选一） |
+| `--base64` | Base64编码的示例文档 | 否（与--file-url或--file-local三选一） |
 
 ```bash
 # 示例
@@ -998,7 +1037,7 @@ export ADP_LANG=zh
 
 **ADP CLI 版本**: 1.10.0
 
-**最后更新**: 2026-04-03
+**最后更新**: 2026-04-05
 
 ---
 

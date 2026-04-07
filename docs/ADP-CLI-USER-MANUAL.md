@@ -528,6 +528,7 @@ adp app-id [COMMAND]
 | Command | Description |
 |---------|-------------|
 | `list` | List all available applications |
+| `cache` | List cached high-frequency applications (fast, no network required) |
 
 **app-id list**
 
@@ -561,6 +562,39 @@ adp custom-app [COMMAND]
 | `delete` | Delete application |
 | `delete-version` | Delete specified configuration version |
 | `ai-generate` | AI generate extraction field recommendations |
+
+**schema**
+
+```bash
+adp schema [COMMAND]
+```
+
+| Parameter | Description | Required |
+|-----------|-------------|----------|
+| `command` | Command path (optional), e.g., `parse local`, `extract url` | No |
+
+```bash
+# Examples
+adp schema              # Show full command tree
+adp schema parse        # Show parse command group
+adp schema parse local  # Show parse local command details
+```
+
+**app-id cache**
+
+```bash
+adp app-id cache [OPTIONS]
+```
+
+| Parameter | Description | Required |
+|-----------|-------------|----------|
+| `--app-label` | Filter cached applications by label (optional) | No |
+
+```bash
+# Examples
+adp app-id cache                    # List all cached high-frequency applications
+adp app-id cache --app-label invoice # Query cached application by label
+```
 
 **custom-app create**
 
@@ -673,8 +707,9 @@ adp custom-app ai-generate [OPTIONS]
 |-----------|-------------|----------|
 | `--api-key` | API authentication key (optional) | No |
 | `--app-id` | Application ID | Yes |
-| `--file-url` | URL of sample document | No (either --file-url or --file-local required) |
-| `--file-local` | Local path of sample document | No (either --file-url or --file-local required) |
+| `--file-url` | URL of sample document | No (one of --file-url, --file-local, or --base64 required) |
+| `--file-local` | Local path of sample document | No (one of --file-url, --file-local, or --base64 required) |
+| `--base64` | Base64 encoded sample document | No (one of --file-url, --file-local, or --base64 required) |
 
 ```bash
 # Example
@@ -1006,7 +1041,7 @@ If you try to use concurrency 2 as a free user, you will receive an error messag
 
 **ADP CLI Version**: 1.10.0
 
-**Last Updated**: 2026-04-03
+**Last Updated**: 2026-04-05
 
 ---
 

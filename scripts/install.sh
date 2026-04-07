@@ -139,71 +139,14 @@ $PYTHON_CMD -m pip install $PACKAGE_NAME \
 
 echo "✓ Package installed successfully"
 
-# 4. 验证安装并自动添加到PATH
-echo ""
-echo "Verifying installation..."
-
-# 检测当前使用的shell
-CURRENT_SHELL=$(basename "$SHELL")
-
-# 确定配置文件路径
-if [ "$CURRENT_SHELL" = "zsh" ]; then
-    SHELL_RC="$HOME/.zshrc"
-else
-    SHELL_RC="$HOME/.bashrc"
-fi
-
-# 检查 PATH 是否已包含 ~/.local/bin
-USER_BIN="$HOME/.local/bin"
-PATH_ADDED=false
-
-if echo ":$PATH:" | grep -q ":$USER_BIN:"; then
-    PATH_ADDED=true
-fi
-
-# 如果不在PATH中，自动添加
-if [ "$PATH_ADDED" = false ]; then
-    echo "  Adding $USER_BIN to PATH in $SHELL_RC..."
-
-    # 检查配置文件中是否已有 PATH 配置
-    if [ -f "$SHELL_RC" ] && grep -q "export PATH=.*\.local/bin" "$SHELL_RC"; then
-        echo "  ✓ PATH configuration already exists in $SHELL_RC"
-    else
-        # 添加 PATH 配置到配置文件
-        if [ -f "$SHELL_RC" ]; then
-            echo "" >> "$SHELL_RC"
-            echo "# ADP CLI" >> "$SHELL_RC"
-            echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> "$SHELL_RC"
-        else
-            echo "# ADP CLI" > "$SHELL_RC"
-            echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> "$SHELL_RC"
-        fi
-        echo "  ✓ Added to $SHELL_RC"
-    fi
-
-    # 在当前会话中立即生效
-    export PATH="$USER_BIN:$PATH"
-    echo "  ✓ PATH updated in current session"
-else
-    echo "  ✓ PATH already configured"
-fi
-
-# 直接使用完整路径验证（不依赖 PATH）
-ADP_BIN="$USER_BIN/adp"
-
-if [ -x "$ADP_BIN" ]; then
-    ADP_VERSION=$("$ADP_BIN" --version 2>&1 || true)
-    echo "✓ ADP CLI installed successfully"
-    echo "  Version: $ADP_VERSION"
-else
-    echo "✓ ADP CLI installed successfully"
-    echo "  Location: $ADP_BIN"
-fi
-
+# 验证安装
 echo ""
 echo "=========================================="
 echo "Installation completed!"
 echo "=========================================="
+echo ""
+echo "Next step: Setup PATH"
+echo "  curl -sSL https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/adp-init.sh | bash"
 echo ""
 echo "Usage: adp --help"
 echo "=========================================="
