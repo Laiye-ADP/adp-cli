@@ -1,6 +1,5 @@
-# ADP CLI TestPyPI Installation Script (PowerShell) - for test version installation
+# ADP CLI PyPI Installation Script (PowerShell) - support China mirrors
 param(
-    [string]$IndexUrl = "https://test.pypi.org/simple/",
     [string]$Mirror = "aliyun"
 )
 
@@ -9,10 +8,10 @@ $MinPythonVersion = [version]"3.8"
 
 # Mirror configuration
 switch ($Mirror.ToLower()) {
-    "aliyun"   { $ExtraIndexUrl = "https://mirrors.aliyun.com/pypi/simple" }
-    "tsinghua" { $ExtraIndexUrl = "https://pypi.tuna.tsinghua.edu.cn/simple" }
-    "douban"   { $ExtraIndexUrl = "https://pypi.douban.com/simple" }
-    "ustc"     { $ExtraIndexUrl = "https://pypi.mirrors.ustc.edu.cn/simple" }
+    "aliyun"   { $PipIndexUrl = "https://mirrors.aliyun.com/pypi/simple" }
+    "tsinghua" { $PipIndexUrl = "https://pypi.tuna.tsinghua.edu.cn/simple" }
+    "douban"   { $PipIndexUrl = "https://pypi.douban.com/simple" }
+    "ustc"     { $PipIndexUrl = "https://pypi.mirrors.ustc.edu.cn/simple" }
     default {
         Write-Host "Error: Invalid mirror name '$Mirror'" -ForegroundColor Red
         Write-Host "Available mirrors: aliyun, tsinghua, douban, ustc"
@@ -21,12 +20,11 @@ switch ($Mirror.ToLower()) {
 }
 
 Write-Host "=========================================="
-Write-Host "ADP CLI Installation from TestPyPI"
+Write-Host "ADP CLI Installation from PyPI"
 Write-Host "=========================================="
 Write-Host "Package:         $PackageName"
 Write-Host "Minimum Python:  $MinPythonVersion"
-Write-Host "Index URL:       $IndexUrl"
-Write-Host "Extra Index:     $ExtraIndexUrl"
+Write-Host "Mirror:          $PipIndexUrl"
 Write-Host "=========================================="
 Write-Host ""
 
@@ -87,12 +85,12 @@ Write-Host "  [OK] System platform check completed"
 
 # 4. Install package
 Write-Host ""
-Write-Host "[4/4] Installing $PackageName from TestPyPI..."
+Write-Host "[4/4] Installing $PackageName from PyPI..."
 
 # --user: Install to current user's site-packages to avoid admin privileges
 # --quiet: Reduce output
 # --no-warn-script-location: Don't show script location warnings
-python -m pip install --index-url $IndexUrl --extra-index-url $ExtraIndexUrl $PackageName --user --quiet --no-warn-script-location
+python -m pip install $PackageName -i $PipIndexUrl --extra-index-url $PipIndexUrl --user --quiet --no-warn-script-location
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Package installation failed" -ForegroundColor Red

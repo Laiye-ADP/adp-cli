@@ -137,7 +137,6 @@ echo Installation completed!
 echo ==========================================
 echo.
 echo Next step: Setup PATH
-echo   powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/adp-init.bat' -OutFile '$env:TEMP\adp-init.bat'; & '$env:TEMP\adp-init.bat'"
 echo.
 echo Usage: adp --help
 echo ==========================================
