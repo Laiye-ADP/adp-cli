@@ -1,26 +1,26 @@
 #!/bin/bash
-# ADP CLI 一键初始化脚本
-# 使用方式: source <(curl -sSL https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/adp-init.sh)
+# ADP CLI One-click Initialization Script
+# Usage: source <(curl -sSL https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/adp-init.sh)
 
 ADP_BIN_DIR="$HOME/.local/bin"
 INSTALL_SCRIPT_URL="https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/install_test.sh"
 
-echo "ADP CLI 初始化..."
+echo "ADP CLI initializing..."
 
-# 检查是否已安装（直接检查安装目录）
+# Check if already installed
 if [ -x "$ADP_BIN_DIR/adp" ]; then
-    echo "✓ ADP CLI 已安装"
+    echo "  ADP CLI is already installed"
 else
-    echo "ADP CLI 未安装，开始安装..."
+    echo "  ADP CLI not installed, starting installation..."
     curl -sSL "$INSTALL_SCRIPT_URL" | bash
 fi
 
-# 设置 PATH（当前 shell）
+# Set PATH (current shell)
 export PATH="$ADP_BIN_DIR:$PATH"
 
-# 验证 PATH
+# Verify PATH
 if echo ":$PATH:" | grep -q ":$ADP_BIN_DIR:"; then
-    echo "✓ PATH 设置成功"
+    echo "  PATH configured successfully"
 else
-    echo "✗ PATH 设置失败"
+    echo "  PATH configuration failed"
 fi

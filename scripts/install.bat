@@ -1,5 +1,5 @@
 @echo off
-REM ADP CLI PyPI 安装脚本（Windows）- 支持国内镜像源
+REM ADP CLI PyPI Installation Script (Windows) - support China mirror sources
 
 setlocal enabledelayedexpansion
 
@@ -7,7 +7,7 @@ set PACKAGE_NAME=agentic_doc_parse_and_extract
 set MIN_PYTHON_VERSION=3.8
 set SELECTED_MIRROR=aliyun
 
-REM 解析参数
+REM Parse arguments
 :parse_args
 if "%~1"=="" goto args_done
 if /i "%~1"=="--mirror" (
@@ -25,7 +25,7 @@ exit /b 1
 
 :args_done
 
-REM 国内镜像源
+REM China mirror sources
 if /i "%SELECTED_MIRROR%"=="aliyun" set DEFAULT_PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple
 if /i "%SELECTED_MIRROR%"=="tsinghua" set DEFAULT_PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 if /i "%SELECTED_MIRROR%"=="douban" set DEFAULT_PIP_INDEX_URL=https://pypi.douban.com/simple
@@ -46,7 +46,7 @@ echo Mirror:          %DEFAULT_PIP_INDEX_URL%
 echo ==========================================
 echo.
 
-REM 1. 检查Python安装
+REM 1. Check Python installation
 echo [1/4] Checking Python environment...
 python --version >nul 2>&1
 if errorlevel 1 (
@@ -59,12 +59,12 @@ for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
 echo   Python command: python
 echo   Python version: %PYTHON_VERSION%
 
-REM 获取Python可执行文件路径
+REM Get Python executable path
 for /f "delims=" %%i in ('python -c "import sys; print(sys.executable)" 2^>nul') do set PYTHON_EXEC=%%i
 echo   Python executable: %PYTHON_EXEC%
-echo   ✓ Python version meets requirements ^(%MIN_PYTHON_VERSION% or higher^)
+echo   [OK] Python version meets requirements ^(%MIN_PYTHON_VERSION% or higher^)
 
-REM 2. 检查pip
+REM 2. Check pip
 echo.
 echo [2/4] Checking pip...
 python -m pip --version >nul 2>&1
@@ -76,9 +76,9 @@ if errorlevel 1 (
 
 for /f "tokens=2" %%i in ('python -m pip --version 2^>^&1') do set PIP_VERSION=%%i
 echo   pip version: %PIP_VERSION%
-echo   ✓ pip is available
+echo   [OK] pip is available
 
-REM 3. 检查系统平台
+REM 3. Check system platform
 echo.
 echo [3/4] Checking system platform...
 echo   System: Windows
@@ -89,15 +89,15 @@ if "%VIRTUAL_ENV%"=="" (
 ) else (
     echo   Virtual environment: %VIRTUAL_ENV%
 )
-echo   ✓ System platform check completed
+echo   [OK] System platform check completed
 
-REM 4. 安装包
+REM 4. Install package
 echo.
 echo [4/4] Installing %PACKAGE_NAME% from PyPI...
 
-REM --user: 安装到当前用户的site-packages，避免需要管理员权限
-REM --quiet: 减少输出信息
-REM --no-warn-script-location: 不显示脚本安装路径的警告
+REM --user: Install to current user's site-packages to avoid admin privileges
+REM --quiet: Reduce output
+REM --no-warn-script-location: Don't show script location warnings
 python -m pip install %PACKAGE_NAME% ^
     -i %DEFAULT_PIP_INDEX_URL% ^
     --extra-index-url %DEFAULT_PIP_INDEX_URL% ^
@@ -108,17 +108,17 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo   ✓ Package installed successfully
+echo   [OK] Package installed successfully
 
-REM 5. 验证安装并自动添加到PATH
+REM 5. Verify installation
 echo.
 echo Verifying installation...
 
 if exist "%USERPROFILE%\.local\bin\adp.exe" (
     "%USERPROFILE%\.local\bin\adp.exe" --version
-    echo   ✓ 安装成功
+    echo   [OK] Installation completed
 ) else (
-    echo   ✓ 安装成功
+    echo   [OK] Installation completed
 )
 
 echo.
@@ -127,7 +127,7 @@ echo Installation completed!
 echo ==========================================
 echo.
 echo Next step: Setup PATH
-echo   powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/adp-init.bat' -OutFile '$env:TEMP\adp-init.bat'; & '$env:TEMP\adp-init.bat'"
+echo   powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/adp-init.ps1' -OutFile '$env:TEMP\adp-init.ps1'; & '$env:TEMP\adp-init.ps1'"
 echo.
 echo Usage: adp --help
 echo ==========================================

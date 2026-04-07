@@ -1,52 +1,120 @@
-# ADP CLI 一键初始化脚本
-# 使用方式: 下载后执行 adp-init.ps1
+# ADP CLI Auto-Initialization Script
+# Modified to dynamically detect Python environment with fallback
 
 param(
     [string]$InstallScriptUrl = "https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/install_test.ps1"
 )
 
-$AdpBinDir = "$env:USERPROFILE\.local\bin"
+# Function to find Python in common installation directories
+function Find-Python {
+    $pythonDirs = @(
+        "D:\Programs\Python\Python38",
+        "D:\Programs\Python\Python39",
+        "D:\Programs\Python\Python310",
+        "D:\Programs\Python\Python311",
+        "D:\Programs\Python\Python312",
+        "C:\Python38",
+        "C:\Python39",
+        "C:\Python310",
+        "C:\Python311",
+        "C:\Python312",
+        "$env:LOCALAPPDATA\Programs\Python\Python38",
+        "$env:LOCALAPPDATA\Programs\Python\Python39",
+        "$env:LOCALAPPDATA\Programs\Python\Python310",
+        "$env:LOCALAPPDATA\Programs\Python\Python311",
+        "$env:LOCALAPPDATA\Programs\Python\Python312",
+        "$env:USERPROFILE\AppData\Local\Programs\Python\Python38",
+        "$env:USERPROFILE\AppData\Local\Programs\Python\Python39",
+        "$env:USERPROFILE\AppData\Local\Programs\Python\Python310",
+        "$env:USERPROFILE\AppData\Local\Programs\Python\Python311",
+        "$env:USERPROFILE\AppData\Local\Programs\Python\Python312",
+        "C:\Program Files\Python38",
+        "C:\Program Files\Python39",
+        "C:\Program Files\Python310",
+        "C:\Program Files\Python311",
+        "C:\Program Files\Python312"
+    )
 
-Write-Host "ADP CLI 初始化..."
+    foreach ($dir in $pythonDirs) {
+        $pythonExe = Join-Path $dir "python.exe"
+        if (Test-Path $pythonExe) {
+            return Get-Command $pythonExe -ErrorAction SilentlyContinue
+        }
+    }
 
-# 检查是否已安装
-if (Test-Path "$AdpBinDir\adp.exe") {
-    Write-Host "  ADP CLI 已安装"
+    return $null
+}
+
+# Step 1: Try to find Python from PATH
+Write-Host "=== Detecting Python Environment ==="
+$pythonCmd = Get-Command python -ErrorAction SilentlyContinue
+
+# Step 2: If not found in PATH, try common installation directories
+if (-not $pythonCmd) {
+    Write-Host "Python not found in PATH, searching common installation directories..."
+    $pythonCmd = Find-Python
+}
+
+# Step 3: Report result
+if ($pythonCmd) {
+    $pythonDir = Split-Path $pythonCmd.Source -Parent
+    $AdpBinDir = $pythonDir
+    Write-Host "Found Python: $($pythonCmd.Source)"
+    Write-Host "Using Scripts directory: $AdpBinDir"
 } else {
-    Write-Host "  ADP CLI 未安装，开始安装..."
+    Write-Host "Python not found in PATH or common directories" -ForegroundColor Red
+    Write-Host "Please install Python 3.8 or higher first" -ForegroundColor Red
+    Write-Host "Download from: https://www.python.org/downloads/"
+    exit 1
+}
 
-    # 下载安装脚本
+Write-Host ""
+
+# Step 4: Check if ADP CLI already installed
+if (Test-Path "$AdpBinDir\adp.exe") {
+    Write-Host "ADP CLI already installed at $AdpBinDir"
+} else {
+    Write-Host "ADP CLI not found, starting installation..."
+
+    # Download install script
     $tempScript = "$env:TEMP\install-adp.ps1"
     try {
         Invoke-WebRequest -Uri $InstallScriptUrl -OutFile $tempScript -ErrorAction Stop
+        Write-Host "Install script downloaded successfully"
     } catch {
-        Write-Host "  Error: 下载安装脚本失败" -ForegroundColor Red
-        Write-Host "  $_"
+        Write-Host "Error: Failed to download install script" -ForegroundColor Red
+        Write-Host "Error: $_"
         exit 1
     }
 
-    # 执行安装脚本
+    # Execute install script
+    Write-Host "Running install script..."
     & $tempScript
 
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "  Error: 安装失败" -ForegroundColor Red
+        Write-Host "Error: Installation failed" -ForegroundColor Red
         exit 1
     }
 }
 
-# 设置 PATH（当前会话）
+# Step 5: Set PATH for current session
 $env:PATH = "$AdpBinDir;$env:PATH"
 
-# 验证 PATH
+# Verify PATH
 if ($env:PATH -like "*$AdpBinDir*") {
-    Write-Host "  PATH 设置成功"
+    Write-Host "PATH setting for current session: SUCCESS"
 } else {
-    Write-Host "  PATH 设置失败" -ForegroundColor Yellow
+    Write-Host "PATH setting for current session: FAILED" -ForegroundColor Yellow
 }
 
-# 永久添加 PATH（对当前用户）
+# Step 6: Permanently add to user environment variable
 $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
 if ($userPath -notlike "*$AdpBinDir*") {
     [Environment]::SetEnvironmentVariable("PATH", "$userPath;$AdpBinDir", "User")
-    Write-Host "  PATH 已永久添加到用户环境变量"
+    Write-Host "PATH permanently added to user environment variable: SUCCESS"
+} else {
+    Write-Host "PATH already exists in user environment variable"
 }
+
+Write-Host ""
+Write-Host "=== Initialization Complete ==="
