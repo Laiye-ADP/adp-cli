@@ -690,6 +690,10 @@ def list_apps(app_label):
         api_client = APIClient(config_manager)
         apps = api_client.list_apps()
 
+        # Save all apps to cache
+        cache = ADPCacheManager()
+        cache.set_apps(apps)
+
         # Filter by app_label if provided
         if app_label:
             filtered_apps = []
@@ -713,33 +717,13 @@ list_apps.help_key = 'app_id_list_title'
 
 
 @app_id.command('cache', help=t('app_id_list_cache_title'))
-@click.option('--app-label', help="__app_id_list_cache_app_label__")
-def list_apps_cache(app_label):
+def list_apps_cache():
     """
-    List high-frequency application IDs from cache (fast).
+    List cached application IDs (fast, no network required).
     """
     cache = ADPCacheManager()
-
-    # 如果提供了 app-label，尝试从缓存匹配
-    if app_label:
-        matched_app_id = cache.get_app_id(app_label, fuzzy=True)
-        if matched_app_id:
-            matched_apps = [{
-                "app_label": app_label,
-                "app_id": matched_app_id,
-                "hit": True
-            }]
-            formatter.print_json({"apps": matched_apps, "hit": True})
-        else:
-            formatter.print_json({"apps": [], "message": "No cached app found", "hit": False})
-        return
-
-    # 显示所有缓存的高频应用
-    cached_apps_list = [
-        {"app_label": name, "app_id": app_id, "hit": True}
-        for name, app_id in cache.get_all_app_ids().items()
-    ]
-    formatter.print_json({"apps": cached_apps_list, "hit": True})
+    apps = cache.get_all_apps()
+    formatter.print_json({"apps": apps})
 
 list_apps_cache.help_key = 'app_id_list_cache_title'
 
