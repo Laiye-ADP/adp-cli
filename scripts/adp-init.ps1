@@ -5,6 +5,10 @@ param(
     [string]$InstallScriptUrl = "https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/install_test.ps1"
 )
 
+# Set UTF-8 encoding for output
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
 # Function to find Python in common installation directories
 function Find-Python {
     $pythonDirs = @(
@@ -114,6 +118,26 @@ if ($userPath -notlike "*$AdpBinDir*") {
     Write-Host "PATH permanently added to user environment variable: SUCCESS"
 } else {
     Write-Host "PATH already exists in user environment variable"
+}
+
+# Step 7: Set UTF-8 encoding permanently in PowerShell profile
+Write-Host ""
+Write-Host "=== Setting UTF-8 encoding for PowerShell ==="
+$profilePath = "$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+$encodingSetting = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8"
+
+# Create profile file if not exists
+if (-not (Test-Path $profilePath)) {
+    New-Item -Path $profilePath -ItemType File -Force | Out-Null
+    Write-Host "Created PowerShell profile: $profilePath"
+}
+
+# Add encoding setting if not exists
+if ((Get-Content $profilePath -Raw -ErrorAction SilentlyContinue) -notmatch "OutputEncoding") {
+    Add-Content -Path $profilePath -Value $encodingSetting
+    Write-Host "UTF-8 encoding setting added to profile: SUCCESS"
+} else {
+    Write-Host "UTF-8 encoding already exists in profile"
 }
 
 Write-Host ""
