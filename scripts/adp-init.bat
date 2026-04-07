@@ -16,7 +16,6 @@ if exist "%ADP_BIN_DIR%\adp.exe" (
     echo   ADP CLI 未安装，开始安装...
     powershell -Command "Invoke-WebRequest -Uri '%INSTALL_SCRIPT_URL%' -OutFile '%TEMP%\install-adp.bat'"
     call "%TEMP%\install-adp.bat"
-    del "%TEMP%\install-adp.bat" >nul 2>&1
 )
 
 REM 设置 PATH

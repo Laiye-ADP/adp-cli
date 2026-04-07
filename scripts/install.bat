@@ -131,5 +131,3 @@ echo   powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubuserconten
 echo.
 echo Usage: adp --help
 echo ==========================================
-
-endlocal
