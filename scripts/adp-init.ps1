@@ -5,9 +5,11 @@ param(
     [string]$InstallScriptUrl = "https://raw.githubusercontent.com/Laiye-ADP/adp-cli/master/scripts/install_test.ps1"
 )
 
-# Set UTF-8 encoding for output
+# Set UTF-8 encoding for output & input
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
+$env:PYTHONIOENCODING = "utf-8"
 
 # Function to find Python in common installation directories
 function Find-Python {
