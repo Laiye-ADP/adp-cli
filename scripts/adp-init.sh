@@ -38,9 +38,9 @@ echo "=== Detecting Python Environment ==="
 # Step 1: Try to find Python from PATH
 python_cmd=""
 if command -v python &> /dev/null; then
-    python_cmd="python"
+    python_cmd=$(command -v python)
 elif command -v python3 &> /dev/null; then
-    python_cmd="python3"
+    python_cmd=$(command -v python3)
 fi
 
 # Step 2: If not found in PATH, try common installation directories
