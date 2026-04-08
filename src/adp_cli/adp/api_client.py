@@ -313,17 +313,28 @@ class APIClient:
 
     # ==================== App Management APIs ====================
 
-    def list_apps(self) -> List[Dict[str, Any]]:
+    def list_apps(self, app_type: int = None, limit: int = 120) -> List[Dict[str, Any]]:
         """
         获取当前租户下的所有可用应用（App）。
 
         该方法会向 API 发送 GET 请求，获取应用列表。返回的每个应用包含 app_id、app_name 和 description 等信息。
+
+        Args:
+            app_type: 应用类型过滤，1=自定义应用，0=系统预设
+            limit: 返回应用数量限制
 
         Returns:
             应用列表，每个元素为 dict，包含 app_id、app_name、description 字段。
         """
         tenant_name = self.config_manager.get("tenant_name", "laiye")
         endpoint = f"/open/agentic_doc_processor/{tenant_name}/v1/app-list"
+        query_parts = []
+        if app_type is not None:
+            query_parts.append(f"app_type={app_type}")
+        if limit is not None:
+            query_parts.append(f"limit={limit}")
+        if query_parts:
+            endpoint = f"{endpoint}?{'&'.join(query_parts)}"
         try:
             response = self._request("GET", endpoint)
             apps_list = []
@@ -336,7 +347,8 @@ class APIClient:
                     app = {
                         "app_id": item.get("id", ""),
                         "app_name": item.get("app_name", ""),
-                        "app_label":item.get("app_label","")
+                        "app_label": item.get("app_label", ""),
+                        "app_type": item.get("app_type", 0)
                     }
                     apps_list.append(app)
             return apps_list

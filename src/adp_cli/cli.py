@@ -452,7 +452,7 @@ parse.is_group = True
 @click.option('--app-id', required=True, help="__option_app_id_parse__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_timeout__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_timeout__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
 def local(path, app_id, async_mode, export, timeout, concurrency):
@@ -472,7 +472,7 @@ local.help_key = 'parse_local_title'
 @click.option('--app-id', required=True, help="__option_app_id_parse__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_timeout__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_timeout__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
 def url(url, app_id, async_mode, export, timeout, concurrency):
@@ -492,7 +492,7 @@ url.help_key = 'parse_url_title'
 @click.option('--app-id', required=True, help="__option_app_id_parse__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_timeout__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_timeout__")
 @click.option('--file-name', default="document", help="__option_file_name__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
@@ -529,7 +529,7 @@ extract.is_group = True
 @click.option('--app-id', required=True, help="__option_app_id_extract__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_timeout__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_timeout__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
 def local(path, app_id, async_mode, export, timeout, concurrency):
@@ -549,7 +549,7 @@ local.help_key = 'extract_local_title'
 @click.option('--app-id', required=True, help="__option_app_id_extract__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_timeout__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_timeout__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
 def url(url, app_id, async_mode, export, timeout, concurrency):
@@ -569,7 +569,7 @@ url.help_key = 'extract_url_title'
 @click.option('--app-id', required=True, help="__option_app_id_extract__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_timeout__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_timeout__")
 @click.option('--file-name', default="document", help="__option_file_name__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
@@ -592,7 +592,7 @@ extract_base64.help_key = 'extract_base64_title'
 @click.argument('task-id')
 @click.option('--watch', is_flag=True, help="__option_watch__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_watch_timeout__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_watch_timeout__")
 @check_config
 def extract_query(task_id, watch, export,timeout):
     """
@@ -631,7 +631,7 @@ extract_query.help_key = 'extract_query_title'
 @click.argument('task-id')
 @click.option('--watch', is_flag=True, help="__option_watch__")
 @click.option('--export', type=click.Path(), help="__option_export__")
-@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=300, help="__option_watch_timeout__")
+@click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_watch_timeout__")
 @check_config
 def parse_query(task_id, watch,export, timeout):
     """
@@ -680,15 +680,17 @@ app_id.is_group = True
 
 @app_id.command('list', help=t('app_id_list_title'))
 @click.option('--app-label', help="__app_id_list_app_label__")
+@click.option('--app-type', type=int, help="__app_id_list_app_type__")
+@click.option('--limit', type=int, default=120, help="__app_id_list_limit__", callback=lambda ctx, param, value: (_ for _ in ()).throw(click.BadParameter(t('limit_must_be_non_negative'))) if value is not None and value < 0 else value)
 @check_config
-def list_apps(app_label):
+def list_apps(app_label, app_type, limit):
     """
     List all available application IDs from API.
     """
     try:
         config_manager = ConfigManager()
         api_client = APIClient(config_manager)
-        apps = api_client.list_apps()
+        apps = api_client.list_apps(app_type, limit)
 
         # Save all apps to cache
         cache = ADPCacheManager()
