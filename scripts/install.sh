@@ -132,7 +132,8 @@ echo "[4/4] Installing $PACKAGE_NAME from PyPI..."
 $PYTHON_CMD -m pip install $PACKAGE_NAME \
     -i "$DEFAULT_PIP_INDEX_URL" \
     --user --quiet --no-warn-script-location \
-    --extra-index-url "$DEFAULT_PIP_INDEX_URL"
+    --extra-index-url "$DEFAULT_PIP_INDEX_URL" \
+    --root-user-action=ignore
 
 echo "  [OK] Package installed successfully"
 

@@ -36,6 +36,9 @@ esac
 echo -e "${YELLOW}Detected platform: $PLATFORM_NAME${NC}"
 echo ""
 
+# Add custom Python locations to PATH (for self-built Python with shared library)
+export PATH="/usr/local/python3.8/bin:/usr/local/python3.11/bin:/usr/local/bin:$PATH"
+
 # Find Python interpreter (try multiple possibilities)
 PYTHON_CMD=""
 for cmd in python3 python3.12 python3.11 python3.10 python3.9 python3.8; do

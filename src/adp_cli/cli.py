@@ -335,7 +335,7 @@ def lang_callback(_ctx, _param, value):
     return value
 
 
-@click.version_option(version="1.10.0", prog_name="adp")
+@click.version_option(version="1.10.6", prog_name="adp")
 @click.option('--json', 'json_mode', is_flag=True, help="__option_json__", is_eager=True)
 @click.option('--quiet', is_flag=True, help="__option_quiet__", is_eager=True)
 @click.option('--lang', help="__option_lang__", is_eager=True, callback=lang_callback)

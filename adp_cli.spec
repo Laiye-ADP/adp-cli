@@ -8,7 +8,7 @@ from pathlib import Path
 
 # Project configuration
 project_name = "adp"
-version = "1.10.0"
+version = "1.10.6"
 description = "AI Document Platform Command Line Tool"
 
 # Determine the entry point

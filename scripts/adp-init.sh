@@ -109,23 +109,31 @@ else
 fi
 
 # Step 6: Permanently add to user environment variable
-if [ -d "$ADP_BIN_DIR" ]; then
-    if [ -w "$HOME/.bashrc" ]; then
-        if ! grep -q "$ADP_BIN_DIR" "$HOME/.bashrc" 2>/dev/null; then
-            echo "export PATH=\"$ADP_BIN_DIR:\$PATH\"" >> "$HOME/.bashrc"
-            echo "PATH permanently added to ~/.bashrc: SUCCESS"
+add_to_profile() {
+    local file="$1"
+    if [ -w "$file" ] 2>/dev/null || [ -w "$(dirname "$file")" ]; then
+        if ! grep -q "$ADP_BIN_DIR" "$file" 2>/dev/null; then
+            echo "export PATH=\"$ADP_BIN_DIR:\$PATH\"" >> "$file"
+            echo "PATH added to $file: SUCCESS"
+            return 0
         else
-            echo "PATH already exists in ~/.bashrc"
+            echo "PATH already exists in $file"
+            return 0
         fi
     fi
-    if [ -w "$HOME/.zshrc" ]; then
-        if ! grep -q "$ADP_BIN_DIR" "$HOME/.zshrc" 2>/dev/null; then
-            echo "export PATH=\"$ADP_BIN_DIR:\$PATH\"" >> "$HOME/.zshrc"
-            echo "PATH permanently added to ~/.zshrc: SUCCESS"
-        else
-            echo "PATH already exists in ~/.zshrc"
-        fi
-    fi
+    return 1
+}
+
+# Try to write to multiple profile files
+add_to_profile "$HOME/.bashrc"
+add_to_profile "$HOME/.profile"
+add_to_profile "$HOME/.bash_profile"
+
+# If permitted, write to the system-wide configuration
+if [ -w "/etc/profile.d" ]; then
+    echo "export PATH=\"$ADP_BIN_DIR:\$PATH\"" > /etc/profile.d/adp.sh
+    chmod +x /etc/profile.d/adp.sh
+    echo "PATH added to /etc/profile.d/adp.sh: SUCCESS"
 fi
 
 echo ""
