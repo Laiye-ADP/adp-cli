@@ -92,7 +92,8 @@ jobs:
         run: |
           mv dist/${{ matrix.binary_name }} dist/${{ matrix.platform }}/${{ matrix.binary_name }}
 
-      - name: Verify binary exists
+      - name: Verify binary exists (Unix only)
+        if: matrix.os != 'windows-latest'
         run: |
           if [ -f "dist/${{ matrix.platform }}/${{ matrix.binary_name }}" ]; then
             echo "Build successful: dist/${{ matrix.platform }}/${{ matrix.binary_name }}"
@@ -100,6 +101,16 @@ jobs:
             echo "Build failed: binary not found"
             exit 1
           fi
+
+      - name: Verify binary exists (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: |
+          if exist "dist\${{ matrix.platform }}\${{ matrix.binary_name }}" (
+            echo Build successful: dist\${{ matrix.platform }}\${{ matrix.binary_name }}
+          ) else (
+            echo Build failed: binary not found
+            exit /b 1
+          )
 
       - name: Test executable (Unix)
         if: matrix.os != 'windows-latest'
