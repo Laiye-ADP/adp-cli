@@ -8,8 +8,11 @@ from pathlib import Path
 
 # Project configuration
 project_name = "adp"
-version = "1.10.6"
 description = "AI Document Platform Command Line Tool"
+
+# Load version from __init__.py
+_version_py = Path("src/adp_cli/__init__.py").read_text()
+version = _version_py.split("__version__")[1].split("=")[1].strip().strip('"').strip("'")
 
 # Determine the entry point
 entry_point = Path("src/adp_cli/cli.py")

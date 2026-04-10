@@ -25,14 +25,20 @@ set "PROJECT_ROOT=%SCRIPT_DIR%.."
 REM Convert to absolute path
 for /f "delims=" %%i in ("%PROJECT_ROOT%") do set "PROJECT_ROOT=%%~fi"
 
+REM Create platform output directory
+set "OUTPUT_DIR=%PROJECT_ROOT%\dist\win32-x64"
+if not exist "%OUTPUT_DIR%" (
+    mkdir "%OUTPUT_DIR%"
+)
+
 echo Detected platform: Windows
+echo Output directory: %OUTPUT_DIR%
 echo.
 
-REM Check if virtual environment exists
-set "VENV_DIR=%PROJECT_ROOT%\.venv"
+REM Check if virtual environment exists (prefer Python 3.8 venv)
+set "VENV_DIR=%PROJECT_ROOT%\.venv38"
 if not exist "%VENV_DIR%" (
-    echo [INFO] Virtual environment not found. Creating...
-    python -m venv "%VENV_DIR%"
+    set "VENV_DIR=%PROJECT_ROOT%\.venv"
 )
 
 REM Activate virtual environment
@@ -62,14 +68,14 @@ if errorlevel 1 (
 
 REM Clean previous builds
 echo [INFO] Cleaning previous builds...
-if exist "%PROJECT_ROOT%\dist\adp.exe" (
-    del /f /q "%PROJECT_ROOT%\dist\adp.exe" 2>nul
+if exist "%OUTPUT_DIR%\adp.exe" (
+    del /f /q "%OUTPUT_DIR%\adp.exe" 2>nul
 )
 
-REM Run PyInstaller
+REM Run PyInstaller with output to platform directory
 echo [INFO] Building executable with PyInstaller...
 cd /d "%PROJECT_ROOT%"
-pyinstaller "%PROJECT_ROOT%\adp_cli.spec" --clean --noconfirm
+pyinstaller "%PROJECT_ROOT%\adp_cli.spec" --clean --noconfirm --distpath "%OUTPUT_DIR%"
 if errorlevel 1 (
     echo.
     echo ========================================
@@ -81,22 +87,22 @@ if errorlevel 1 (
 )
 
 REM Check if build succeeded
-if exist "%PROJECT_ROOT%\dist\adp.exe" (
+if exist "%OUTPUT_DIR%\adp.exe" (
     echo.
     echo ========================================
     echo   Build successful!
     echo ========================================
     echo.
     echo Executable location:
-    echo   %PROJECT_ROOT%\dist\adp.exe
+    echo   %OUTPUT_DIR%\adp.exe
     echo.
-    echo You can now: %PROJECT_ROOT%\dist\adp.exe --help
+    echo You can now: %OUTPUT_DIR%\adp.exe --help
     echo.
 
     REM Check for --install parameter
     if "%1"=="--install" (
         echo [INFO] Adding to PATH (user scope)...
-        setx PATH "%PATH%;%PROJECT_ROOT%\dist%"
+        setx PATH "%PATH%;%OUTPUT_DIR%"
         echo [SUCCESS] Added to PATH. Please restart your terminal.
     )
 ) else (

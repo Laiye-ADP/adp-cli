@@ -1,0 +1,34 @@
+{
+  "name": "adp-cli",
+  "version": "1.10.7",
+  "description": "ADP CLI - AI Document Platform Command Line Tool",
+  "keywords": ["cli", "document", "ai", "parser", "extractor", "adp"],
+  "homepage": "https://github.com/Laiye-ADP/adp-cli",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Laiye-ADP/adp-cli.git"
+  },
+  "author": "ADP Team",
+  "author_email": "support@adp.ai",
+  "license": "MIT",
+  "main": "bin/run.js",
+  "bin": {
+    "adp": "./bin/run.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/download-binary.js"
+  },
+  "files": [
+    "bin/**/*",
+    "dist/**/*",
+    "scripts/download-binary.js"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "os": [
+    "win32",
+    "linux",
+    "darwin"
+  ]
+}
