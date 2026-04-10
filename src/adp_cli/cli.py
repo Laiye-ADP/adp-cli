@@ -1228,13 +1228,7 @@ def credit(api_key):
 
         # Get credit from response
         credit = result.get("remaining_credits", 0)
-
-        # Get portal URL based on language
-        lang = get_language()
-        if lang == 'zh':
-            portal_url = "https://adp.laiye.com"
-        else:
-            portal_url = "https://adp-global.laiye.com"
+        portal_url = config_manager.get("api_base_url","")
 
         # Display result
         if formatter.json_mode:

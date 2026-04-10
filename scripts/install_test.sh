@@ -141,7 +141,7 @@ echo "  [OK] System platform check completed"
 echo ""
 echo "[4/4] Installing $PACKAGE_NAME from TestPyPI..."
 
-$PYTHON_CMD -m pip install --index-url "$DEFAULT_PIP_INDEX_URL" --extra-index-url "$EXTRA_INDEX_URL" $PACKAGE_NAME --user --quiet --no-warn-script-location
+$PYTHON_CMD -m pip install --index-url "$DEFAULT_PIP_INDEX_URL" --extra-index-url "$EXTRA_INDEX_URL" $PACKAGE_NAME --user --quiet --no-warn-script-location --root-user-action=ignore
 
 echo "  [OK] Package installed successfully"
 
