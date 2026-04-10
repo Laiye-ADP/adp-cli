@@ -24,21 +24,21 @@ jobs:
             binary_name: adp
             artifact_name: linux-x64
             shell: bash
-          - os: ubuntu-latest
-            platform: linux-arm64
-            binary_name: adp
-            artifact_name: linux-arm64
-            shell: bash
-          - os: macos-14
-            platform: darwin-x64
-            binary_name: adp
-            artifact_name: darwin-x64
-            shell: bash
-          - os: macos-14
-            platform: darwin-arm64
-            binary_name: adp
-            artifact_name: darwin-arm64
-            shell: bash
+          # - os: ubuntu-latest
+          #   platform: linux-arm64
+          #   binary_name: adp
+          #   artifact_name: linux-arm64
+          #   shell: bash
+          # - os: macos-14
+          #   platform: darwin-x64
+          #   binary_name: adp
+          #   artifact_name: darwin-x64
+          #   shell: bash
+          # - os: macos-14
+          #   platform: darwin-arm64
+          #   binary_name: adp
+          #   artifact_name: darwin-arm64
+          #   shell: bash
 
     runs-on: ${{ matrix.os }}
     defaults:
@@ -68,19 +68,29 @@ jobs:
           pip3 install pyinstaller
           pip3 install -r requirements.txt
 
-      - name: Create output directory
+      - name: Create output directory (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          if not exist dist\${{ matrix.platform }} mkdir dist\${{ matrix.platform }}
+
+      - name: Create output directory (Unix)
+        if: matrix.os != 'windows-latest'
         run: |
           mkdir -p dist/${{ matrix.platform }}
 
-      - name: Build with PyInstaller (Windows)
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller adp_cli.spec --clean --noconfirm
+
+      - name: Move binary to platform directory (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          pyinstaller adp_cli.spec --clean --noconfirm --distpath dist/${{ matrix.platform }}
+          move dist\${{ matrix.binary_name }} dist\${{ matrix.platform }}\${{ matrix.binary_name }}
 
-      - name: Build with PyInstaller (Unix)
+      - name: Move binary to platform directory (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          pyinstaller adp_cli.spec --clean --noconfirm --distpath dist/${{ matrix.platform }} --name ${{ matrix.binary_name }}
+          mv dist/${{ matrix.binary_name }} dist/${{ matrix.platform }}/${{ matrix.binary_name }}
 
       - name: Verify binary exists
         run: |
