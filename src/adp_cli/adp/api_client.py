@@ -55,6 +55,7 @@ class APIClient:
 
         return {
             "Content-Type": "application/json",
+            "X-API-Source" : "CLI",
             "X-Api-key": api_key,
         }
 
