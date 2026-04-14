@@ -28,17 +28,18 @@ jobs:
             platform: linux-arm64
             binary_name: adp
             artifact_name: linux-arm64
+            runs-on: ubuntu-22.04-arm
             shell: bash
           - os: macos-14
             platform: darwin-x64
             binary_name: adp
             artifact_name: darwin-x64
             shell: bash
-          - os: macos-14
-            platform: darwin-arm64
-            binary_name: adp
-            artifact_name: darwin-arm64
-            shell: bash
+          # - os: macos-14
+          #   platform: darwin-arm64
+          #   binary_name: adp
+          #   artifact_name: darwin-arm64
+          #   shell: bash
 
     runs-on: ${{ matrix.os }}
     defaults:
