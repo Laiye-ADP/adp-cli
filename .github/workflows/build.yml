@@ -19,7 +19,7 @@ jobs:
             binary_name: adp.exe
             artifact_name: win32-x64
             shell: cmd
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             platform: linux-x64
             binary_name: adp
             artifact_name: linux-x64
