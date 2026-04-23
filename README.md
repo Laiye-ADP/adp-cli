@@ -124,29 +124,66 @@ adp config clear                 # 清除本地配置
 ```bash
 adp parse local <path>           # 解析本地文件/文件夹
 adp parse url <url>              # 解析 URL 文件
-adp parse ... --async            # 异步处理
-adp parse ... --concurrency 2    # 使用并发数 2（需要付费用户）
+adp parse base64 <b64>...       # 解析 base64 编码内容
+adp parse local <path> --async --no-wait   # 异步提交，立即返回 task ID
+adp parse local <path> --retry 3          # 失败重试 3 次
 ```
 
-**并发数说明**：
-- 免费用户：最大并发数为 1
-- 付费用户：最大并发数为 2
-- 默认并发数为 1
+**parse 命令新选项**：
+| 选项 | 说明 |
+|------|------|
+| `--async` | 异步处理，自动等待任务完成 |
+| `--no-wait` | 异步提交后立即返回 task ID（需配合 --async） |
+| `--retry N` | 失败任务重试 N 次（指数退避） |
+| `--concurrency 2` | 并发数（付费用户最大 2） |
 
 ### 文档抽取 (extract)
 
 ```bash
-adp extract local <path> --app-id <id>   # 抽取本地文件
-adp extract url <url> --app-id <id>      # 抽取 URL 文件
-adp extract ... --async                  # 异步处理
-adp extract ... --export <path>          # 导出 JSON 结果
-adp extract ... --concurrency 2          # 使用并发数 2（需要付费用户）
+adp extract local <path> --app-id <id>           # 抽取本地文件
+adp extract url <url> --app-id <id>             # 抽取 URL 文件
+adp extract base64 <b64>... --app-id <id>       # 抽取 base64 内容
+adp extract local <path> --app-id <id> --async  # 异步抽取
+adp extract local <path> --app-id <id> --no-wait --async --export tasks.json  # 批量提交
 ```
+
+**extract 命令新选项**：
+| 选项 | 说明 |
+|------|------|
+| `--async` | 异步处理，自动等待任务完成 |
+| `--no-wait` | 异步提交后立即返回 task ID（需配合 --async） |
+| `--retry N` | 失败任务重试 N 次（指数退避） |
+| `--concurrency 2` | 并发数（付费用户最大 2） |
 
 ### 查询异步结果 (query)
 
 ```bash
-adp query <task-id>              # 查询任务状态
+adp parse query <task-id>              # 查询解析任务状态
+adp extract query <task-id>            # 查询抽取任务状态
+adp parse query <task-id> --watch      # 监视直到完成
+adp parse query <id1> <id2> ...       # 批量查询多个任务
+adp extract query --file tasks.json    # 从文件加载任务 ID 批量查询
+```
+
+**query 命令新选项**：
+| 选项 | 说明 |
+|------|------|
+| `--watch` | 监视模式，持续查询直到任务完成 |
+| `--file <path>` | 从 JSON 文件加载任务 ID |
+| `--concurrency 2` | 批量查询时的并发数 |
+| `--export <path>` | 导出结果到 JSON 文件 |
+
+### 批量结果导出
+
+批量处理时，每个结果写入独立文件：
+
+```bash
+# 批量处理后，导出目录结构：
+# output/
+#   ├── doc1.json          # 成功结果
+#   ├── doc2.json
+#   ├── doc3.error.json     # 失败结果
+#   └── _summary.json       # 汇总信息
 ```
 
 ### 应用管理 (app-id)

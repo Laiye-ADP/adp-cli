@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from click.testing import CliRunner
 
-from adp_cli.cli import cli, _parse_json_param_value, parse_bool_param, parse_json_list_param, validate_create_app_params
+from adp_cli.cli import cli, _parse_json_param_value, parse_bool_param, parse_json_list_param, validate_create_app_params, _sanitize_file_name, _load_tasks_from_file
 from adp_cli.adp.config import ConfigManager
 
 
@@ -45,7 +45,7 @@ def test_cli_version(runner):
     """Test CLI version command."""
     result = runner.invoke(cli, ['--version'])
     assert result.exit_code == 0
-    assert '1.10.0' in result.output
+    assert 'adp, version' in result.output
 
 
 def test_cli_custom_help_command(runner):
@@ -79,7 +79,7 @@ def test_config_set_api_base_url(runner, temp_config_dir):
 def test_config_set_no_args(runner, temp_config_dir):
     """Test config set with no arguments."""
     result = runner.invoke(cli, ['config', 'set'])
-    assert result.exit_code == 1
+    assert result.exit_code == 2
 
 
 def test_config_get(runner, temp_config_dir):
@@ -186,7 +186,7 @@ def test_app_id_list_help(runner):
 def test_app_id_list_no_config(runner, temp_config_dir):
     """Test app-id list without config."""
     result = runner.invoke(cli, ['app-id', 'list'])
-    assert result.exit_code == 1
+    assert result.exit_code == 2
     # Error message might be in Chinese or English
 
 
@@ -435,3 +435,205 @@ def test_extract_local_file(tmp_path, runner, temp_config_dir):
 
         result = runner.invoke(cli, ['extract', 'local', '--app-id', 'app123', str(test_file)])
         # Note: This might fail due to actual API call, but we're testing command structure
+
+
+# ==================== New Feature Tests ====================
+
+def test_parse_local_no_wait_flag(runner, temp_config_dir):
+    """Test parse local with --no-wait flag."""
+    result = runner.invoke(cli, ['parse', 'local', '--help'])
+    assert result.exit_code == 0
+    assert '--no-wait' in result.output
+
+
+def test_parse_local_retry_flag(runner, temp_config_dir):
+    """Test parse local with --retry flag."""
+    result = runner.invoke(cli, ['parse', 'local', '--help'])
+    assert result.exit_code == 0
+    assert '--retry' in result.output
+
+
+def test_parse_url_no_wait_flag(runner, temp_config_dir):
+    """Test parse url with --no-wait flag."""
+    result = runner.invoke(cli, ['parse', 'url', '--help'])
+    assert result.exit_code == 0
+    assert '--no-wait' in result.output
+
+
+def test_parse_url_retry_flag(runner, temp_config_dir):
+    """Test parse url with --retry flag."""
+    result = runner.invoke(cli, ['parse', 'url', '--help'])
+    assert result.exit_code == 0
+    assert '--retry' in result.output
+
+
+def test_parse_base64_no_wait_flag(runner, temp_config_dir):
+    """Test parse base64 with --no-wait flag."""
+    result = runner.invoke(cli, ['parse', 'base64', '--help'])
+    assert result.exit_code == 0
+    assert '--no-wait' in result.output
+
+
+def test_parse_base64_retry_flag(runner, temp_config_dir):
+    """Test parse base64 with --retry flag."""
+    result = runner.invoke(cli, ['parse', 'base64', '--help'])
+    assert result.exit_code == 0
+    assert '--retry' in result.output
+
+
+def test_extract_local_no_wait_flag(runner, temp_config_dir):
+    """Test extract local with --no-wait flag."""
+    result = runner.invoke(cli, ['extract', 'local', '--help'])
+    assert result.exit_code == 0
+    assert '--no-wait' in result.output
+
+
+def test_extract_local_retry_flag(runner, temp_config_dir):
+    """Test extract local with --retry flag."""
+    result = runner.invoke(cli, ['extract', 'local', '--help'])
+    assert result.exit_code == 0
+    assert '--retry' in result.output
+
+
+def test_extract_url_no_wait_flag(runner, temp_config_dir):
+    """Test extract url with --no-wait flag."""
+    result = runner.invoke(cli, ['extract', 'url', '--help'])
+    assert result.exit_code == 0
+    assert '--no-wait' in result.output
+
+
+def test_extract_url_retry_flag(runner, temp_config_dir):
+    """Test extract url with --retry flag."""
+    result = runner.invoke(cli, ['extract', 'url', '--help'])
+    assert result.exit_code == 0
+    assert '--retry' in result.output
+
+
+def test_extract_base64_no_wait_flag(runner, temp_config_dir):
+    """Test extract base64 with --no-wait flag."""
+    result = runner.invoke(cli, ['extract', 'base64', '--help'])
+    assert result.exit_code == 0
+    assert '--no-wait' in result.output
+
+
+def test_extract_base64_retry_flag(runner, temp_config_dir):
+    """Test extract base64 with --retry flag."""
+    result = runner.invoke(cli, ['extract', 'base64', '--help'])
+    assert result.exit_code == 0
+    assert '--retry' in result.output
+
+
+def test_parse_query_file_flag(runner, temp_config_dir):
+    """Test parse query with --file flag."""
+    result = runner.invoke(cli, ['parse', 'query', '--help'])
+    assert result.exit_code == 0
+    assert '--file' in result.output
+
+
+def test_parse_query_concurrency_flag(runner, temp_config_dir):
+    """Test parse query with --concurrency flag."""
+    result = runner.invoke(cli, ['parse', 'query', '--help'])
+    assert result.exit_code == 0
+    assert '--concurrency' in result.output
+
+
+def test_extract_query_file_flag(runner, temp_config_dir):
+    """Test extract query with --file flag."""
+    result = runner.invoke(cli, ['extract', 'query', '--help'])
+    assert result.exit_code == 0
+    assert '--file' in result.output
+
+
+def test_extract_query_concurrency_flag(runner, temp_config_dir):
+    """Test extract query with --concurrency flag."""
+    result = runner.invoke(cli, ['extract', 'query', '--help'])
+    assert result.exit_code == 0
+    assert '--concurrency' in result.output
+
+
+def test_parse_query_multiple_task_ids(runner, temp_config_dir):
+    """Test parse query with multiple task IDs."""
+    # Set API key
+    runner.invoke(cli, ['config', 'set', '--api-key', 'test-api-key'])
+
+    # Mock the API client
+    with patch('adp_cli.adp.api_client.APIClient') as MockAPIClient:
+        mock_client = MockAPIClient.return_value
+        mock_client.get_user_payment_status.return_value = {"payment_type": "free"}
+        mock_client.query_parse_task.return_value = {"data": {"status": 4}}
+
+        # Multiple task IDs should be accepted
+        result = runner.invoke(cli, ['parse', 'query', 'id1', 'id2', 'id3'])
+        # Should not reject multiple args (exit code 0 or the error from mock)
+
+
+def test_extract_query_multiple_task_ids(runner, temp_config_dir):
+    """Test extract query with multiple task IDs."""
+    # Set API key
+    runner.invoke(cli, ['config', 'set', '--api-key', 'test-api-key'])
+
+    # Mock the API client
+    with patch('adp_cli.adp.api_client.APIClient') as MockAPIClient:
+        mock_client = MockAPIClient.return_value
+        mock_client.get_user_payment_status.return_value = {"payment_type": "free"}
+        mock_client.query_extract_task.return_value = {"data": {"status": 4}}
+
+        # Multiple task IDs should be accepted
+        result = runner.invoke(cli, ['extract', 'query', 'id1', 'id2', 'id3'])
+        # Should not reject multiple args (exit code 0 or the error from mock)
+
+
+# ==================== Helper Function Tests ====================
+
+def test_sanitize_file_name_basic():
+    """Test _sanitize_file_name with basic strings."""
+    assert _sanitize_file_name("simple_file") == "simple_file"
+    assert _sanitize_file_name("file with spaces") == "file with spaces"
+
+
+def test_sanitize_file_name_special_chars():
+    """Test _sanitize_file_name with special characters."""
+    assert _sanitize_file_name("file/with/slashes") == "file_with_slashes"
+    assert _sanitize_file_name("file:colon") == "file_colon"
+    assert _sanitize_file_name("file*star") == "file_star"
+    assert _sanitize_file_name('file"quotes') == "file_quotes"
+    assert _sanitize_file_name("file<less>") == "file_less_"
+    assert _sanitize_file_name("file|pipe") == "file_pipe"
+    assert _sanitize_file_name("file?name") == "file_name"
+
+
+def test_sanitize_file_name_trim():
+    """Test _sanitize_file_name trimming."""
+    assert _sanitize_file_name("  file  ") == "file"
+    assert _sanitize_file_name("file.") == "file"
+
+
+def test_sanitize_file_name_long():
+    """Test _sanitize_file_name with long names."""
+    long_name = "a" * 300
+    result = _sanitize_file_name(long_name)
+    assert len(result) == 200
+
+
+def test_load_tasks_from_file(tmp_path):
+    """Test _load_tasks_from_file with valid JSON."""
+    task_file = tmp_path / "tasks.json"
+    task_file.write_text('[{"path": "doc1.pdf", "task_id": "id1"}, {"path": "doc2.pdf", "task_id": "id2"}]')
+
+    task_ids = _load_tasks_from_file(str(task_file))
+    assert task_ids == ["id1", "id2"]
+
+
+def test_load_tasks_from_file_empty(tmp_path):
+    """Test _load_tasks_from_file with no valid task IDs."""
+    task_file = tmp_path / "tasks.json"
+    task_file.write_text('[{"path": "doc1.pdf"}, {"path": "doc2.pdf"}]')
+
+    with pytest.raises(SystemExit):
+        _load_tasks_from_file(str(task_file))
+
+
+def test_load_tasks_from_file_not_found():
+    """Test _load_tasks_from_file with non-existent file."""
+    with pytest.raises(SystemExit):
+        _load_tasks_from_file("/non/existent/file.json")

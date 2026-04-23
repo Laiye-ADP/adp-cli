@@ -333,9 +333,11 @@ adp parse local PATH [OPTIONS]
 | `path` | File or folder path | Yes |
 | `--app-id` | Parsing application ID | Yes |
 | `--async` | Submit async task and wait for completion with results | No |
+| `--no-wait` | Submit async task and return immediately (requires --async) | No |
 | `--export` | Export results to JSON file | No |
 | `--timeout` | Task timeout (seconds) | No |
 | `--concurrency` | Concurrent tasks count for batch processing (default: 1, max: 1 for free users, 2 for paid users) | No |
+| `--retry` | Number of retries for failed tasks (default: 0, max: 10) | No |
 
 ```bash
 # Example
@@ -343,6 +345,8 @@ adp parse local ./document.pdf --app-id YOUR_APP_ID
 adp parse local ./documents/ --app-id YOUR_APP_ID --async
 adp parse local ./documents/ --app-id YOUR_APP_ID --async --concurrency 5
 adp parse local ./document.pdf --app-id YOUR_APP_ID --export result.json
+adp parse local ./documents/ --app-id YOUR_APP_ID --async --no-wait --export tasks.json
+adp parse local ./documents/ --app-id YOUR_APP_ID --async --retry 3
 ```
 
 **parse url**
@@ -356,15 +360,18 @@ adp parse url URL [OPTIONS]
 | `url` | File URL or URL list file path | Yes |
 | `--app-id` | Parsing application ID | Yes |
 | `--async` | Submit async task and wait for completion with results | No |
+| `--no-wait` | Submit async task and return immediately (requires --async) | No |
 | `--export` | Export results to JSON file | No |
 | `--timeout` | Task timeout (seconds) | No |
 | `--concurrency` | Concurrent tasks count for batch processing (default: 1, max: 1 for free users, 2 for paid users) | No |
+| `--retry` | Number of retries for failed tasks (default: 0, max: 10) | No |
 
 ```bash
 # Example
 adp parse url https://example.com/document.pdf --app-id YOUR_APP_ID
 adp parse url ./urls.txt --app-id YOUR_APP_ID --async
 adp parse url ./urls.txt --app-id YOUR_APP_ID --async --concurrency 5
+adp parse url ./urls.txt --app-id YOUR_APP_ID --async --no-wait --export tasks.json
 ```
 
 **parse base64**
@@ -378,35 +385,42 @@ adp parse base64 BASE64_STRING [OPTIONS]
 | `file_base64` | Base64 encoded file content (one or more) | Yes |
 | `--app-id` | Parsing application ID | Yes |
 | `--async` | Submit async task and wait for completion with results | No |
+| `--no-wait` | Submit async task and return immediately (requires --async) | No |
 | `--export` | Export results to JSON file | No |
 | `--timeout` | Task timeout (seconds) | No |
 | `--file-name` | Base file name for the base64 content (default: document) | No |
 | `--concurrency` | Concurrent tasks count for batch processing (default: 1) | No |
+| `--retry` | Number of retries for failed tasks (default: 0, max: 10) | No |
 
 ```bash
 # Example
 adp parse base64 SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID
 adp parse base64 SGVsbG8gV29ybGQ= SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID --file-name document
+adp parse base64 SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID --async --no-wait --export tasks.json
 ```
 
 **parse query**
 
 ```bash
-adp parse query TASK_ID [OPTIONS]
+adp parse query TASK_ID... [OPTIONS]
 ```
 
 | Parameter | Description | Required |
 |-----------|-------------|----------|
-| `task-id` | Parse async task ID | Yes |
+| `task-id` | Parse async task ID(s). Multiple IDs can be provided. | Yes (at least one) |
 | `--watch` | Watch mode, continuously query until task completes | No |
+| `--file` | Load task IDs from a JSON file (produced by --no-wait) | No |
 | `--export` | Export results to JSON file | No |
 | `--timeout` | Watch mode timeout (seconds) | No |
+| `--concurrency` | Concurrent queries for batch processing (default: 1, max: 2) | No |
 
 ```bash
 # Example
 adp parse query 12345678-1234-1234-1234-123456789012
 adp parse query 12345678-1234-1234-1234-123456789012 --watch
 adp parse query 12345678-1234-1234-1234-123456789012 --export result.json
+adp parse query id1 id2 id3 --concurrency 2
+adp parse query --file tasks.json
 ```
 
 #### Document Extraction Commands
@@ -435,15 +449,19 @@ adp extract local PATH [OPTIONS]
 | `path` | File or folder path | Yes |
 | `--app-id` | Extraction application ID | Yes |
 | `--async` | Submit async task and wait for completion with results | No |
+| `--no-wait` | Submit async task and return immediately (requires --async) | No |
 | `--export` | Export results to JSON file | No |
 | `--timeout` | Task timeout (seconds) | No |
 | `--concurrency` | Concurrent tasks count for batch processing (default: 1, max: 1 for free users, 2 for paid users) | No |
+| `--retry` | Number of retries for failed tasks (default: 0, max: 10) | No |
 
 ```bash
 # Example
 adp extract local ./invoice.pdf --app-id INVOICE_EXTRACTOR
 adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --async
 adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --async --concurrency 5
+adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --async --no-wait --export tasks.json
+adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --async --retry 3
 ```
 
 **extract url**
@@ -457,9 +475,11 @@ adp extract url URL [OPTIONS]
 | `url` | File URL or URL list file path | Yes |
 | `--app-id` | Extraction application ID | Yes |
 | `--async` | Submit async task and wait for completion with results | No |
+| `--no-wait` | Submit async task and return immediately (requires --async) | No |
 | `--export` | Export results to JSON file | No |
 | `--timeout` | Task timeout (seconds) | No |
 | `--concurrency` | Concurrent tasks count for batch processing (default: 1, max: 1 for free users, 2 for paid users) | No |
+| `--retry` | Number of retries for failed tasks (default: 0, max: 10) | No |
 
 ```bash
 # Example
@@ -473,6 +493,13 @@ adp extract url ./urls.txt \
   --app-id YOUR_EXTRACT_APP_ID \
   --async \
   --concurrency 5
+
+# No-wait mode for batch submission
+adp extract url ./urls.txt \
+  --app-id YOUR_EXTRACT_APP_ID \
+  --async \
+  --no-wait \
+  --export tasks.json
 ```
 
 **extract base64**
@@ -486,35 +513,42 @@ adp extract base64 BASE64_STRING [OPTIONS]
 | `file_base64` | Base64 encoded file content (one or more) | Yes |
 | `--app-id` | Extraction application ID | Yes |
 | `--async` | Submit async task and wait for completion with results | No |
+| `--no-wait` | Submit async task and return immediately (requires --async) | No |
 | `--export` | Export results to JSON file | No |
 | `--timeout` | Task timeout (seconds) | No |
 | `--file-name` | Base file name for the base64 content (default: document) | No |
 | `--concurrency` | Concurrent tasks count for batch processing (default: 1) | No |
+| `--retry` | Number of retries for failed tasks (default: 0, max: 10) | No |
 
 ```bash
 # Example
 adp extract base64 SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID
 adp extract base64 SGVsbG8gV29ybGQ= SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID --file-name document
+adp extract base64 SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID --async --no-wait --export tasks.json
 ```
 
 **extract query**
 
 ```bash
-adp extract query TASK_ID [OPTIONS]
+adp extract query TASK_ID... [OPTIONS]
 ```
 
 | Parameter | Description | Required |
 |-----------|-------------|----------|
-| `task-id` | Extract async task ID | Yes |
+| `task-id` | Extract async task ID(s). Multiple IDs can be provided. | Yes (at least one) |
 | `--watch` | Watch mode, continuously query until task completes | No |
+| `--file` | Load task IDs from a JSON file (produced by --no-wait) | No |
 | `--export` | Export results to JSON file | No |
 | `--timeout` | Watch mode timeout (seconds) | No |
+| `--concurrency` | Concurrent queries for batch processing (default: 1, max: 2) | No |
 
 ```bash
 # Example
 adp extract query 12345678-1234-1234-1234-123456789012
 adp extract query 12345678-1234-1234-1234-123456789012 --watch
 adp extract query 12345678-1234-1234-1234-123456789012 --export result.json
+adp extract query id1 id2 id3 --concurrency 2
+adp extract query --file tasks.json
 ```
 
 #### Application Management Commands
@@ -844,6 +878,46 @@ adp parse local ./document.pdf --app-id YOUR_APP_ID || echo "Parse failed, retry
 
 # Linux/macOS
 adp parse local ./document.pdf --app-id YOUR_APP_ID || echo "Parse failed, retrying..."
+
+# Use retry option for automatic retries
+adp parse local ./documents/ --app-id YOUR_APP_ID --async --retry 3
+```
+
+#### Example 5: No-Wait Mode for Batch Submission
+
+```bash
+# Submit multiple tasks and get task IDs immediately
+adp parse local ./documents/ --app-id YOUR_APP_ID --async --no-wait --export tasks.json
+
+# tasks.json content example:
+# [{"path": "doc1.pdf", "task_id": "xxx-001"}, {"path": "doc2.pdf", "task_id": "xxx-002"}]
+
+# Later, query all tasks from the file
+adp parse query --file tasks.json --watch
+```
+
+#### Example 6: Batch Processing with Individual Result Files
+
+```bash
+# Process multiple files, each result written to separate file
+adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --export ./output
+
+# Output directory structure:
+# output/
+#   ├── invoice_001.json      # Success result
+#   ├── invoice_002.json
+#   ├── invoice_003.error.json # Error result
+#   └── _summary.json          # Summary with total/success/failed counts
+```
+
+#### Example 7: Query Multiple Tasks
+
+```bash
+# Query multiple task IDs at once
+adp parse query id1 id2 id3 --concurrency 2
+
+# Or load from file
+adp extract query --file tasks.json --watch
 ```
 
 ---

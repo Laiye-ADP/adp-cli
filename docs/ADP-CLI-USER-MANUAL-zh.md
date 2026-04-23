@@ -333,9 +333,11 @@ adp parse local PATH [OPTIONS]
 | `path` | 文件或文件夹路径 | 是 |
 | `--app-id` | 解析应用ID | 是 |
 | `--async` | 提交异步任务并等待完成返回结果 | 否 |
+| `--no-wait` | 提交异步任务后立即返回（需配合 --async） | 否 |
 | `--export` | 导出结果到JSON文件 | 否 |
 | `--timeout` | 任务超时时间（秒） | 否 |
 | `--concurrency` | 批量处理的并发数（默认：1） | 否 |
+| `--retry` | 失败任务重试次数（默认：0，最大：10） | 否 |
 
 ```bash
 # 示例
@@ -343,6 +345,8 @@ adp parse local ./document.pdf --app-id YOUR_APP_ID
 adp parse local ./documents/ --app-id YOUR_APP_ID --async
 adp parse local ./documents/ --app-id YOUR_APP_ID --async --concurrency 5
 adp parse local ./document.pdf --app-id YOUR_APP_ID --export result.json
+adp parse local ./documents/ --app-id YOUR_APP_ID --async --no-wait --export tasks.json
+adp parse local ./documents/ --app-id YOUR_APP_ID --async --retry 3
 ```
 
 **parse url**
@@ -356,15 +360,18 @@ adp parse url URL [OPTIONS]
 | `url` | 文件URL或URL列表文件路径 | 是 |
 | `--app-id` | 解析应用ID | 是 |
 | `--async` | 提交异步任务并等待完成返回结果 | 否 |
+| `--no-wait` | 提交异步任务后立即返回（需配合 --async） | 否 |
 | `--export` | 导出结果到JSON文件 | 否 |
 | `--timeout` | 任务超时时间（秒） | 否 |
 | `--concurrency` | 批量处理的并发数（默认：1） | 否 |
+| `--retry` | 失败任务重试次数（默认：0，最大：10） | 否 |
 
 ```bash
 # 示例
 adp parse url https://example.com/document.pdf --app-id YOUR_APP_ID
 adp parse url ./urls.txt --app-id YOUR_APP_ID --async
 adp parse url ./urls.txt --app-id YOUR_APP_ID --async --concurrency 5
+adp parse url ./urls.txt --app-id YOUR_APP_ID --async --no-wait --export tasks.json
 ```
 
 **parse base64**
@@ -378,35 +385,42 @@ adp parse base64 BASE64_STRING [OPTIONS]
 | `file_base64` | Base64编码的文件内容（一个或多个） | 是 |
 | `--app-id` | 解析应用ID | 是 |
 | `--async` | 提交异步任务并等待完成返回结果 | 否 |
+| `--no-wait` | 提交异步任务后立即返回（需配合 --async） | 否 |
 | `--export` | 导出结果到JSON文件 | 否 |
 | `--timeout` | 任务超时时间（秒） | 否 |
 | `--file-name` | Base64内容的基础文件名（默认：document） | 否 |
 | `--concurrency` | 批量处理的并发数（默认：1） | 否 |
+| `--retry` | 失败任务重试次数（默认：0，最大：10） | 否 |
 
 ```bash
 # 示例
 adp parse base64 SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID
 adp parse base64 SGVsbG8gV29ybGQ= SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID --file-name document
+adp parse base64 SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID --async --no-wait --export tasks.json
 ```
 
 **parse query**
 
 ```bash
-adp parse query TASK_ID [OPTIONS]
+adp parse query TASK_ID... [OPTIONS]
 ```
 
 | 参数 | 说明 | 必填 |
 |------|------|------|
-| `task-id` | 解析异步任务ID | 是 |
+| `task-id` | 解析异步任务ID（支持多个） | 是（至少一个） |
 | `--watch` | 监视模式，持续查询直到任务完成 | 否 |
+| `--file` | 从JSON文件加载任务ID（由 --no-wait 生成） | 否 |
 | `--export` | 导出结果到JSON文件 | 否 |
 | `--timeout` | 监视模式超时时间（秒） | 否 |
+| `--concurrency` | 批量查询的并发数（默认：1，最大：2） | 否 |
 
 ```bash
 # 示例
 adp parse query 12345678-1234-1234-1234-123456789012
 adp parse query 12345678-1234-1234-1234-123456789012 --watch
 adp parse query 12345678-1234-1234-1234-123456789012 --export result.json
+adp parse query id1 id2 id3 --concurrency 2
+adp parse query --file tasks.json
 ```
 
 #### 文档抽取命令
@@ -435,15 +449,19 @@ adp extract local PATH [OPTIONS]
 | `path` | 文件或文件夹路径 | 是 |
 | `--app-id` | 抽取应用ID | 是 |
 | `--async` | 提交异步任务并等待完成返回结果 | 否 |
+| `--no-wait` | 提交异步任务后立即返回（需配合 --async） | 否 |
 | `--export` | 导出结果到JSON文件 | 否 |
 | `--timeout` | 任务超时时间（秒） | 否 |
 | `--concurrency` | 批量处理的并发数（默认：1） | 否 |
+| `--retry` | 失败任务重试次数（默认：0，最大：10） | 否 |
 
 ```bash
 # 示例
 adp extract local ./invoice.pdf --app-id INVOICE_EXTRACTOR
 adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --async
 adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --async --concurrency 5
+adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --async --no-wait --export tasks.json
+adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --async --retry 3
 ```
 
 **extract url**
@@ -457,9 +475,11 @@ adp extract url URL [OPTIONS]
 | `url` | 文件URL或URL列表文件路径 | 是 |
 | `--app-id` | 抽取应用ID | 是 |
 | `--async` | 提交异步任务并等待完成返回结果 | 否 |
+| `--no-wait` | 提交异步任务后立即返回（需配合 --async） | 否 |
 | `--export` | 导出结果到JSON文件 | 否 |
 | `--timeout` | 任务超时时间（秒） | 否 |
 | `--concurrency` | 批量处理的并发数（默认：1） | 否 |
+| `--retry` | 失败任务重试次数（默认：0，最大：10） | 否 |
 
 ```bash
 # 示例
@@ -473,6 +493,13 @@ adp extract url ./urls.txt \
   --app-id YOUR_EXTRACT_APP_ID \
   --async \
   --concurrency 5
+
+# no-wait 模式批量提交
+adp extract url ./urls.txt \
+  --app-id YOUR_EXTRACT_APP_ID \
+  --async \
+  --no-wait \
+  --export tasks.json
 ```
 
 **extract base64**
@@ -486,35 +513,42 @@ adp extract base64 BASE64_STRING [OPTIONS]
 | `file_base64` | Base64编码的文件内容（一个或多个） | 是 |
 | `--app-id` | 抽取应用ID | 是 |
 | `--async` | 提交异步任务并等待完成返回结果 | 否 |
+| `--no-wait` | 提交异步任务后立即返回（需配合 --async） | 否 |
 | `--export` | 导出结果到JSON文件 | 否 |
 | `--timeout` | 任务超时时间（秒） | 否 |
 | `--file-name` | Base64内容的基础文件名（默认：document） | 否 |
 | `--concurrency` | 批量处理的并发数（默认：1） | 否 |
+| `--retry` | 失败任务重试次数（默认：0，最大：10） | 否 |
 
 ```bash
 # 示例
 adp extract base64 SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID
 adp extract base64 SGVsbG8gV29ybGQ= SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID --file-name document
+adp extract base64 SGVsbG8gV29ybGQ= --app-id YOUR_APP_ID --async --no-wait --export tasks.json
 ```
 
 **extract query**
 
 ```bash
-adp extract query TASK_ID [OPTIONS]
+adp extract query TASK_ID... [OPTIONS]
 ```
 
 | 参数 | 说明 | 必填 |
 |------|------|------|
-| `task-id` | 抽取异步任务ID | 是 |
+| `task-id` | 抽取异步任务ID（支持多个） | 是（至少一个） |
 | `--watch` | 监视模式，持续查询直到任务完成 | 否 |
+| `--file` | 从JSON文件加载任务ID（由 --no-wait 生成） | 否 |
 | `--export` | 导出结果到JSON文件 | 否 |
 | `--timeout` | 监视模式超时时间（秒） | 否 |
+| `--concurrency` | 批量查询的并发数（默认：1，最大：2） | 否 |
 
 ```bash
 # 示例
 adp extract query 12345678-1234-1234-1234-123456789012
 adp extract query 12345678-1234-1234-1234-123456789012 --watch
 adp extract query 12345678-1234-1234-1234-123456789012 --export result.json
+adp extract query id1 id2 id3 --concurrency 2
+adp extract query --file tasks.json
 ```
 
 #### 应用管理命令
@@ -848,6 +882,46 @@ adp parse local ./document.pdf --app-id YOUR_APP_ID || echo "Parse failed, retry
 
 # Linux/macOS
 adp parse local ./document.pdf --app-id YOUR_APP_ID || echo "Parse failed, retrying..."
+
+# 使用 --retry 选项自动重试
+adp parse local ./documents/ --app-id YOUR_APP_ID --async --retry 3
+```
+
+#### 示例 5：no-wait 模式批量提交
+
+```bash
+# 提交多个任务并立即获取 task ID
+adp parse local ./documents/ --app-id YOUR_APP_ID --async --no-wait --export tasks.json
+
+# tasks.json 内容示例：
+# [{"path": "doc1.pdf", "task_id": "xxx-001"}, {"path": "doc2.pdf", "task_id": "xxx-002"}]
+
+# 后续从文件加载任务进行查询
+adp parse query --file tasks.json --watch
+```
+
+#### 示例 6：批量处理独立结果文件
+
+```bash
+# 处理多个文件，每个结果写入独立文件
+adp extract local ./invoices/ --app-id INVOICE_EXTRACTOR --export ./output
+
+# 输出目录结构：
+# output/
+#   ├── invoice_001.json      # 成功结果
+#   ├── invoice_002.json
+#   ├── invoice_003.error.json # 错误结果
+#   └── _summary.json          # 汇总信息（total/success/failed）
+```
+
+#### 示例 7：批量查询多个任务
+
+```bash
+# 同时查询多个任务 ID
+adp parse query id1 id2 id3 --concurrency 2
+
+# 或从文件加载
+adp extract query --file tasks.json --watch
 ```
 
 ---

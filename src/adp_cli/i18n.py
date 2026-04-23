@@ -128,13 +128,16 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "option_app_id_parse": "Application ID for parsing (use \"adp app-id list\" to get available IDs)",
         "option_app_id_extract": "Application ID for extraction (use \"adp app-id list\" to get available IDs)",
         "option_async": "Process asynchronously (return task ID immediately)",
+        "option_no_wait": "Submit async task and return immediately without waiting (requires --async)",
         "option_export": "Export results to JSON file",
         "option_timeout": "Timeout for sync mode (seconds, default: 300)",
         "option_concurrency": "For batch processing, concurrency defaults to 1. Free users max=1, paid users max=2. If other values are entered, concurrency will not take effect. Please wait for processing.",
+        "option_retry": "Number of retries for failed tasks (default: 0, max: 10)",
         "option_file_base64": "Directly pass file content as base64 encoded string (skip file reading)",
         "option_file_name": "File name (default: document)",
         "option_watch": "Watch task until completion (polls until task finishes)",
         "option_watch_timeout": "Timeout for watch mode (seconds, default: 300)",
+        "option_task_file": "JSON file containing task IDs (produced by --no-wait)",
 
         # Query command
         "query_description": "Query async task status.",
@@ -208,6 +211,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "interrupted": "Received interrupt signal, stopping...",
         "cancelled_pending_tasks": "Cancelled {count} pending task(s)",
         "waiting_for_results": "Waiting for all results to complete...",
+        "submitting_tasks": "Submitting {count} task(s)...",
 
         # Custom App command
         "custom_app_description": "Custom extraction application management.",
@@ -381,13 +385,16 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "option_app_id_parse": "解析的应用 ID (使用 \"adp app-id list\" 获取可用 ID)",
         "option_app_id_extract": "抽取的应用 ID (使用 \"adp app-id list\" 获取可用 ID)",
         "option_async": "异步处理，立即返回任务 ID",
+        "option_no_wait": "提交异步任务后立即返回，不等待完成（需配合 --async 使用）",
         "option_export": "导出结果到 JSON 文件",
         "option_timeout": "同步模式超时时间（秒，默认 300）",
         "option_concurrency": "批量处理时，并发数默认为 1。免费用户最高为 1，付费用户最高为 2。若输入其他数值，并发将不生效，请等待处理。",
+        "option_retry": "失败任务重试次数（默认：0，最大：10）",
         "option_file_base64": "直接传入文件的 base64 编码内容（跳过文件读取）",
         "option_file_name": "文件名（默认: document）",
         "option_watch": "监视任务直到完成（轮询直到任务结束）",
         "option_watch_timeout": "监视模式超时时间（秒，默认 300）",
+        "option_task_file": "包含任务 ID 的 JSON 文件（由 --no-wait 生成）",
 
         # Query command
         "query_description": "查询异步任务状态。",
@@ -454,6 +461,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "interrupted": "接收到中断信号，正在停止...",
         "cancelled_pending_tasks": "已取消 {count} 个待处理任务",
         "waiting_for_results": "等待所有结果完成...",
+        "submitting_tasks": "正在提交 {count} 个任务...",
 
         # Custom App command
         "custom_app_description": "自定义抽取应用管理。",

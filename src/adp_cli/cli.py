@@ -452,16 +452,18 @@ parse.is_group = True
 @click.argument('path', type=click.Path(exists=True))
 @click.option('--app-id', required=True, help="__option_app_id_parse__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
+@click.option('--no-wait', is_flag=True, help="__option_no_wait__")
 @click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_timeout__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
+@click.option('--retry', type=click.IntRange(min=0, max=10), default=0, help="__option_retry__")
 @check_config
-def local(path, app_id, async_mode, export, timeout, concurrency):
+def local(path, app_id, async_mode, no_wait, export, timeout, concurrency, retry):
     """
     Parse local files or folders.
     """
     try:
-        _process_local_files(path, async_mode, export, timeout, mode="parse", app_id=app_id, concurrency=concurrency)
+        _process_local_files(path, async_mode, no_wait, export, timeout, mode="parse", app_id=app_id, concurrency=concurrency, retry=retry)
     except Exception as e:
         print_error_and_exit(classify_exception(e, "parse local"))
 
@@ -472,16 +474,18 @@ local.help_key = 'parse_local_title'
 @click.argument('url')
 @click.option('--app-id', required=True, help="__option_app_id_parse__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
+@click.option('--no-wait', is_flag=True, help="__option_no_wait__")
 @click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_timeout__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
+@click.option('--retry', type=click.IntRange(min=0, max=10), default=0, help="__option_retry__")
 @check_config
-def url(url, app_id, async_mode, export, timeout, concurrency):
+def url(url, app_id, async_mode, no_wait, export, timeout, concurrency, retry):
     """
     Parse URL files or URL list files.
     """
     try:
-        _process_url_file(url, async_mode, export, timeout, mode="parse", app_id=app_id, concurrency=concurrency)
+        _process_url_file(url, async_mode, no_wait, export, timeout, mode="parse", app_id=app_id, concurrency=concurrency, retry=retry)
     except Exception as e:
         print_error_and_exit(classify_exception(e))
 
@@ -492,19 +496,21 @@ url.help_key = 'parse_url_title'
 @click.argument('file_base64', nargs=-1, required=True)
 @click.option('--app-id', required=True, help="__option_app_id_parse__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
+@click.option('--no-wait', is_flag=True, help="__option_no_wait__")
 @click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_timeout__")
 @click.option('--file-name', default="document", help="__option_file_name__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
+@click.option('--retry', type=click.IntRange(min=0, max=10), default=0, help="__option_retry__")
 @check_config
-def parse_base64(file_base64, app_id, async_mode, export, timeout, file_name, concurrency):
+def parse_base64(file_base64, app_id, async_mode, no_wait, export, timeout, file_name, concurrency, retry):
     """
     Parse base64 encoded file content.
     """
     try:
         _process_base64_files(
-            file_base64, app_id, file_name, async_mode,
-            export, timeout, mode="parse", concurrency=concurrency
+            file_base64, app_id, file_name, async_mode, no_wait,
+            export, timeout, mode="parse", concurrency=concurrency, retry=retry
         )
     except Exception as e:
         print_error_and_exit(classify_exception(e))
@@ -529,16 +535,18 @@ extract.is_group = True
 @click.argument('path', type=click.Path(exists=True))
 @click.option('--app-id', required=True, help="__option_app_id_extract__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
+@click.option('--no-wait', is_flag=True, help="__option_no_wait__")
 @click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_timeout__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
+@click.option('--retry', type=click.IntRange(min=0, max=10), default=0, help="__option_retry__")
 @check_config
-def local(path, app_id, async_mode, export, timeout, concurrency):
+def local(path, app_id, async_mode, no_wait, export, timeout, concurrency, retry):
     """
     Extract local files or folders.
     """
     try:
-        _process_local_files(path, async_mode, export, timeout, mode="extract", app_id=app_id, concurrency=concurrency)
+        _process_local_files(path, async_mode, no_wait, export, timeout, mode="extract", app_id=app_id, concurrency=concurrency, retry=retry)
     except Exception as e:
         print_error_and_exit(classify_exception(e))
 
@@ -549,16 +557,18 @@ local.help_key = 'extract_local_title'
 @click.argument('url')
 @click.option('--app-id', required=True, help="__option_app_id_extract__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
+@click.option('--no-wait', is_flag=True, help="__option_no_wait__")
 @click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_timeout__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
+@click.option('--retry', type=click.IntRange(min=0, max=10), default=0, help="__option_retry__")
 @check_config
-def url(url, app_id, async_mode, export, timeout, concurrency):
+def url(url, app_id, async_mode, no_wait, export, timeout, concurrency, retry):
     """
     Extract URL files or URL list files.
     """
     try:
-        _process_url_file(url, async_mode, export, timeout, mode="extract", app_id=app_id, concurrency=concurrency)
+        _process_url_file(url, async_mode, no_wait, export, timeout, mode="extract", app_id=app_id, concurrency=concurrency, retry=retry)
     except Exception as e:
         print_error_and_exit(classify_exception(e))
 
@@ -569,19 +579,21 @@ url.help_key = 'extract_url_title'
 @click.argument('file_base64', nargs=-1, required=True)
 @click.option('--app-id', required=True, help="__option_app_id_extract__")
 @click.option('--async', 'async_mode', is_flag=True, help="__option_async__")
+@click.option('--no-wait', is_flag=True, help="__option_no_wait__")
 @click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_timeout__")
 @click.option('--file-name', default="document", help="__option_file_name__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
+@click.option('--retry', type=click.IntRange(min=0, max=10), default=0, help="__option_retry__")
 @check_config
-def extract_base64(file_base64, app_id, async_mode, export, timeout, file_name, concurrency):
+def extract_base64(file_base64, app_id, async_mode, no_wait, export, timeout, file_name, concurrency, retry):
     """
     Extract base64 encoded file content.
     """
     try:
         _process_base64_files(
-            file_base64, app_id, file_name, async_mode,
-            export, timeout, mode="extract", concurrency=concurrency
+            file_base64, app_id, file_name, async_mode, no_wait,
+            export, timeout, mode="extract", concurrency=concurrency, retry=retry
         )
     except Exception as e:
         print_error_and_exit(classify_exception(e))
@@ -590,36 +602,59 @@ extract_base64.help_key = 'extract_base64_title'
 
 
 @extract.command('query', help="__extract_query_title__")
-@click.argument('task-id')
+@click.argument('task-id', nargs=-1, required=False)
 @click.option('--watch', is_flag=True, help="__option_watch__")
+@click.option('--file', 'task_file', type=click.Path(exists=True), help="__option_task_file__")
 @click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_watch_timeout__")
+@click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
-def extract_query(task_id, watch, export,timeout):
+def extract_query(task_ids, watch, task_file, export, timeout, concurrency):
     """
     Query extract async task status.
     """
     try:
+        # Load tasks from file if --file is specified
+        if task_file:
+            task_ids = _load_tasks_from_file(task_file)
+
+        if not task_ids:
+            error = CLIError(
+                message="Either task IDs or --file must be provided",
+                error_type=ERROR_TYPE_PARAM,
+                exit_code=EXIT_PARAMETER_ERROR,
+                fix="Provide task IDs as arguments or use --file to load from a JSON file",
+                retryable=False
+            )
+            print_error_and_exit(error)
+
         config_manager = ConfigManager()
         api_client = APIClient(config_manager)
 
-        if watch:
-            # Watch mode: wait for task completion
-            result = api_client.wait_for_task(
-                task_id,
-                api_client.query_extract_task,
-                timeout=timeout
-            )
-            formatter.print_success(t('task_completed'))
+        # Validate concurrency
+        concurrency = _validate_concurrency(api_client, concurrency)
+
+        if len(task_ids) == 1:
+            # Single task query
+            task_id = task_ids[0]
+            if watch:
+                result = api_client.wait_for_task(
+                    task_id,
+                    api_client.query_extract_task,
+                    timeout=timeout
+                )
+                formatter.print_success(t('task_completed'))
+            else:
+                result = api_client.query_extract_task(task_id)
+            data = result.get("data", {})
+            formatter.print_task_result(task_id, data.get("status", ""), result)
+            if export:
+                FileHandler.write_json_output(data, Path(export))
+                formatter.print_success(f"{t('results_exported_to')} {export}")
         else:
-            # Single query
-            result = api_client.query_extract_task(task_id)
-        data = result.get("data",{})
-        formatter.print_task_result(task_id, data.get("status", ""), result)
-        if export:
-            FileHandler.write_json_output(data, Path(export))
-            formatter.print_success(f"{t('results_exported_to')} {export}")
-            
+            # Multi-task query with batch processing
+            _query_tasks_batch(task_ids, watch, export, timeout, concurrency, api_client, "extract")
+
     except Exception as e:
         print_error_and_exit(classify_exception(e))
 
@@ -629,36 +664,58 @@ extract_query.help_key = 'extract_query_title'
 # ==================== Parse Query Command ====================
 
 @parse.command('query', help="__parse_query_title__")
-@click.argument('task-id')
+@click.argument('task-id', nargs=-1, required=False)
 @click.option('--watch', is_flag=True, help="__option_watch__")
+@click.option('--file', 'task_file', type=click.Path(exists=True), help="__option_task_file__")
 @click.option('--export', type=click.Path(), help="__option_export__")
 @click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_watch_timeout__")
+@click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
-def parse_query(task_id, watch,export, timeout):
+def parse_query(task_ids, watch, task_file, export, timeout, concurrency):
     """
     Query parse async task status.
     """
     try:
+        # Load tasks from file if --file is specified
+        if task_file:
+            task_ids = _load_tasks_from_file(task_file)
+
+        if not task_ids:
+            error = CLIError(
+                message="Either task IDs or --file must be provided",
+                error_type=ERROR_TYPE_PARAM,
+                exit_code=EXIT_PARAMETER_ERROR,
+                fix="Provide task IDs as arguments or use --file to load from a JSON file",
+                retryable=False
+            )
+            print_error_and_exit(error)
+
         config_manager = ConfigManager()
         api_client = APIClient(config_manager)
 
-        if watch:
-            # Watch mode: wait for task completion
-            result = api_client.wait_for_task(
-                task_id,
-                api_client.query_parse_task,
-                timeout=timeout
-            )
-            formatter.print_success(t('task_completed'))
+        # Validate concurrency
+        concurrency = _validate_concurrency(api_client, concurrency)
+
+        if len(task_ids) == 1:
+            # Single task query
+            task_id = task_ids[0]
+            if watch:
+                result = api_client.wait_for_task(
+                    task_id,
+                    api_client.query_parse_task,
+                    timeout=timeout
+                )
+                formatter.print_success(t('task_completed'))
+            else:
+                result = api_client.query_parse_task(task_id)
+            data = result.get("data", {})
+            formatter.print_task_result(task_id, data.get("status", ""), result)
+            if export:
+                FileHandler.write_json_output(data, Path(export))
+                formatter.print_success(f"{t('results_exported_to')} {export}")
         else:
-            # Single query
-            result = api_client.query_parse_task(task_id)
-        data = result.get("data",{})
-        formatter.print_task_result(task_id, data.get("status", ""), result)
-        if export:
-            FileHandler.write_json_output(data, Path(export))
-            formatter.print_success(f"{t('results_exported_to')} {export}")
-            
+            # Multi-task query with batch processing
+            _query_tasks_batch(task_ids, watch, export, timeout, concurrency, api_client, "parse")
 
     except Exception as e:
         print_error_and_exit(classify_exception(e))
@@ -1412,14 +1469,16 @@ from typing import Tuple, List, Any, Dict, Optional
 class BatchProcessor:
     """批量处理器基类，处理通用流程."""
 
-    def __init__(self, mode: str, app_id: str, async_mode: bool,
-                 export_path: Optional[str], timeout: int, concurrency: int):
+    def __init__(self, mode: str, app_id: str, async_mode: bool, no_wait: bool,
+                 export_path: Optional[str], timeout: int, concurrency: int, retry: int):
         self.mode = mode
         self.app_id = app_id
         self.async_mode = async_mode
+        self.no_wait = no_wait
         self.export_path = export_path
         self.timeout = timeout
         self.concurrency = concurrency
+        self.retry = retry
         self.config_manager = ConfigManager()
         self.api_client = APIClient(self.config_manager)
 
@@ -1456,17 +1515,22 @@ class BatchProcessor:
 
         formatter.print_section(self._get_section_title(valid_items))
 
-        # 4. 处理项目（并发或串行）
+        # 4. no_wait mode: submit only and return task IDs
+        if self.async_mode and self.no_wait:
+            self._submit_only(valid_items)
+            return
+
+        # 5. 处理项目（并发或串行）
         if len(valid_items) > 1 and self.concurrency > 1:
             results = self._process_concurrent(valid_items)
         else:
             results = self._process_sequential(valid_items)
 
-        # 5. 排序并输出结果
+        # 6. 排序并输出结果
         results = _sort_and_clean_results(results)
         OutputFormatter.print_results(results, valid_items, self.mode, formatter, t)
 
-        # 6. 导出
+        # 7. 导出
         self._export_if_needed(results, valid_items)
 
     # --- 子类必须实现的方法 ---
@@ -1499,6 +1563,49 @@ class BatchProcessor:
     def _get_error_message_key(self) -> str:
         """获取错误消息的i18n key."""
         return 'failed_to_process'
+
+    def _submit_only(self, items: List) -> None:
+        """Submit async tasks without waiting (no_wait mode)."""
+        submit_results = []
+        for i, item in enumerate(items, 1):
+            item_name = self._get_item_name(item)
+            try:
+                task_id = self._submit_single(item, i)
+                submit_results.append({"path": item_name, "task_id": task_id})
+                print(f"[{i}/{len(items)}] Submitted: {item_name} (task_id: {task_id})")
+            except Exception as e:
+                submit_results.append({"path": item_name, "error": str(e)})
+                print(f"[{i}/{len(items)}] Failed: {item_name} - {str(e)}")
+
+        # Output results as JSON
+        if self.export_path:
+            FileHandler.write_json_output(submit_results, Path(self.export_path))
+            formatter.print_success(f"{t('results_exported_to')} {self.export_path}")
+        else:
+            formatter.print_json(submit_results)
+
+    def _submit_single(self, item: Any, index: int) -> str:
+        """Submit a single async task and return task ID."""
+        raise NotImplementedError
+
+    def _retry_with_backoff(self, fn, max_retry: int):
+        """Retry a function with exponential backoff."""
+        import math
+        last_err = None
+        for attempt in range(max_retry + 1):
+            try:
+                return fn()
+            except Exception as e:
+                last_err = e
+                if attempt < max_retry:
+                    cli_err = classify_exception(e, "")
+                    if not cli_err.retryable:
+                        raise
+                    backoff = math.pow(2, attempt)
+                    formatter.print_warning(f"Retrying ({attempt+1}/{max_retry}) after {backoff}s: {str(e)}")
+                    import time
+                    time.sleep(backoff)
+        raise last_err
 
     # --- 内部辅助方法 ---
 
@@ -1539,16 +1646,79 @@ class BatchProcessor:
             print(f"✓ Completed: {item_name}")
 
     def _export_if_needed(self, results: List[Dict], valid_items: List) -> None:
-        """导出结果."""
+        """导出结果（批量模式下写入独立文件）."""
         if not self.export_path:
             return
-        data = results[0]["result"] if len(results) == 1 else {"results": results}
-        FileHandler.write_json_output(data, Path(self.export_path))
-        formatter.print_success(f"{t('results_exported_to')} {self.export_path}")
+
+        is_batch = len(valid_items) > 1
+
+        if is_batch:
+            # 批量模式：创建输出目录，每个结果写入独立文件
+            import time
+            output_dir = self.export_path
+            if not output_dir:
+                output_dir = f"adp_results_{time.strftime('%Y%m%d_%H%M%S')}"
+
+            try:
+                Path(output_dir).mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                formatter.print_warning(f"Failed to create output directory: {e}, using single file export")
+                data = results[0]["result"] if len(results) == 1 else {"results": results}
+                FileHandler.write_json_output(data, Path(self.export_path))
+                formatter.print_success(f"{t('results_exported_to')} {self.export_path}")
+                return
+
+            formatter.print_success(f"{t('results_exported_to')} {output_dir}")
+
+            # 构建 summary 数据
+            summary_files = []
+            success_count = 0
+            failed_count = 0
+
+            for i, result in enumerate(results):
+                item_name = self._get_item_name_for_export(valid_items[i], i)
+                safe_name = _sanitize_file_name(item_name)
+
+                if "error" in result:
+                    # 写入错误文件
+                    error_file = Path(output_dir) / f"{safe_name}.error.json"
+                    error_data = {"input": item_name, "status": "failed", "error": result["error"]}
+                    FileHandler.write_json_output(error_data, error_file)
+                    summary_files.append({"input": item_name, "output": f"{safe_name}.error.json", "status": "failed", "error": result["error"]})
+                    failed_count += 1
+                else:
+                    # 写入结果文件
+                    result_file = Path(output_dir) / f"{safe_name}.json"
+                    FileHandler.write_json_output(result.get("result", {}), result_file)
+                    summary_files.append({"input": item_name, "output": f"{safe_name}.json", "status": "success"})
+                    success_count += 1
+
+            # 写入 summary 文件
+            summary = {
+                "total": len(results),
+                "success": success_count,
+                "failed": failed_count,
+                "output_dir": str(Path(output_dir).absolute()),
+                "files": summary_files
+            }
+            summary_file = Path(output_dir) / "_summary.json"
+            FileHandler.write_json_output(summary, summary_file)
+
+            # 打印 summary
+            formatter.print_json(summary)
+        else:
+            # 单文件模式：保持原有行为
+            data = results[0]["result"] if len(results) == 1 else {"results": results}
+            FileHandler.write_json_output(data, Path(self.export_path))
+            formatter.print_success(f"{t('results_exported_to')} {self.export_path}")
+
+    def _get_item_name_for_export(self, item: Any, index: int) -> str:
+        """获取用于文件名的项目名称."""
+        return self._get_item_name(item)
 
     def _call_api(self, item: Any, file_name: str, index: int) -> Dict[str, Any]:
         """调用API处理单个项目."""
-        try:
+        def do_call():
             if self.mode == "parse":
                 if self.async_mode:
                     task_id = self.api_client.parse_async(None, self.app_id, file_path=item)
@@ -1569,6 +1739,11 @@ class BatchProcessor:
                 else:
                     result = self.api_client.extract_sync(None, self.app_id, file_path=item)
                     return {"file": str(item), "result": result, "index": index}
+
+        try:
+            if self.retry > 0:
+                return self._retry_with_backoff(do_call, self.retry)
+            return do_call()
         except Exception as e:
             formatter.print_error(t(self._get_error_message_key(), name=str(item), error=str(e)))
             return {"file": str(item), "error": str(e), "index": index}
@@ -1588,8 +1763,20 @@ class LocalFileProcessor(BatchProcessor):
         """处理单个文件."""
         return self._call_api(file_path, file_path.name, index)
 
+    def _submit_single(self, item: Any, index: int) -> str:
+        """Submit a single async task for local file."""
+        file_path = item
+        if self.mode == "parse":
+            return self.api_client.parse_async(None, self.app_id, file_path=file_path)
+        else:
+            return self.api_client.extract_async(None, self.app_id, file_path=file_path)
+
     def _get_item_name(self, item: Any) -> str:
         """获取文件显示名称."""
+        return Path(item).name
+
+    def _get_item_name_for_export(self, item: Any, index: int) -> str:
+        """Get item name for export file naming."""
         return Path(item).name
 
     def _get_section_title(self, items: List) -> str:
@@ -1600,10 +1787,10 @@ class LocalFileProcessor(BatchProcessor):
 class UrlProcessor(BatchProcessor):
     """URL批量处理器."""
 
-    def __init__(self, mode: str, app_id: str, async_mode: bool,
-                 export_path: Optional[str], timeout: int, concurrency: int,
+    def __init__(self, mode: str, app_id: str, async_mode: bool, no_wait: bool,
+                 export_path: Optional[str], timeout: int, concurrency: int, retry: int,
                  source_file: Optional[str] = None):
-        super().__init__(mode, app_id, async_mode, export_path, timeout, concurrency)
+        super().__init__(mode, app_id, async_mode, no_wait, export_path, timeout, concurrency, retry)
         self.source_file = source_file  # Optional: if URLs were read from a file
 
     def _validate_items(self, items: List) -> Tuple[List, List]:
@@ -1621,7 +1808,7 @@ class UrlProcessor(BatchProcessor):
 
     def _process_single(self, url: str, index: int, total: int) -> Dict[str, Any]:
         """处理单个URL."""
-        try:
+        def do_call():
             if self.mode == "parse":
                 if self.async_mode:
                     task_id = self.api_client.parse_async(url, self.app_id)
@@ -1642,9 +1829,26 @@ class UrlProcessor(BatchProcessor):
                 else:
                     result = self.api_client.extract_sync(url, self.app_id)
                     return {"url": url, "result": result, "index": index}
+
+        try:
+            if self.retry > 0:
+                return self._retry_with_backoff(do_call, self.retry)
+            return do_call()
         except Exception as e:
             formatter.print_error(t('failed_to_process_url', url=url, error=str(e)))
             return {"url": url, "error": str(e), "index": index}
+
+    def _submit_single(self, item: Any, index: int) -> str:
+        """Submit a single async task for URL."""
+        url = item
+        if self.mode == "parse":
+            return self.api_client.parse_async(url, self.app_id)
+        else:
+            return self.api_client.extract_async(url, self.app_id)
+
+    def _get_item_name_for_export(self, item: Any, index: int) -> str:
+        """Get item name for export file naming (URL uses index-based naming)."""
+        return f"url_{index:03d}"
 
     def _get_item_name(self, item: Any) -> str:
         """获取URL显示名称（截断处理）."""
@@ -1684,10 +1888,10 @@ class UrlProcessor(BatchProcessor):
 class Base64Processor(BatchProcessor):
     """Base64批量处理器."""
 
-    def __init__(self, mode: str, app_id: str, async_mode: bool,
-                 export_path: Optional[str], timeout: int, concurrency: int,
+    def __init__(self, mode: str, app_id: str, async_mode: bool, no_wait: bool,
+                 export_path: Optional[str], timeout: int, concurrency: int, retry: int,
                  file_name: str = "document"):
-        super().__init__(mode, app_id, async_mode, export_path, timeout, concurrency)
+        super().__init__(mode, app_id, async_mode, no_wait, export_path, timeout, concurrency, retry)
         self.file_name = file_name
 
     def _validate_items(self, items: List) -> Tuple[List, List]:
@@ -1697,7 +1901,8 @@ class Base64Processor(BatchProcessor):
     def _process_single(self, b64_str: str, index: int, total: int) -> Dict[str, Any]:
         """处理单个base64字符串."""
         current_file_name = self.file_name if total == 1 else f"{self.file_name}_{index}"
-        try:
+
+        def do_call():
             if self.mode == "parse":
                 if self.async_mode:
                     task_id = self.api_client.parse_async(None, self.app_id, file_base64=b64_str, file_name=current_file_name)
@@ -1718,9 +1923,27 @@ class Base64Processor(BatchProcessor):
                 else:
                     result = self.api_client.extract_sync(None, self.app_id, file_base64=b64_str, file_name=current_file_name)
                     return {"index": index, "result": result}
+
+        try:
+            if self.retry > 0:
+                return self._retry_with_backoff(do_call, self.retry)
+            return do_call()
         except Exception as e:
             formatter.print_error(t('failed_to_process', name=f"base64_{index}", error=str(e)))
             return {"index": index, "error": str(e)}
+
+    def _submit_single(self, item: Any, index: int) -> str:
+        """Submit a single async task for base64."""
+        b64_str = item
+        current_file_name = self.file_name if index == 1 else f"{self.file_name}_{index}"
+        if self.mode == "parse":
+            return self.api_client.parse_async(None, self.app_id, file_base64=b64_str, file_name=current_file_name)
+        else:
+            return self.api_client.extract_async(None, self.app_id, file_base64=b64_str, file_name=current_file_name)
+
+    def _get_item_name_for_export(self, item: Any, index: int) -> str:
+        """Get item name for export file naming."""
+        return self.file_name if index == 1 else f"{self.file_name}_{index}"
 
     def _get_item_name(self, item: Any) -> str:
         """获取显示名称."""
@@ -1834,14 +2057,115 @@ def _process_items_concurrently(items, process_func, concurrency, display_submit
     return results
 
 
+def _load_tasks_from_file(file_path: str) -> List[str]:
+    """
+    Load task IDs from a JSON file produced by --no-wait.
+
+    Args:
+        file_path: Path to JSON file containing task info
+
+    Returns:
+        List of task IDs
+    """
+    import json
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except Exception as e:
+        error = CLIError(
+            message=f"Failed to read task file: {str(e)}",
+            error_type=ERROR_TYPE_RESOURCE,
+            exit_code=EXIT_RESOURCE_NOT_FOUND,
+            fix="Check the file path is correct",
+            retryable=False
+        )
+        print_error_and_exit(error)
+
+    task_ids = []
+    for item in data:
+        task_id = item.get("task_id") if isinstance(item, dict) else None
+        if task_id:
+            task_ids.append(task_id)
+
+    if not task_ids:
+        error = CLIError(
+            message=f"No task IDs found in file: {file_path}",
+            error_type=ERROR_TYPE_RESOURCE,
+            exit_code=EXIT_RESOURCE_NOT_FOUND,
+            fix="The file may be empty or in wrong format",
+            retryable=False
+        )
+        print_error_and_exit(error)
+
+    return task_ids
+
+
+def _query_tasks_batch(task_ids: List[str], watch: bool, export_path: Optional[str],
+                       timeout: int, concurrency: int, api_client: APIClient, mode: str) -> None:
+    """
+    Query multiple tasks in batch with concurrent processing.
+
+    Args:
+        task_ids: List of task IDs to query
+        watch: Whether to wait for completion
+        export_path: Export path for results
+        timeout: Timeout for watch mode
+        concurrency: Number of concurrent queries
+        api_client: API client instance
+        mode: Mode (parse or extract)
+    """
+    query_func = api_client.query_parse_task if mode == "parse" else api_client.query_extract_task
+
+    def process_single(task_id: str, index: int, total: int) -> Dict[str, Any]:
+        try:
+            if watch:
+                result = api_client.wait_for_task(task_id, query_func, timeout=timeout)
+            else:
+                result = query_func(task_id)
+            data = result.get("data", {})
+            return {"task_id": task_id, "status": data.get("status", ""), "result": result, "index": index}
+        except Exception as e:
+            return {"task_id": task_id, "error": str(e), "index": index}
+
+    def display_submit(index: int, item: Any, total: int) -> None:
+        print(f"[{index}/{total}] Querying: {item}")
+
+    def display_result(result: Dict[str, Any]) -> None:
+        if "error" in result:
+            print(f"✗ Failed: {result['task_id']} - {result['error']}")
+        else:
+            print(f"✓ Completed: {result['task_id']} - Status: {result.get('status', '')}")
+
+    # Process concurrently
+    results = _process_items_concurrently(
+        task_ids, process_single,
+        concurrency,
+        display_submit, display_result, t
+    )
+
+    # Sort and clean results
+    results.sort(key=lambda x: x["index"])
+    for result in results:
+        result.pop("index", None)
+
+    # Output results
+    if export_path:
+        data = results[0]["result"] if len(results) == 1 else {"results": results}
+        FileHandler.write_json_output(data, Path(export_path))
+        formatter.print_success(f"{t('results_exported_to')} {export_path}")
+    else:
+        formatter.print_json(results)
+
+
 def _process_local_files(
-    path_str: str,
     async_mode: bool,
+    no_wait: bool,
     export_path: Optional[str],
     timeout: int,
     mode: str,
     app_id: Optional[str] = None,
-    concurrency: int = 1
+    concurrency: int = 1,
+    retry: int = 0
 ) -> None:
     """
     Process local files (supports batch processing).
@@ -1849,13 +2173,15 @@ def _process_local_files(
     Args:
         path_str: File/folder path
         async_mode: Whether to process asynchronously
+        no_wait: If True and async_mode=True, submit task and return immediately without waiting
         export_path: Export path
         timeout: Timeout
         mode:: Mode (parse or extract)
         app_id: Application ID (required for extract mode)
         concurrency: Number of concurrent tasks (only effective for batch processing)
+        retry: Number of retries for failed tasks
     """
-    processor = LocalFileProcessor(mode, app_id, async_mode, export_path, timeout, concurrency)
+    processor = LocalFileProcessor(mode, app_id, async_mode, no_wait, export_path, timeout, concurrency, retry)
     processor.run([path_str])
 
 
@@ -1888,20 +2214,43 @@ def _is_valid_url(url: str) -> bool:
         if authority_end == -1:
             authority_end = len(url)
         authority = url[scheme_end:authority_end]
-        if "@" in authority:
+    if "@" in authority:
             return False
 
     return True
 
 
+def _sanitize_file_name(name: str) -> str:
+    """
+    Sanitize a string for use as a file name.
+
+    Args:
+        name: The string to sanitize
+
+    Returns:
+        Sanitized string safe for use as file name
+    """
+    import re
+    # Replace problematic characters with underscores
+    sanitized = re.sub(r'[/\\:*?"<>|]', '_', name)
+    # Remove leading/trailing spaces and dots
+    sanitized = sanitized.strip(' .')
+    # Limit length to avoid filesystem issues
+    if len(sanitized) > 200:
+        sanitized = sanitized[:200]
+    return sanitized
+
+
 def _process_url_file(
     url: str,
     async_mode: bool,
+    no_wait: bool,
     export_path: Optional[str],
     timeout: int,
     mode: str,
     app_id: Optional[str] = None,
-    concurrency: int = 1
+    concurrency: int = 1,
+    retry: int = 0
 ) -> None:
     """
     Process URL file or URL list file.
@@ -1909,11 +2258,13 @@ def _process_url_file(
     Args:
         url: File URL or file path containing URL list
         async_mode: Whether to process asynchronously
+        no_wait: If True and async_mode=True, submit task and return immediately without waiting
         export_path: Export path
         timeout: Timeout
         mode: Mode (parse or extract)
         app_id: Application ID (required for extract mode)
         concurrency: Number of concurrent tasks (only effective for batch processing)
+        retry: Number of retries for failed tasks
     """
     # Determine if url parameter is a file path or a single URL
     input_path = Path(url)
@@ -1955,7 +2306,7 @@ def _process_url_file(
         urls = [url]
 
     # Use UrlProcessor to handle the URLs
-    processor = UrlProcessor(mode, app_id, async_mode, export_path, timeout, concurrency, source_file=source_file)
+    processor = UrlProcessor(mode, app_id, async_mode, no_wait, export_path, timeout, concurrency, retry, source_file=source_file)
     processor.run(urls)
 
 
@@ -1964,10 +2315,12 @@ def _process_base64_files(
     app_id: str,
     file_name: str,
     async_mode: bool,
+    no_wait: bool,
     export_path: Optional[str],
     timeout: int,
     mode: str,
-    concurrency: int = 1
+    concurrency: int = 1,
+    retry: int = 0
 ) -> None:
     """
     Process base64 encoded files (supports batch processing).
@@ -1977,12 +2330,14 @@ def _process_base64_files(
         app_id: Application ID
         file_name: Base file name
         async_mode: Whether to process asynchronously
+        no_wait: If True and async_mode=True, submit task and return immediately without waiting
         export_path: Export path
         timeout: Timeout
         mode: Mode (parse or extract)
         concurrency: Number of concurrent tasks (only effective for batch processing)
+        retry: Number of retries for failed tasks
     """
-    processor = Base64Processor(mode, app_id, async_mode, export_path, timeout, concurrency, file_name=file_name)
+    processor = Base64Processor(mode, app_id, async_mode, no_wait, export_path, timeout, concurrency, retry, file_name=file_name)
     processor.run(base64_strings)
 
 

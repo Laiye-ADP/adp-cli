@@ -23,7 +23,7 @@ def formatter(mock_console):
 
 def test_formatter_initialization(formatter):
     """Test formatter initialization."""
-    assert formatter.console is not None
+    assert formatter.stdout_console is not None
     assert formatter.json_mode is False
     assert formatter.quiet_mode is False
 
@@ -217,8 +217,8 @@ def test_print_section(formatter):
 def test_formatter_with_direct_console_initialization():
     """Test formatter initialized without custom console."""
     formatter = OutputFormatter()
-    assert formatter.console is not None
-    assert isinstance(formatter.console, Console)
+    assert formatter.stdout_console is not None
+    assert isinstance(formatter.stdout_console, Console)
 
 
 def test_print_json_with_list(formatter):

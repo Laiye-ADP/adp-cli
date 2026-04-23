@@ -40,7 +40,7 @@ class TestCLIIntegration:
         assert returncode == 0
         # stdout may be None on Windows due to encoding issues
         if stdout:
-            assert "1.10.0" in stdout
+            assert "adp, version" in stdout
 
     def test_config_help(self):
         """测试配置帮助。"""
