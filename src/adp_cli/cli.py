@@ -913,15 +913,9 @@ def parse_json_list_param(_ctx, _param, value):
     return [label.strip() for label in value.split(',') if label.strip()]
 
 
-def validate_create_app_params(app_name, app_label, enable_long_doc, long_doc_config):
+def _validate_app_name_and_labels(app_name, app_label):
     """
-    验证创建应用参数。
-
-    Args:
-        app_name: 应用名称
-        app_label: 标签列表
-        enable_long_doc: 是否开启长文档支持
-        long_doc_config: 长文档配置
+    验证应用名称和标签参数。
     """
     # 验证 app_name 长度不超过 50 字符
     if len(app_name) > 50:
@@ -944,18 +938,6 @@ def validate_create_app_params(app_name, app_label, enable_long_doc, long_doc_co
             retryable=False
         )
         print_error_and_exit(error)
-
-    # 验证 long_doc_config 仅在 enable_long_doc=true 时生效
-    if long_doc_config is not None and not enable_long_doc:
-        error = CLIError(
-            message="long_doc_config is only valid when enable_long_doc=true",
-            error_type=ERROR_TYPE_PARAM,
-            exit_code=EXIT_PARAMETER_ERROR,
-            fix="Set --enable-long-doc to true when using --long-doc-config",
-            retryable=False
-        )
-        print_error_and_exit(error)
-        sys.exit(EXIT_PARAMETER_ERROR)
 
 
 @cli.group(help=t('custom_app_description'), cls=CLI)
@@ -987,13 +969,16 @@ def create(api_key, app_name, app_label, extract_fields, parse_mode, enable_long
     """
     try:
         # 验证参数
-        validate_create_app_params(app_name, app_label, enable_long_doc, long_doc_config)
+        _validate_app_name_and_labels(app_name, app_label)
 
         # 解析 JSON 参数（支持字符串或文件路径）
         extract_fields = _parse_json_param_value(extract_fields)
         if long_doc_config:
             long_doc_config = _parse_json_param_value(long_doc_config)
 
+        # 如果 enable_long_doc 未开启，静默丢弃 long_doc_config
+        if not enable_long_doc:
+            long_doc_config = None
 
         # 临时覆盖 API Key（如果提供）
         if api_key:
@@ -1037,7 +1022,7 @@ create.help_key = 'custom_app_create_title'
 @click.option('--parse-mode', required=True,
               type=click.Choice(['standard', 'advance', 'agentic'], case_sensitive=False),
               help="__custom_app_update_parse_mode__")
-@click.option('--enable-long-doc', 'enable_long_doc', required=True,
+@click.option('--enable-long-doc', 'enable_long_doc',
               callback=parse_bool_param, help="__custom_app_update_enable_long_doc__")
 @click.option('--long-doc-config', help="__custom_app_update_long_doc_config__")
 @check_config
@@ -1051,6 +1036,10 @@ def update(api_key, app_id, app_name, app_label, extract_fields,
         extract_fields = _parse_json_param_value(extract_fields)
         if long_doc_config:
             long_doc_config = _parse_json_param_value(long_doc_config)
+
+        # 如果 enable_long_doc 未开启，静默丢弃 long_doc_config
+        if not enable_long_doc:
+            long_doc_config = None
 
         # 临时覆盖 API Key
         if api_key:

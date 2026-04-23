@@ -499,7 +499,6 @@ def classify_exception(e: Exception, context: str = "") -> CLIError:
 | app-label 格式错误 | `PARAM_ERROR` | 提供 JSON 数组格式 |
 | app_name 长度超限 | `PARAM_ERROR` | 缩短到 50 字符以内 |
 | app_label 数量超限 | `PARAM_ERROR` | 保持 5 个或更少 |
-| long_doc_config 条件错误 | `PARAM_ERROR` | 设置 --enable-long-doc 为 true |
 | 缺少文件参数 | `PARAM_ERROR` | 提供 --file-url、--file-local 或 --base64 |
 | schema 命令不存在 | `RESOURCE_ERROR` | 运行 `adp schema` 查看可用命令 |
 | 无有效文件 | `RESOURCE_ERROR` | 检查文件路径和格式是否支持 |

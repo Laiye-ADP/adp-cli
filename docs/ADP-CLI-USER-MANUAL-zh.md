@@ -647,8 +647,10 @@ adp custom-app create [OPTIONS]
 | `--app-label` | 应用标签（最多5个，可选） | 否 |
 | `--extract-fields` | 字段配置（JSON格式或文件路径） | 是 |
 | `--parse-mode` | 解析模式（standard=标准；advance=增强；agentic=智能体） | 是 |
-| `--enable-long-doc` | 启用长文档支持（true/false） | 是 |
-| `--long-doc-config` | 可用文档配置 | 否 |
+| `--enable-long-doc` | 启用长文档支持（true/false） | 否 |
+| `--long-doc-config` | 长文档配置（仅在 `--enable-long-doc` 为 true 时生效） | 否 |
+
+> **注意：** `--long-doc-config` 仅在 `--enable-long-doc` 设置为 `true` 时生效。如果 `--enable-long-doc` 未设置或为 `false`，`--long-doc-config` 将被静默丢弃。
 
 ```bash
 # 方式一：使用JSON字符串（推荐PowerShell）
@@ -687,8 +689,10 @@ adp custom-app update [OPTIONS]
 | `--app-label` | 应用标签（最多5个，可选） | 否 |
 | `--extract-fields` | 字段配置（JSON格式或文件路径） | 是 |
 | `--parse-mode` | 解析模式（standard=标准；advance=增强；agentic=智能体） | 是 |
-| `--enable-long-doc` | 启用长文档支持（true/false） | 是 |
-| `--long-doc-config` | 长文档配置 | 否 |
+| `--enable-long-doc` | 启用长文档支持（true/false） | 否 |
+| `--long-doc-config` | 长文档配置（仅在 `--enable-long-doc` 为 true 时生效） | 否 |
+
+> **注意：** `--long-doc-config` 仅在 `--enable-long-doc` 设置为 `true` 时生效。如果 `--enable-long-doc` 未设置或为 `false`，`--long-doc-config` 将被静默丢弃。
 
 ```bash
 # 示例

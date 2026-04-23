@@ -643,8 +643,10 @@ adp custom-app create [OPTIONS]
 | `--app-label` | Application labels (max 5 labels, optional) | No |
 | `--extract-fields` | Field configuration (JSON format or file path) | Yes |
 | `--parse-mode` | Parsing mode (standard=standard; advance=advanced; agentic=agentic) | Yes |
-| `--enable-long-doc` | Enable long document support (true/false) | Yes` |
-| `--long-doc-config` | Available document configuration | No |
+| `--enable-long-doc` | Enable long document support (true/false) | No |
+| `--long-doc-config` | Long document configuration (only effective when `--enable-long-doc` is true) | No |
+
+> **Note:** `--long-doc-config` is only effective when `--enable-long-doc` is set to `true`. If `--enable-long-doc` is not set or is `false`, `--long-doc-config` will be silently ignored.
 
 ```bash
 # Method 1: Using JSON string (recommended for PowerShell)
@@ -683,8 +685,10 @@ adp custom-app update [OPTIONS]
 | `--app-label` | Application labels (max 5 labels, optional) | No |
 | `--extract-fields` | Field configuration (JSON format or file path) | Yes |
 | `--parse-mode` | Parsing mode (standard=standard; advance=advanced; agentic=agentic) | Yes |
-| `--enable-long-doc` | Enable long document support (true/false) | Yes |
-| `--long-doc-config` | Long document configuration | No |
+| `--enable-long-doc` | Enable long document support (true/false) | No |
+| `--long-doc-config` | Long document configuration (only effective when `--enable-long-doc` is true) | No |
+
+> **Note:** `--long-doc-config` is only effective when `--enable-long-doc` is set to `true`. If `--enable-long-doc` is not set or is `false`, `--long-doc-config` will be silently ignored.
 
 ```bash
 # Example

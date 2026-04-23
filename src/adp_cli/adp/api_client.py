@@ -80,6 +80,7 @@ class APIClient:
 
         try:
             response = requests.request(method, url, headers=headers, json=data, timeout=300)
+            print(f"{response.json()}")
             return response.json()
         except RequestException as e:
             # 尝试获取响应内容以提供更多调试信息
