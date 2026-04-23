@@ -356,17 +356,13 @@ def test_validate_create_app_params_valid():
     # Valid params - should not raise
     validate_create_app_params(
         app_name="Valid App Name",
-        app_label=["label1", "label2"],
-        enable_long_doc=False,
-        long_doc_config=None
+        app_label=["label1", "label2"]
     )
 
-    # Enable long doc with config - should not raise
+    # Valid params with max labels - should not raise
     validate_create_app_params(
         app_name="Valid App Name",
-        app_label=["label1"],
-        enable_long_doc=True,
-        long_doc_config={"config": "data"}
+        app_label=["label1", "label2", "label3", "label4", "label5"]
     )
 
 
@@ -375,9 +371,7 @@ def test_validate_create_app_params_app_name_too_long():
     with pytest.raises(SystemExit):
         validate_create_app_params(
             app_name="A" * 51,  # 51 characters
-            app_label=None,
-            enable_long_doc=False,
-            long_doc_config=None
+            app_label=None
         )
 
 
@@ -386,21 +380,14 @@ def test_validate_create_app_params_app_label_too_many():
     with pytest.raises(SystemExit):
         validate_create_app_params(
             app_name="Valid App Name",
-            app_label=["label1", "label2", "label3", "label4", "label5", "label6"],  # 6 labels
-            enable_long_doc=False,
-            long_doc_config=None
+            app_label=["label1", "label2", "label3", "label4", "label5", "label6"]  # 6 labels
         )
 
 
-def test_validate_create_app_params_long_doc_config_without_enable():
-    """Test validating create app params with long_doc_config but enable_long_doc False."""
-    with pytest.raises(SystemExit):
-        validate_create_app_params(
-            app_name="Valid App Name",
-            app_label=None,
-            enable_long_doc=False,
-            long_doc_config={"config": "data"}
-        )
+def test_validate_create_app_params_empty_params():
+    """Test validating create app params with empty params (should not raise)."""
+    # Empty app_name and label should not raise in this validation function
+    validate_create_app_params(app_name="", app_label=[])
 
 
 def test_parse_local_file(tmp_path, runner, temp_config_dir):

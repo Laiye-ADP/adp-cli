@@ -609,7 +609,7 @@ extract_base64.help_key = 'extract_base64_title'
 @click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_watch_timeout__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
-def extract_query(task_ids, watch, task_file, export, timeout, concurrency):
+def extract_query(task_id, watch, task_file, export, timeout, concurrency):
     """
     Query extract async task status.
     """
@@ -617,8 +617,11 @@ def extract_query(task_ids, watch, task_file, export, timeout, concurrency):
         # Load tasks from file if --file is specified
         if task_file:
             task_ids = _load_tasks_from_file(task_file)
+        else:
+            # task_id from Click is a tuple when nargs=-1
+            task_ids = task_id if isinstance(task_id, (list, tuple)) else (task_id,)
 
-        if not task_ids:
+        if not task_ids or all(t is None or t == '' for t in task_ids):
             error = CLIError(
                 message="Either task IDs or --file must be provided",
                 error_type=ERROR_TYPE_PARAM,
@@ -636,24 +639,24 @@ def extract_query(task_ids, watch, task_file, export, timeout, concurrency):
 
         if len(task_ids) == 1:
             # Single task query
-            task_id = task_ids[0]
+            task_id_single = task_ids[0]
             if watch:
                 result = api_client.wait_for_task(
-                    task_id,
+                    task_id_single,
                     api_client.query_extract_task,
                     timeout=timeout
                 )
                 formatter.print_success(t('task_completed'))
             else:
-                result = api_client.query_extract_task(task_id)
+                result = api_client.query_extract_task(task_id_single)
             data = result.get("data", {})
-            formatter.print_task_result(task_id, data.get("status", ""), result)
+            formatter.print_task_result(task_id_single, data.get("status", ""), result)
             if export:
                 FileHandler.write_json_output(data, Path(export))
                 formatter.print_success(f"{t('results_exported_to')} {export}")
         else:
             # Multi-task query with batch processing
-            _query_tasks_batch(task_ids, watch, export, timeout, concurrency, api_client, "extract")
+            _query_tasks_batch(list(task_ids), watch, export, timeout, concurrency, api_client, "extract")
 
     except Exception as e:
         print_error_and_exit(classify_exception(e))
@@ -671,7 +674,7 @@ extract_query.help_key = 'extract_query_title'
 @click.option('--timeout', type=click.IntRange(min=30, max=3600), default=900, help="__option_watch_timeout__")
 @click.option('--concurrency', type=click.IntRange(min=1, max=2), default=1, help="__option_concurrency__")
 @check_config
-def parse_query(task_ids, watch, task_file, export, timeout, concurrency):
+def parse_query(task_id, watch, task_file, export, timeout, concurrency):
     """
     Query parse async task status.
     """
@@ -679,8 +682,11 @@ def parse_query(task_ids, watch, task_file, export, timeout, concurrency):
         # Load tasks from file if --file is specified
         if task_file:
             task_ids = _load_tasks_from_file(task_file)
+        else:
+            # task_id from Click is a tuple when nargs=-1
+            task_ids = task_id if isinstance(task_id, (list, tuple)) else (task_id,)
 
-        if not task_ids:
+        if not task_ids or all(t is None or t == '' for t in task_ids):
             error = CLIError(
                 message="Either task IDs or --file must be provided",
                 error_type=ERROR_TYPE_PARAM,
@@ -698,24 +704,24 @@ def parse_query(task_ids, watch, task_file, export, timeout, concurrency):
 
         if len(task_ids) == 1:
             # Single task query
-            task_id = task_ids[0]
+            task_id_single = task_ids[0]
             if watch:
                 result = api_client.wait_for_task(
-                    task_id,
+                    task_id_single,
                     api_client.query_parse_task,
                     timeout=timeout
                 )
                 formatter.print_success(t('task_completed'))
             else:
-                result = api_client.query_parse_task(task_id)
+                result = api_client.query_parse_task(task_id_single)
             data = result.get("data", {})
-            formatter.print_task_result(task_id, data.get("status", ""), result)
+            formatter.print_task_result(task_id_single, data.get("status", ""), result)
             if export:
                 FileHandler.write_json_output(data, Path(export))
                 formatter.print_success(f"{t('results_exported_to')} {export}")
         else:
             # Multi-task query with batch processing
-            _query_tasks_batch(task_ids, watch, export, timeout, concurrency, api_client, "parse")
+            _query_tasks_batch(list(task_ids), watch, export, timeout, concurrency, api_client, "parse")
 
     except Exception as e:
         print_error_and_exit(classify_exception(e))
@@ -913,7 +919,7 @@ def parse_json_list_param(_ctx, _param, value):
     return [label.strip() for label in value.split(',') if label.strip()]
 
 
-def _validate_app_name_and_labels(app_name, app_label):
+def validate_create_app_params(app_name, app_label):
     """
     验证应用名称和标签参数。
     """
@@ -969,7 +975,7 @@ def create(api_key, app_name, app_label, extract_fields, parse_mode, enable_long
     """
     try:
         # 验证参数
-        _validate_app_name_and_labels(app_name, app_label)
+        validate_create_app_params(app_name, app_label)
 
         # 解析 JSON 参数（支持字符串或文件路径）
         extract_fields = _parse_json_param_value(extract_fields)
@@ -2147,6 +2153,7 @@ def _query_tasks_batch(task_ids: List[str], watch: bool, export_path: Optional[s
 
 
 def _process_local_files(
+    path_str: str,
     async_mode: bool,
     no_wait: bool,
     export_path: Optional[str],
@@ -2203,9 +2210,8 @@ def _is_valid_url(url: str) -> bool:
         if authority_end == -1:
             authority_end = len(url)
         authority = url[scheme_end:authority_end]
-    if "@" in authority:
+        if "@" in authority:
             return False
-
     return True
 
 
