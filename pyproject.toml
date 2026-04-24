@@ -2,9 +2,6 @@
 requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["adp_cli"]
-
 [tool.black]
 line-length = 100
 target-version = ['py38', 'py39', 'py310', 'py311']
