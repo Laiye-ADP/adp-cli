@@ -29,6 +29,9 @@ parse_result.json
 result.json
 test_report*.txt
 coverage.json
+dist/
+build/
+*.egg-info/
 
 # Claude Code - ignore local settings with sensitive info
 .claude/settings.local.json

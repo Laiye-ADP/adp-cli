@@ -1,19 +1,16 @@
 """Setup script for ADP CLI."""
 
-from pathlib import Path
 from setuptools import setup, find_packages
-
-# Load version from __init__.py
-_version_py = Path("src/adp_cli/__init__.py").read_text()
-version = _version_py.split("__version__")[1].split("=")[1].strip().strip('"').strip("'")
 
 with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
     name="agentic_doc_parse_and_extract",
-    version=version,
+    use_scm_version=True,
+    version="1.0.0",  # Fallback, actual version from git tag
     author="ADP Team",
+    setup_requires=["setuptools-scm"],
     author_email="support@adp.ai",
     license="Commercial license required. New users receive 100 free credits monthly to offset usage.",
     description="AI Document Platform Command Line Tool - Document Parse & Extract Tool",
