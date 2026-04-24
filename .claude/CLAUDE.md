@@ -40,7 +40,7 @@ adp-cli/
 - **Cryptography**: Fernet (API key encryption)
 - **Output Formatting**: Rich, Pygments
 - **Testing**: Pytest
-- **Packaging**: PyInstaller (for standalone executables)
+- **Packaging**: PyPI (pip install)
 
 ---
 
@@ -289,34 +289,25 @@ def test_function_name():
 
 ---
 
-## 6) Building Executables
+## 6) Publishing to PyPI
 
 ### 6.1 Build Process
 
-ADP CLI can be packaged as standalone executables using PyInstaller.
-
-**Quick Build**:
 ```bash
-# Windows
-scripts\build.bat
+# Build Python package
+python -m build
 
-# Linux/macOS
-./scripts/build.sh
+# Check package
+twine check dist/*
+
+# Upload to PyPI (test first)
+twine upload --repository testpypi dist/*
+twine upload dist/*
 ```
 
-**Output**: `dist/adp.exe` (Windows) or `dist/adp` (Linux/macOS)
+### 6.2 Version Update
 
-### 6.2 Build Configuration
-
-PyInstaller spec file: `adp_cli.spec`
-
-Key settings:
-- Single-file executable
-- Console enabled
-- UPX compression enabled
-- Excludes unnecessary packages for size reduction
-
-See [BUILD.md](docs/BUILD.md) for detailed build instructions.
+Update version in `setup.py` before building.
 
 ---
 
@@ -346,7 +337,7 @@ See [BUILD.md](docs/BUILD.md) for detailed build instructions.
 ### 7.4 Updating Documentation
 
 - **User Manual**: [docs/ADP-CLI-USER-MANUAL.md](docs/ADP-CLI-USER-MANUAL.md)
-- **Build Guide**: [docs/BUILD.md](docs/BUILD.md)
+- **PyPI Install Guide**: [docs/PYPI-INSTALL-GUIDE.md](docs/PYPI-INSTALL-GUIDE.md)
 - **Developer Guide**: [docs/CLI-DEVELOPER-GUIDE.md](docs/CLI-DEVELOPER-GUIDE.md)
 - **README**: [README.md](README.md)
 
@@ -397,12 +388,10 @@ except ValueError as e:
 # Run full test suite
 pytest tests/
 
-# Build executables for all platforms
-# (on each platform) ./scripts/build.sh
-
-# Test built executables
-./dist/adp --version
-./dist/adp config set --api-key test_key
+# Test PyPI package
+pip install dist/*.whl
+adp --version
+adp config set --api-key test_key
 ```
 
 ### 9.3 Publishing
@@ -454,11 +443,6 @@ pip install -e . --force-reinstall --no-deps
 pip install -r requirements.txt
 ```
 
-**Build fails with PyInstaller**:
-- Check for missing modules in `hiddenimports`
-- Ensure all dependencies are installed
-- Review `adp_cli.spec` configuration
-
 **Encoding issues on Windows**:
 - The CLI automatically configures UTF-8 output
 - Ensure terminal supports UTF-8 characters
@@ -470,6 +454,6 @@ pip install -r requirements.txt
 - **Project Homepage**: https://github.com/adp/adp-aiem
 - **Issue Tracker**: https://github.com/adp/adp-aiem/issues
 - **User Manual**: [docs/ADP-CLI-USER-MANUAL.md](docs/ADP-CLI-USER-MANUAL.md)
-- **Build Guide**: [docs/BUILD.md](docs/BUILD.md)
+- **PyPI Install Guide**: [docs/PYPI-INSTALL-GUIDE.md](docs/PYPI-INSTALL-GUIDE.md)
 - **Click Documentation**: https://click.palletsprojects.com/
-- **PyInstaller Documentation**: https://pyinstaller.org/
+- **Python Packaging Guide**: https://packaging.python.org/

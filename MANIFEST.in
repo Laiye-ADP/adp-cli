@@ -12,11 +12,5 @@ recursive-include docs *.md
 # Include scripts
 recursive-include scripts *.sh *.bat *.py
 
-# Include PyInstaller spec file
-include adp_cli.spec
-
 # Include all Python source
 recursive-include src/adp_cli *.py
-
-# Include PyInstaller hooks
-recursive-include src/adp_cli/_pyinstaller_hooks *.py

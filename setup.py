@@ -39,6 +39,7 @@ setup(
         "requests>=2.28.0",
         "cryptography>=41.0.0",
         "rich>=13.0.0",
+        "pygments>=2.14.0",
     ],
     extras_require={
         "dev": [
