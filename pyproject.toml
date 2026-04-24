@@ -5,12 +5,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = ["adp_cli"]
 
-[tool.setuptools_scm]
-version_source = "tag"
-version_scheme = "post-release"
-local_scheme = "no-local-version"
-tag_regex = "^v?(\\d+\\.\\d+\\.\\d+)$"
-
 [tool.black]
 line-length = 100
 target-version = ['py38', 'py39', 'py310', 'py311']
